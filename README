@@ -1,0 +1,55 @@
+Dunfell
+=======
+
+Dunfell provides a library for extracting events from GLib main contexts and
+visualising them for the purposes of debugging and optimisation. It provides
+graphical utilities for this purpose.
+
+See the test programs in libdunfell/tests/ for simple examples of how to use
+the code.
+
+libdunfell’s API is currently unstable and is likely to change wildly.
+
+What is the GLib main context
+=============================
+
+This is handily written up elsewhere:
+
+https://developer.gnome.org/programming-guidelines/unstable/main-contexts.html.en
+
+Using Dunfell
+=============
+
+Dunfell can be used as a set of utility programs or as a library.
+
+TODO
+
+Dependencies
+============
+
+ • glib-2.0
+ • gio-2.0
+ • gtk+-3.0
+
+Deprecation guards
+==================
+
+If LIBDUNFELL_DISABLE_DEPRECATED is defined when compiling against
+libdunfell, all deprecated API will be removed from included headers.
+
+Licensing
+=========
+
+libdunfell is licensed under the LGPL; see COPYING for more details.
+
+Bugs
+====
+
+Bug reports and (git formatted) patches should be e-mailed to one of the
+addresses listed in the ‘Contact’ section below. Thank you!
+
+Contact
+=======
+
+Philip Withnall <philip@tecnocode.co.uk>
+https://gitlab.com/pwithnall/dunfell

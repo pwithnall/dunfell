@@ -1,0 +1,15 @@
+<Project xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:gnome="http://api.gnome.org/doap-extensions#" xmlns="http://usefulinc.com/ns/doap#">
+	<name xml:lang="en">Dunfell</name>
+	<shortdesc xml:lang="en">Dunfell visualises the behaviour of GLib main contexts</shortdesc>
+	<description xml:lang="en">Dunfell provides a library for extracting events from GLib main contexts and visualising them for the purposes of debugging and optimisation. It provides graphical utilities for this purpose.</description>
+	<homepage rdf:resource="https://gitlab.com/pwithnall/dunfell"/>
+	<license rdf:resource="http://usefulinc.com/doap/licenses/lgpl"/>
+	<download-page rdf:resource="http://tecnocode.co.uk/downloads/dunfell/"/>
+	<maintainer>
+		<foaf:Person>
+			<foaf:name>Philip Withnall</foaf:name>
+			<foaf:mbox rdf:resource="mailto:philip@tecnocode.co.uk"/>
+			<gnome:userid>pwithnall</gnome:userid>
+		</foaf:Person>
+	</maintainer>
+</Project>

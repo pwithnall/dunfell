@@ -1,0 +1,183 @@
+Formatting
+==========
+
+All code should follow the same formatting standards which are broadly based on the GNU style (http://www.gnu.org/prep/standards.html) with some
+additions. Briefly:
+
+ - Tab indents are used and braces for blocks go on the same line as the block statement:
+
+	if (x < foo (y, z)) {
+		haha = bar[4] + 5;
+	} else {
+		while (z) {
+			haha += foo (z, z);
+			z--;
+		}
+		return abc (haha);
+	}
+
+   Braces should be omitted for single-line blocks, but included for all blocks in a multi-part if statement which has blocks containing more than
+   one line (as above).
+
+ - Spaces should be present between function name and argument block, and after commas:
+
+	foo (z, z)
+
+ - In pointer types, the '*' is grouped with the variable name, not with the base type.
+
+	int *a;
+
+   Not:
+
+	int* a;
+
+   In cases where there is no variable name, for instance, return values, there should be a single space between the base type and the '*'.
+
+   Type casts should have no space between the type and '*', but a space before the variable being cast:
+
+	(gchar*) foobar;
+	(gchar**) &foobar;
+
+ - Function and variable names are lower_case_with_underscores, type names are CamelCase and macro names are UPPER_CASE_WITH_UNDERSCORES.
+
+ - Comparisons to NULL, TRUE and FALSE should always be made explicit, for clarity.
+
+ - Code should be wrapped at the 150th column, such that it doesn't require horizontal scrolling on a decent-sized display.
+   Don't wrap at the 80th column.
+
+Documentation comments
+======================
+
+All public API functions should have inline documentation headers in the gtk-doc style. For more information about gtk-doc comments, see the gtk-doc
+manual (http://library.gnome.org/devel/gtk-doc-manual/stable/). There are a few conventions above and beyond the standard gtk-doc formatting which
+Dunfell employs:
+
+ - For API which returns allocated memory, the relevant free/unref function must be mentioned in the "Return value" part of the documentation:
+
+	* Return value: a new #DflServer; unref with g_object_unref()
+
+   If the function can also return NULL (on error, for example) or some other "default" value (-1, 0, etc.), format it as follows:
+
+	* Return value: (allow-none): a new #DflServerIdentity, or %NULL; free with dfl_server_identity_free()
+
+   Note that if a function returns NULL as a result of a precondition or assertion failure, this should not be listed in the documentation. The
+   precondition itself may be listed in the function documentation prose, but if it's the only reason for a function to return NULL, the "or %NULL"
+   clause should be omitted.
+
+ - When adding API, make sure to add a "Since" clause:
+
+	* Since: 0.2.0
+
+ - For object methods, the "self" parameter should be documented simply as "a #GObjectType":
+
+	* @self: a #DflServer
+
+ - For function parameters which can legitimately be set to NULL (or some other default value), list that as follows:
+
+	* @updated_max: (allow-none): the new maximum update time, or %NULL
+
+ - If numbers, such as -1, are mentioned in documentation as values to be passed around in code, they should be wrapped in a DocBook "code" tag
+   (e.g. "<code class="literal">-1</code>"), so that they appear similarly to NULL in the documentation.
+
+ - The documentation explaining the purpose of a property, its limitations, interpretation, etc., should be given in the gtk-doc comment for the
+   GObject property itself, not in the documentation for its getter or setter. The documentation for the getter and setter should be stubs which
+   refer to the property's documentation. The getter and setter documentation should, however, still include full details about whether NULL values
+   are permissible for the function parameters, or are possible as the return value, for example.
+
+Adding public API
+=================
+
+ - Ensure it has proper guards against bad parameters:
+
+	g_return_if_fail (DFL_IS_SERVER (self));
+	g_return_if_fail (foobar != NULL);
+
+ - All public API must have a gtk-doc comment, and be added to the docs/libdunfell-sections.txt file, to include it in the documentation.
+   The documentation comment must have a "Since" clause (see "Documentation comments" section).
+
+ - All public API must be listed in libdunfell/libdunfell.symbols.
+
+ - Non-trivial API should have a test case added in the relevant test suite file in libdunfell/tests.
+
+ - All GObject properties must have getter/setter functions.
+
+ - All API which returns allocated memory must be tagged with G_GNUC_WARN_UNUSED_RESULT after its declaration, to safeguard against consumers of the
+   API forgetting to use (and consequently free) the memory. This is unlikely, but adding the macro costs little and acts as a reminder in the API
+   documentation to free the result.
+
+ - All GObject *_get_type function declarations must be tagged with the G_GNUC_CONST macro, as well as any other applicable functions
+   (see the gcc documentation: http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#index-g_t_0040code_007bconst_007d-function-attribute-2207).
+
+ - New API must never be added in a stable micro release. API additions can only be made in a major or minor release; this is to prevent the LT version
+   of one minor version's micro releases exceeding the LT version of the next minor version as almost happened between versions 0.6.3 and 0.7.0.
+   See http://www.gnu.org/software/libtool/manual/html_node/Libtool-versioning.html for information about libtool's versioning system. See also the
+   “Versioning” section below.
+
+ - Any async function which uses non-async-scope callbacks as well as the async ready callback should provide GDestroyNotify callbacks for destroying
+   the user data for those callbacks. See https://bugzilla.gnome.org/show_bug.cgi?id=649728 for details.
+
+Choosing function names
+=======================
+
+In general, use common sense. However, there are some specific cases where a standard is enforced:
+
+ - For boolean getters (e.g. for FooBar:is-baz) use foo_bar_is_baz, rather than foo_bar_get_is_baz. Note that the property name should be "is-baz",
+   rather than just "baz".
+
+ - For boolean setters use foo_bar_set_is_baz, rather than foo_bar_set_baz.
+
+Deprecating public API
+======================
+
+As libdunfell moves towards API stability, old API should be deprecated rather than broken or removed entirely. The following should be ensured when
+deprecating API:
+
+ - G_GNUC_DEPRECATED_FOR is added to the API in the public header file.
+
+ - A “Deprecated:” line is added to the gtk-doc comment for the API. This should mention what API replaces it, give a brief explanation of why the
+   API has been deprecated, and finish with “(Since: [version].)” to list the version the API was deprecated.
+
+ - “#ifndef LIBDUNFELL_DISABLE_DEPRECATED” should be wrapped around the API in the public header file.
+
+ - All references to the API/uses of the API in libdunfell code (including demos and the test suite) should be ported to use the replacement API
+   instead. If this isn't possible, the deprecated function should be split into a static function which contains all the code, and the public
+   symbol should become a simple wrapper of this static function. This allows the static function to be used inside libdunfell without causing
+   deprecation warnings.
+
+ - Don't remove deprecated symbols from libdunfell/libdunfell.symbols.
+
+ - Don't forget to also deprecate related symbols, such as the getter/setter for a property (or vice-versa).
+
+Commit messages
+===============
+
+libdunfell does not use a ChangeLog; it is auto-generated from the git log when packaging a release. Commit messages should follow the GNOME commit
+message guidelines (http://live.gnome.org/Git/CommitMessages), with the exception that when a commit closes a bug, the short explanation of the commit
+should simply be the bug's title, as copied from Bugzilla (e.g. "Bug 579885 – Add code examples to documentation"). The long explanation should then
+be used to give details of the changes. If the bug's title is not relevant, it should be changed before committing the changes.
+
+Unless the short explanation of a commit is a bug title, it should always be prefixed by a tag to describe the part of the library it touches, using
+the following format "tag: Short explanation". The following tags are valid:
+
+ - lib: for the core code in the libdunfell directory, such as DflServer.
+
+ - build: for build changes and releases.
+
+ - docs: for documentation changes such as updates to the docs directory, NEWS, README, this file, etc.
+
+ - tests: for changes to the test code in libdunfell/tests.
+
+ - demos: for changes to the demo applications in the demos directory.
+
+ - introspection: for introspection annotations and build changes.
+
+The only commits which should not have a tag are translation commits, touching only the po directory.
+
+Versioning
+==========
+
+libdunfell uses an even–odd/stable–unstable versioning policy, where odd minor version numbers are unstable releases,
+released periodically (with increasing micro version numbers) and leading to a stable release with the next even minor version number. API breaks are
+allowed in micro releases with an odd minor version number, but not in micro releases with an even minor version number.
+
+It is encouraged to make a new micro release of an odd minor series after each large API addition or break.

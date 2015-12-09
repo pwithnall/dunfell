@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN" "http://www.oasis-open.org/docbook/xml/4.3/docbookx.dtd" [
+	<!ENTITY % local.common.attrib "xmlns:xi  CDATA  #FIXED 'http://www.w3.org/2003/XInclude'">
+]>
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+	<bookinfo>
+		<title>libdunfell Reference Manual</title>
+		<releaseinfo>for libdunfell &version;.<!-- The latest version of this documentation can be found online at
+			<ulink role="online-location" url="http://[SERVER]/libdunfell/index.html">http://[SERVER]/libdunfell/</ulink>.-->
+		</releaseinfo>
+	</bookinfo>
+
+	<part>
+		<title>libdunfell Overview</title>
+		<chapter>
+			<title>Object Hierarchy</title>
+			<xi:include href="xml/tree_index.sgml"/>
+		</chapter>
+	</part>
+
+	<part>
+		<title>Core API</title>
+		<chapter>
+			<title>Core API</title>
+			<xi:include href="xml/dfl-version.xml"/>
+			<xi:include href="xml/dfl-event.xml"/>
+		</chapter>
+	</part>
+
+	<part>
+		<title>Appendices</title>
+		<index role="api-index-full">
+			<title>API Index</title>
+			<xi:include href="xml/api-index-full.xml"><xi:fallback/></xi:include>
+		</index>
+		<index role="api-index-deprecated">
+			<title>Index of deprecated symbols</title>
+			<xi:include href="xml/api-index-deprecated.xml"><xi:fallback/></xi:include>
+		</index>
+		<xi:include href="xml/annotation-glossary.xml"><xi:fallback /></xi:include>
+	</part>
+</book>
