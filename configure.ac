@@ -47,10 +47,10 @@ GTK_REQS=3.0.0
 #     release, then set age to 0.
 AC_SUBST([DFL_LT_VERSION],[2:0:0])
 
-AC_SUBST([DFL_VERSION_MAJOR],DFL_version_major)
-AC_SUBST([DFL_VERSION_MINOR],DFL_version_minor)
-AC_SUBST([DFL_VERSION_MICRO],DFL_version_micro)
-AC_SUBST([DFL_API_VERSION],DFL_api_version)
+AC_SUBST([DFL_VERSION_MAJOR],dfl_version_major)
+AC_SUBST([DFL_VERSION_MINOR],dfl_version_minor)
+AC_SUBST([DFL_VERSION_MICRO],dfl_version_micro)
+AC_SUBST([DFL_API_VERSION],dfl_api_version)
 
 # Dependencies
 AX_PKG_CHECK_MODULES([GLIB],[glib-2.0 >= $GLIB_REQS gio-2.0 gobject-2.0],[])
@@ -67,17 +67,30 @@ GOBJECT_INTROSPECTION_CHECK([0.9.7])
 
 VAPIGEN_CHECK()
 
-AC_PATH_PROG([GLIB_COMPILE_RESOURCES],[glib-compile-resources])
-AS_IF([test "$GLIB_COMPILE_RESOURCES" == ""],[
-	AC_MSG_ERROR([glib-compile-resources not found])
-])
-
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])
 AC_SUBST([AM_LDFLAGS])
 
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+
+# installed-tests
+AC_ARG_ENABLE([always_build_tests],
+              AS_HELP_STRING([--enable-always-build-tests],
+                             [Enable always building tests (default: yes)]),,
+              [enable_always_build_tests=yes])
+AC_ARG_ENABLE([installed_tests],
+              AS_HELP_STRING([--enable-installed-tests],
+                             [Install test programs (default: no)]),,
+              [enable_installed_tests=no])
+
+AM_CONDITIONAL([ENABLE_ALWAYS_BUILD_TESTS],
+               [test "$enable_always_build_tests" = "yes"])
+AC_SUBST([ENABLE_ALWAYS_BUILD_TESTS],[$enable_always_build_tests])
+
+AM_CONDITIONAL([ENABLE_INSTALLED_TESTS],
+               [test "$enable_installed_tests" = "yes"])
+AC_SUBST([ENABLE_INSTALLED_TESTS],[$enable_installed_tests])
 
 AC_CONFIG_FILES([
 Makefile

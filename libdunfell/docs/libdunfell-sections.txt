@@ -6,3 +6,36 @@ DFL_MINOR_VERSION
 DFL_MICRO_VERSION
 DFL_CHECK_VERSION
 </SECTION>
+
+<SECTION>
+<FILE>dfl-parser</FILE>
+<TITLE>DflParser</TITLE>
+DflParser
+dfl_parser_new
+dfl_parser_load_from_data
+dfl_parser_load_from_file
+dfl_parser_load_from_stream
+dfl_parser_load_from_stream_async
+dfl_parser_load_from_stream_finish
+dfl_parser_get_event_sequence
+<SUBSECTION Standard>
+DFL_TYPE_PARSER
+</SECTION>
+
+<SECTION>
+<FILE>dfl-event-sequence</FILE>
+<TITLE>DflEventSequence</TITLE>
+DflEventSequence
+dfl_event_sequence_new
+<SUBSECTION Standard>
+DFL_TYPE_EVENT_SEQUENCE
+</SECTION>
+
+<SECTION>
+<FILE>dfl-event</FILE>
+<TITLE>DflEvent</TITLE>
+DflEvent
+DflEventClass
+<SUBSECTION Standard>
+DFL_TYPE_EVENT
+</SECTION>

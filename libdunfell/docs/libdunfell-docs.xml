@@ -22,8 +22,10 @@
 		<title>Core API</title>
 		<chapter>
 			<title>Core API</title>
-			<xi:include href="xml/dfl-version.xml"/>
 			<xi:include href="xml/dfl-event.xml"/>
+			<xi:include href="xml/dfl-event-sequence.xml"/>
+			<xi:include href="xml/dfl-parser.xml"/>
+			<xi:include href="xml/dfl-version.xml"/>
 		</chapter>
 	</part>
 

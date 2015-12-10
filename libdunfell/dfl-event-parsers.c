@@ -16,13 +16,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_H
-#define DFL_H
+/* This file is included into dfl-parser.c. All its contents must be static. */
 
-/* Core files */
-#include <dunfell/dfl-event.h>
-#include <dunfell/dfl-event-sequence.h>
-#include <dunfell/dfl-parser.h>
-#include <dunfell/dfl-version.h>
+#include <glib.h>
 
-#endif /* !DFL_H */
+#include "dfl-event.h"
+
+static DflEvent *
+parse_main_context_acquire (const gchar *event_type,
+                            guint64 timestamp,
+                            guint64 tid,
+                            const gchar * const *parameters,
+                            GError **error)
+{
+  /* TODO */
+  return g_object_new (DFL_TYPE_EVENT, NULL);
+}

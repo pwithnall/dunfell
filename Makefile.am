@@ -7,6 +7,7 @@ CLEANFILES =
 MAINTAINERCLEANFILES =
 EXTRA_DIST =
 bin_PROGRAMS =
+bin_SCRIPTS =
 man8_MANS =
 
 # libdunfell library
@@ -15,6 +16,8 @@ lib_LTLIBRARIES = libdunfell/libdunfell-@DFL_API_VERSION@.la
 dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@/dunfell
 dfl_headers = \
 	libdunfell/dfl-event.h \
+	libdunfell/dfl-event-sequence.h \
+	libdunfell/dfl-parser.h \
 	libdunfell/dfl-version.h \
 	$(NULL)
 
@@ -28,6 +31,8 @@ dflinclude_HEADERS = \
 
 dfl_sources = \
 	libdunfell/dfl-event.c \
+	libdunfell/dfl-event-sequence.c \
+	libdunfell/dfl-parser.c \
 	$(NULL)
 
 main_header = libdunfell/dunfell.h
@@ -63,12 +68,10 @@ libdunfell_libdunfell_@DFL_API_VERSION@_la_LIBADD = \
 
 libdunfell_libdunfell_@DFL_API_VERSION@_la_LDFLAGS = \
 	-version-info $(DFL_LT_VERSION) \
-	-export-symbols $(srcdir)/libdunfell/libdunfell.symbols \
+	-export-symbols-regex "^dfl_" \
 	-no-undefined \
 	$(AM_LDFLAGS) \
 	$(NULL)
-
-EXTRA_DIST += libdunfell/libdunfell.symbols
 
 # Check if dunfell.h includes all the public headers
 check-local: check-headers
@@ -81,6 +84,16 @@ check-headers:
 			fi; \
 		fi; \
 	done; exit "$$any_missing"
+
+# dunfell-record program
+dfldatadir = $(datadir)/libdunfell-@DFL_API_VERSION@
+dist_dfldata_DATA = agent/dunfell-record.stp
+
+EXTRA_DIST += agent/dunfell-record.in
+bin_SCRIPTS += agent/dunfell-record
+
+agent/dunfell-record: $(srcdir)/agent/dunfell-record.in
+	$(AM_V_GEN)sed -e "s,[@]datadir[@],$(datadir),g;s,[@]DFL_API_VERSION[@],@DFL_API_VERSION@,g" $< > $@ || rm $@
 
 # Macros
 EXTRA_DIST += \
@@ -168,6 +181,9 @@ EXTRA_DIST += \
 	HACKING \
 	gtk-doc.make \
 	dunfell.doap \
+	glib-tap.mk \
+	tap-driver.sh \
+	tap-test \
 	$(NULL)
 
 CLEANFILES += \

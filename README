@@ -22,6 +22,18 @@ Using Dunfell
 
 Dunfell can be used as a set of utility programs or as a library.
 
+Initial setup
+-------------
+
+Install systemtap-client and systemtap-server. If you are using a custom
+version of GLib, you must add its tapset files to the stap-serverd include
+path:
+   sudo mkdir -p /etc/stap-server/conf.d
+   sudo echo "INCLUDE+=/opt/gnome3/build/share/systemtap/tapset" > \
+      /etc/stap-server/conf.d/main.conf
+   sudo systemctl enable stap-server.service
+   sudo systemctl start stap-server.service
+
 TODO
 
 Dependencies
@@ -30,6 +42,54 @@ Dependencies
  • glib-2.0
  • gio-2.0
  • gtk+-3.0
+
+Design
+======
+
+Use cases
+---------
+
+Here are the use cases Dunfell was designed to meet, which should give some
+insight into its design.
+
+ • Detect GSources which are never added to a GMainContext.
+ • Detect GSources which are dispatched too often (i.e. every main context
+   iteration).
+ • Detect GSources whose dispatch function takes too long (and hence blocks
+   the main context).
+ • Detect GSources which are never removed from their GMainContext after
+   being dispatched (but which are never dispatched again).
+ • Detect GMainContexts which have GSources attached or (especially) events
+   pending, but which aren’t being iterated.
+ • Monitor the load on each GMainContext, such as how many GSources it has
+   attached, and how many events are processed each iteration.
+ • Monitor ongoing asynchronous calls and GTasks, giving insight into their
+   nesting and dependencies.
+ • Monitor unfinished or stalled asynchronous calls.
+ • Allow users to record logs to send to the developers for debugging on a
+   different machine. The users may have to install additional software to
+   record these logs (some component of Dunfell, plus its dependencies),
+   but should not have to recompile or otherwise modify the program being
+   debugged.
+ • Work with programs which purely use GLib, through to programs which use
+   GLib, GIO and GTK+.
+ • Allow visualisation of this data, both in a standalone program, and in
+   an IDE such as GNOME Builder.
+ • Allow visualising differences between two traces.
+ • Minimise runtime overhead of logging a program, to reduce the risk of
+   disturbing race conditions by enabling logging.
+ • Connecting to an already-running program is not a requirement, since
+   by the time you’ve decided there’s a problem with a program, it’s
+   already in the wrong state.
+
+Prior art
+---------
+
+ • Record and Replay (http://rr-project.org/)
+ • perf tool
+ • perfkit (https://github.com/chergert/perfkit)
+ • G_DEBUG=instance-count
+ • GTK+ Inspector (https://wiki.gnome.org/Projects/GTK%2B/Inspector)
 
 Deprecation guards
 ==================

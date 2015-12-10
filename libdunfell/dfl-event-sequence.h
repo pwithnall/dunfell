@@ -16,13 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_H
-#define DFL_H
+#ifndef DFL_EVENT_SEQUENCE_H
+#define DFL_EVENT_SEQUENCE_H
 
-/* Core files */
-#include <dunfell/dfl-event.h>
-#include <dunfell/dfl-event-sequence.h>
-#include <dunfell/dfl-parser.h>
-#include <dunfell/dfl-version.h>
+#include <glib.h>
+#include <glib-object.h>
+#include <gio/gio.h>
 
-#endif /* !DFL_H */
+#include "dfl-event.h"
+
+G_BEGIN_DECLS
+
+/**
+ * DflEventSequence:
+ *
+ * All the fields in this structure are private.
+ *
+ * Since: UNRELEASED
+ */
+#define DFL_TYPE_EVENT_SEQUENCE dfl_event_sequence_get_type ()
+G_DECLARE_FINAL_TYPE (DflEventSequence, dfl_event_sequence, DFL, EVENT_SEQUENCE, GObject)
+
+DflEventSequence *dfl_event_sequence_new (const DflEvent **events,
+                                          guint            n_events,
+                                          guint64          initial_timestamp);
+
+G_END_DECLS
+
+#endif /* !DFL_EVENT_SEQUENCE_H */

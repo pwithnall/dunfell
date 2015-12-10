@@ -95,7 +95,7 @@ Adding public API
  - All public API must have a gtk-doc comment, and be added to the docs/libdunfell-sections.txt file, to include it in the documentation.
    The documentation comment must have a "Since" clause (see "Documentation comments" section).
 
- - All public API must be listed in libdunfell/libdunfell.symbols.
+ - All public API must use correct namespacing (start with ‘dfl_’) or it will not be exported.
 
  - Non-trivial API should have a test case added in the relevant test suite file in libdunfell/tests.
 
@@ -143,8 +143,6 @@ deprecating API:
    instead. If this isn't possible, the deprecated function should be split into a static function which contains all the code, and the public
    symbol should become a simple wrapper of this static function. This allows the static function to be used inside libdunfell without causing
    deprecation warnings.
-
- - Don't remove deprecated symbols from libdunfell/libdunfell.symbols.
 
  - Don't forget to also deprecate related symbols, such as the getter/setter for a property (or vice-versa).
 
