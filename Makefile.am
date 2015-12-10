@@ -1,4 +1,4 @@
-SUBDIRS = . libdunfell/tests libdunfell/docs
+SUBDIRS = . libdunfell/tests libdunfell-ui/tests libdunfell/docs libdunfell-ui/docs
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -9,9 +9,11 @@ EXTRA_DIST =
 bin_PROGRAMS =
 bin_SCRIPTS =
 man8_MANS =
+VAPIGEN_VAPIS =
+lib_LTLIBRARIES =
 
 # libdunfell library
-lib_LTLIBRARIES = libdunfell/libdunfell-@DFL_API_VERSION@.la
+lib_LTLIBRARIES += libdunfell/libdunfell-@DFL_API_VERSION@.la
 
 dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@/dunfell
 dfl_headers = \
@@ -22,10 +24,10 @@ dfl_headers = \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
-private_headers = \
+dfl_private_headers = \
 	$(NULL)
 dflinclude_HEADERS = \
-	$(main_header) \
+	$(dfl_main_header) \
 	$(dfl_headers) \
 	$(NULL)
 
@@ -35,11 +37,11 @@ dfl_sources = \
 	libdunfell/dfl-parser.c \
 	$(NULL)
 
-main_header = libdunfell/dunfell.h
-public_headers = $(dflinclude_HEADERS)
+dfl_main_header = libdunfell/dunfell.h
+dfl_public_headers = $(dflinclude_HEADERS)
 
 libdunfell_libdunfell_@DFL_API_VERSION@_la_SOURCES = \
-	$(private_headers) \
+	$(dfl_private_headers) \
 	$(dfl_sources) \
 	$(NULL)
 
@@ -76,14 +78,89 @@ libdunfell_libdunfell_@DFL_API_VERSION@_la_LDFLAGS = \
 # Check if dunfell.h includes all the public headers
 check-local: check-headers
 check-headers:
-	@any_missing=0; for header_file in $(public_headers); do \
-		if test "x$$header_file" != "x$(main_header)"; then \
-			if ! grep "#include <$${header_file#lib}>" $(top_srcdir)/$(main_header) >/dev/null; then \
-				echo "$(main_header) doesn't appear to include \"$$header_file\""; \
+	@any_missing=0; for header_file in $(dfl_public_headers); do \
+		if test "x$$header_file" != "x$(dfl_main_header)"; then \
+			if ! grep "#include <$${header_file#lib}>" $(top_srcdir)/$(dfl_main_header) >/dev/null; then \
+				echo "$(dfl_main_header) doesn't appear to include \"$$header_file\""; \
 				any_missing=1; \
 			fi; \
 		fi; \
 	done; exit "$$any_missing"
+
+# libdunfell-ui library
+lib_LTLIBRARIES += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
+
+dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@/dunfell-ui
+dwl_headers = \
+	libdunfell-ui/dwl-timeline.h \
+	libdunfell-ui/dwl-version.h \
+	$(NULL)
+
+# The following headers are private, and shouldn't be installed:
+dwl_private_headers = \
+	$(NULL)
+dwlinclude_HEADERS = \
+	$(dwl_main_header) \
+	$(dwl_headers) \
+	$(NULL)
+
+dwl_sources = \
+	libdunfell-ui/dwl-timeline.c \
+	$(NULL)
+
+dwl_main_header = libdunfell-ui/dunfell-ui.h
+dwl_public_headers = $(dwlinclude_HEADERS)
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
+	$(dwl_private_headers) \
+	$(dwl_sources) \
+	$(NULL)
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS = \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/libdunfell-ui \
+	-I$(top_builddir)/libdunfell-ui \
+	-DG_LOG_DOMAIN=\"libdunfell-ui\" \
+	$(DISABLE_DEPRECATED) \
+	$(AM_CPPFLAGS) \
+	$(NULL)
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CFLAGS = \
+	$(GLIB_CFLAGS) \
+	$(GTK_CFLAGS) \
+	$(CODE_COVERAGE_CFLAGS) \
+	$(WARN_CFLAGS) \
+	$(AM_CFLAGS) \
+	$(NULL)
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LIBADD = \
+	$(GLIB_LIBS) \
+	$(GTK_LIBS) \
+	$(CODE_COVERAGE_LDFLAGS) \
+	$(WARN_LDFLAGS) \
+	$(AM_LIBADD) \
+	$(NULL)
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LDFLAGS = \
+	-version-info $(DWL_LT_VERSION) \
+	-export-symbols-regex "^dwl_" \
+	-no-undefined \
+	$(AM_LDFLAGS) \
+	$(NULL)
+
+# Check if dunfell-ui.h includes all the public headers
+check-local: check-dwl-headers
+check-dwl-headers:
+	@any_missing=0; for header_file in $(dwl_public_headers); do \
+		if test "x$$header_file" != "x$(dwl_main_header)"; then \
+			if ! grep "#include <$${header_file#lib}>" $(top_srcdir)/$(dwl_main_header) >/dev/null; then \
+				echo "$(dwl_main_header) doesn't appear to include \"$$header_file\""; \
+				any_missing=1; \
+			fi; \
+		fi; \
+	done; exit "$$any_missing"
+
+.PHONY: check-dwl-headers
 
 # dunfell-record program
 dfldatadir = $(datadir)/libdunfell-@DFL_API_VERSION@
@@ -138,6 +215,28 @@ libdunfell_Dunfell_@DFL_API_VERSION@_gir_SCANNERFLAGS = \
 
 INTROSPECTION_GIRS += libdunfell/Dunfell-@DFL_API_VERSION@.gir
 
+libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir: libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_INCLUDES = GObject-2.0 Gio-2.0 Gtk-3.0
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_CFLAGS = \
+	$(GLIB_CFLAGS) \
+	$(GTK_CFLAGS) \
+	$(libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS) \
+	$(NULL)
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_LIBS = libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_FILES = $(dwl_sources) $(dwl_headers)
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_NAMESPACE = DunfellUi
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_EXPORT_PACKAGES = libdunfell-ui
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_SCANNERFLAGS = \
+	--nsversion=@DWL_API_VERSION@ \
+	--identifier-prefix=Dwl \
+	--symbol-prefix=dwl \
+	--c-include="libdunfell-ui/dunfell-ui.h" \
+	--warn-all \
+	--warn-error \
+	$(NULL)
+
+INTROSPECTION_GIRS += libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
+
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(INTROSPECTION_GIRS)
 
@@ -152,7 +251,7 @@ if ENABLE_VAPIGEN
 # Note: The VAPI file name has to match the pkg-config file name.
 libdunfell/libdunfell-@DFL_API_VERSION@.vapi: libdunfell/Dunfell-@DFL_API_VERSION@.gir
 
-VAPIGEN_VAPIS = libdunfell/libdunfell-@DFL_API_VERSION@.vapi
+VAPIGEN_VAPIS += libdunfell/libdunfell-@DFL_API_VERSION@.vapi
 
 libdunfell_libdunfell_@DFL_API_VERSION@_vapi_DEPS =
 libdunfell_libdunfell_@DFL_API_VERSION@_vapi_METADATADIRS = $(srcdir)/libdunfell
@@ -160,6 +259,20 @@ libdunfell_libdunfell_@DFL_API_VERSION@_vapi_FILES = libdunfell/Dunfell-@DFL_API
 
 libdunfell/libdunfell-@DFL_API_VERSION@.deps:
 	$(AM_V_GEN) for pkg in $(libdunfell_libdunfell_@DFL_API_VERSION@_vapi_DEPS); do \
+		echo $$pkg >> $@; \
+	done
+
+# Note: The VAPI file name has to match the pkg-config file name.
+libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.vapi: libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
+
+VAPIGEN_VAPIS += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.vapi
+
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_DEPS = gtk+-3.0
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_METADATADIRS = $(srcdir)/libdunfell-ui
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_FILES = libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
+
+libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.deps:
+	$(AM_V_GEN) for pkg in $(libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_DEPS); do \
 		echo $$pkg >> $@; \
 	done
 
@@ -172,7 +285,7 @@ endif
 
 # Code coverage
 @CODE_COVERAGE_RULES@
-CODE_COVERAGE_DIRECTORY = $(top_builddir)/libdunfell
+CODE_COVERAGE_DIRECTORY = $(top_builddir)/libdunfell $(top_builddir)/libdunfell-ui
 CODE_COVERAGE_LCOV_OPTIONS = --base-directory $(abs_top_srcdir)
 
 # Cleaning
@@ -212,12 +325,17 @@ DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc
 # Note that the template file is called libdunfell.pc.in, but generates a
 # versioned .pc file using some magic in AC_CONFIG_FILES.
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libdunfell/libdunfell-$(DFL_API_VERSION).pc
+pkgconfig_DATA = \
+	libdunfell/libdunfell-$(DFL_API_VERSION).pc \
+	libdunfell-ui/libdunfell-ui-$(DWL_API_VERSION).pc \
+	$(NULL)
 
 DISTCLEANFILES += $(pkgconfig_DATA)
 EXTRA_DIST += \
 	libdunfell/libdunfell.pc.in \
 	libdunfell/dfl-version.h.in \
+	libdunfell-ui/libdunfell-ui.pc.in \
+	libdunfell-ui/dwl-version.h.in \
 	$(NULL)
 
 # ChangeLog

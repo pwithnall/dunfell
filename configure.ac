@@ -2,11 +2,12 @@ AC_PREREQ(2.65)
 
 # Release version
 m4_define([dfl_version_major],[0])
-m4_define([dfl_version_minor],[3])
+m4_define([dfl_version_minor],[1])
 m4_define([dfl_version_micro],[0])
 
 # API version
 m4_define([dfl_api_version],[0])
+m4_define([dwl_api_version],[0])
 
 AC_INIT([dunfell],[dfl_version_major.dfl_version_minor.dfl_version_micro],
         [mailto:bugzilla@tecnocode.co.uk],[dunfell],
@@ -45,12 +46,18 @@ GTK_REQS=3.0.0
 #     increment age.
 #  4. If any interfaces have been removed or changed since the last public
 #     release, then set age to 0.
-AC_SUBST([DFL_LT_VERSION],[2:0:0])
+AC_SUBST([DFL_LT_VERSION],[1:0:0])
+AC_SUBST([DWL_LT_VERSION],[1:0:0])
 
 AC_SUBST([DFL_VERSION_MAJOR],dfl_version_major)
 AC_SUBST([DFL_VERSION_MINOR],dfl_version_minor)
 AC_SUBST([DFL_VERSION_MICRO],dfl_version_micro)
 AC_SUBST([DFL_API_VERSION],dfl_api_version)
+
+AC_SUBST([DWL_VERSION_MAJOR],dwl_version_major)
+AC_SUBST([DWL_VERSION_MINOR],dwl_version_minor)
+AC_SUBST([DWL_VERSION_MICRO],dwl_version_micro)
+AC_SUBST([DWL_API_VERSION],dwl_api_version)
 
 # Dependencies
 AX_PKG_CHECK_MODULES([GLIB],[glib-2.0 >= $GLIB_REQS gio-2.0 gobject-2.0],[])
@@ -98,6 +105,10 @@ libdunfell/libdunfell-$DFL_API_VERSION.pc:libdunfell/libdunfell.pc.in
 libdunfell/dfl-version.h
 libdunfell/tests/Makefile
 libdunfell/docs/Makefile
+libdunfell-ui/libdunfell-ui-$DWL_API_VERSION.pc:libdunfell-ui/libdunfell-ui.pc.in
+libdunfell-ui/dwl-version.h
+libdunfell-ui/tests/Makefile
+libdunfell-ui/docs/Makefile
 ],[],
-[DFL_API_VERSION='$DFL_API_VERSION'])
+[DFL_API_VERSION='$DFL_API_VERSION';DWL_API_VERSION='$DWL_API_VERSION'])
 AC_OUTPUT
