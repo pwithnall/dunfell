@@ -168,6 +168,7 @@ dist_dfldata_DATA = agent/dunfell-record.stp
 
 EXTRA_DIST += agent/dunfell-record.in
 bin_SCRIPTS += agent/dunfell-record
+CLEANFILES += agent/dunfell-record
 
 agent/dunfell-record: $(srcdir)/agent/dunfell-record.in
 	$(AM_V_GEN)sed -e "s,[@]datadir[@],$(datadir),g;s,[@]DFL_API_VERSION[@],@DFL_API_VERSION@,g" $< > $@ || rm $@
