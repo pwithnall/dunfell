@@ -45,6 +45,8 @@ CFILE_GLOB=$(top_srcdir)/libdunfell/*.c
 # Header files to ignore when scanning.
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
 IGNORE_HFILES = \
+	dfl-time-sequence.c \
+	dfl-time-sequence.h \
 	$(NULL)
 
 # Images to copy into HTML directory.

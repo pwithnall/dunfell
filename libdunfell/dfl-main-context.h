@@ -16,39 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_EVENT_H
-#define DFL_EVENT_H
+#ifndef DFL_MAIN_CONTEXT_H
+#define DFL_MAIN_CONTEXT_H
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gio/gio.h>
 
-#include "dfl-types.h"
+#include "dfl-event-sequence.h"
 
 G_BEGIN_DECLS
 
 /**
- * DflEvent:
+ * DflMainContext:
  *
  * All the fields in this structure are private.
  *
  * Since: UNRELEASED
  */
-#define DFL_TYPE_EVENT dfl_event_get_type ()
-G_DECLARE_FINAL_TYPE (DflEvent, dfl_event, DFL, EVENT, GObject)
+#define DFL_TYPE_MAIN_CONTEXT dfl_main_context_get_type ()
+G_DECLARE_FINAL_TYPE (DflMainContext, dfl_main_context, DFL, MAIN_CONTEXT, GObject)
 
-DflEvent *dfl_event_new (const gchar         *event_type,
-                         DflTimestamp         timestamp,
-                         DflThreadId          thread_id,
-                         const gchar * const *parameters);
+DflMainContext *dfl_main_context_new (DflId        id,
+                                      DflTimestamp new_timestamp);
 
-const gchar *dfl_event_get_event_type   (DflEvent *self);
-DflTimestamp dfl_event_get_timestamp    (DflEvent *self);
-DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
+GPtrArray *dfl_main_context_factory_from_event_sequence (DflEventSequence *sequence);
 
-DflId        dfl_event_get_parameter_id (DflEvent *self,
-                                         guint     parameter_index);
+DflId dfl_main_context_get_id (DflMainContext *self);
+DflTimestamp dfl_main_context_get_new_timestamp (DflMainContext *self);
+DflTimestamp dfl_main_context_get_free_timestamp (DflMainContext *self);
 
 G_END_DECLS
 
-#endif /* !DFL_EVENT_H */
+#endif /* !DFL_MAIN_CONTEXT_H */

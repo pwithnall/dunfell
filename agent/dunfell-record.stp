@@ -20,51 +20,66 @@ probe begin {
   printdln (",", "Dunfell log", "1.0", gettimeofday_us ());
 }
 
-probe glib.main_context_default {
-  printdln (",", "g_main_context_default", gettimeofday_us (), tid (), context);
-}
-
 probe glib.main_context_new {
   printdln (",", "g_main_context_new", gettimeofday_us (), tid (), context);
 }
 
 probe glib.main_context_acquire {
-  printdln (",", "g_main_context_acquire", gettimeofday_us (), tid (), context, thread);
+  printdln (",", "g_main_context_acquire", gettimeofday_us (), tid (), context, success);
 }
 
 probe glib.main_context_release {
-  printdln (",", "g_main_context_release", gettimeofday_us (), tid (), context, thread);
+  printdln (",", "g_main_context_release", gettimeofday_us (), tid (), context);
 }
 
 probe glib.main_context_free {
   printdln (",", "g_main_context_free", gettimeofday_us (), tid (), context);
 }
 
-probe glib.main_loop_new {
-  printdln (",", "g_main_loop_new", gettimeofday_us (), tid (), loop, context);
+probe glib.main_source_attach {
+  printdln (",", "g_source_attach", gettimeofday_us (), tid (), source_ptr, context, id);
 }
 
-probe glib.main_loop_quit {
-  printdln (",", "g_main_loop_quit", gettimeofday_us (), tid (), loop);
+probe glib.main_source_destroy {
+  printdln (",", "g_source_destroy", gettimeofday_us (), tid (), source_ptr, context);
 }
 
-/* TODO: Probably have to use g_idle_source_new() and g_source_attach() separately */
-probe glib.idle_add {
-  printdln (",", "g_idle_add", gettimeofday_us (), tid (), context, priority, func, usymname (func), data, source, id);
+probe glib.main_context_push_thread_default {
+  printdln (",", "g_main_context_push_thread_default", gettimeofday_us (), tid (), context);
 }
 
-probe glib.idle_dispatch {
-  printdln (",", "g_idle_dispatch", gettimeofday_us (), tid (), source, context, func, usymname (func), data, again);
+probe glib.main_context_pop_thread_default {
+  printdln (",", "g_main_context_pop_thread_default", gettimeofday_us (), tid (), context);
 }
 
-probe glib.timeout_add {
-  printdln (",", "g_timeout_add", gettimeofday_us (), tid (), context, priority, interval, func, usymname (func), data, source, id);
+probe glib.main_context_before_prepare {
+  printdln (",", "g_main_context_before_prepare", gettimeofday_us (), tid (), context);
 }
 
-probe glib.timeout_dispatch {
-  printdln (",", "g_timeout_dispatch", gettimeofday_us (), tid (), source, context, func, usymname (func), data, again);
+probe glib.main_context_after_prepare {
+  printdln (",", "g_main_context_after_prepare", gettimeofday_us (), tid (), context, priority, n_ready);
 }
 
-probe glib.source_attach {
-  printdln (",", "g_source_attach", gettimeofday_us (), tid (), source, context, id);
+probe glib.main_context_before_query {
+  printdln (",", "g_main_context_before_query", gettimeofday_us (), tid (), context, max_priority);
+}
+
+probe glib.main_context_after_query {
+  printdln (",", "g_main_context_after_query", gettimeofday_us (), tid (), context, timeout, n_fds);
+}
+
+probe glib.main_context_before_check {
+  printdln (",", "g_main_context_before_check", gettimeofday_us (), tid (), context, max_priority, n_fds);
+}
+
+probe glib.main_context_after_check {
+  printdln (",", "g_main_context_after_check", gettimeofday_us (), tid (), context, n_ready);
+}
+
+probe glib.main_context_before_dispatch {
+  printdln (",", "g_main_context_before_dispatch", gettimeofday_us (), tid (), context);
+}
+
+probe glib.main_context_after_dispatch {
+  printdln (",", "g_main_context_after_dispatch", gettimeofday_us (), tid (), context);
 }

@@ -16,39 +16,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_EVENT_H
-#define DFL_EVENT_H
+#ifndef DFL_TIME_SEQUENCE_H
+#define DFL_TIME_SEQUENCE_H
 
 #include <glib.h>
-#include <glib-object.h>
-#include <gio/gio.h>
 
 #include "dfl-types.h"
 
 G_BEGIN_DECLS
 
 /**
- * DflEvent:
+ * DflTimeSequence:
  *
  * All the fields in this structure are private.
  *
  * Since: UNRELEASED
  */
-#define DFL_TYPE_EVENT dfl_event_get_type ()
-G_DECLARE_FINAL_TYPE (DflEvent, dfl_event, DFL, EVENT, GObject)
+typedef struct
+{
+  gpointer dummy[5];
+} DflTimeSequence;
 
-DflEvent *dfl_event_new (const gchar         *event_type,
-                         DflTimestamp         timestamp,
-                         DflThreadId          thread_id,
-                         const gchar * const *parameters);
+void dfl_time_sequence_init (DflTimeSequence *sequence,
+                             gsize            element_size,
+                             GDestroyNotify   element_destroy_notify,
+                             gsize            n_elements_preallocated);
+void dfl_time_sequence_clear (DflTimeSequence *sequence);
 
-const gchar *dfl_event_get_event_type   (DflEvent *self);
-DflTimestamp dfl_event_get_timestamp    (DflEvent *self);
-DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
-
-DflId        dfl_event_get_parameter_id (DflEvent *self,
-                                         guint     parameter_index);
+gpointer dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
+                                             DflTimestamp    *timestamp);
+gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,
+                                             DflTimestamp     timestamp);
 
 G_END_DECLS
 
-#endif /* !DFL_EVENT_H */
+#endif /* !DFL_TIME_SEQUENCE_H */

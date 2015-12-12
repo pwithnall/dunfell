@@ -19,12 +19,16 @@ dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@/dunfell
 dfl_headers = \
 	libdunfell/dfl-event.h \
 	libdunfell/dfl-event-sequence.h \
+	libdunfell/dfl-main-context.h \
 	libdunfell/dfl-parser.h \
+	libdunfell/dfl-thread.h \
+	libdunfell/dfl-types.h \
 	libdunfell/dfl-version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
 dfl_private_headers = \
+	libdunfell/dfl-time-sequence.h \
 	$(NULL)
 dflinclude_HEADERS = \
 	$(dfl_main_header) \
@@ -34,7 +38,10 @@ dflinclude_HEADERS = \
 dfl_sources = \
 	libdunfell/dfl-event.c \
 	libdunfell/dfl-event-sequence.c \
+	libdunfell/dfl-main-context.c \
 	libdunfell/dfl-parser.c \
+	libdunfell/dfl-thread.c \
+	libdunfell/dfl-time-sequence.c \
 	$(NULL)
 
 dfl_main_header = libdunfell/dunfell.h

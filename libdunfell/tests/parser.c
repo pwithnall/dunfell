@@ -96,6 +96,10 @@ main (int argc, char *argv[])
       "g_main_context_acquire,124,1,0,0\n"
       "# Another comment\n"
       "g_main_context_acquire,125,1,0,0\n" },
+    { 1,
+      "Dunfell log,1.0,123\n"
+      "g_main_context_acquire,124,1,0,0\n"
+      "nonexistent_event,125\n" },
   };
 
   setlocale (LC_ALL, "");

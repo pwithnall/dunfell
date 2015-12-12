@@ -19,4 +19,4 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 	exec man dunfell-record
 fi
 
-exec stap --unprivileged --ldd -o "/tmp/dunfell.log" -c "$@" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
+exec stap --unprivileged --ldd -o "/tmp/dunfell.log" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp

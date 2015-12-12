@@ -28,6 +28,7 @@ LDADD = \
 
 test_programs = \
 	event-sequence \
+	main-context \
 	parser \
 	$(NULL)
 

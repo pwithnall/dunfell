@@ -27,6 +27,10 @@ DFL_TYPE_PARSER
 <TITLE>DflEventSequence</TITLE>
 DflEventSequence
 dfl_event_sequence_new
+DflEventWalker
+dfl_event_sequence_add_walker
+dfl_event_sequence_remove_walker
+dfl_event_sequence_walk
 <SUBSECTION Standard>
 DFL_TYPE_EVENT_SEQUENCE
 </SECTION>
@@ -35,7 +39,41 @@ DFL_TYPE_EVENT_SEQUENCE
 <FILE>dfl-event</FILE>
 <TITLE>DflEvent</TITLE>
 DflEvent
-DflEventClass
+dfl_event_new
+dfl_event_get_event_type
+dfl_event_get_timestamp
+dfl_event_get_thread_id
+dfl_event_get_parameter_id
 <SUBSECTION Standard>
 DFL_TYPE_EVENT
+</SECTION>
+
+<SECTION>
+<FILE>dfl-types</FILE>
+<TITLE>Types</TITLE>
+DflThreadId
+DflTimestamp
+DflDuration
+DflId
+DFL_ID_INVALID
+</SECTION>
+
+<SECTION>
+<FILE>dfl-thread</FILE>
+<TITLE>DflThread</TITLE>
+DflThread
+dfl_thread_factory_from_event_sequence
+dfl_thread_new
+<SUBSECTION Standard>
+DFL_TYPE_THREAD
+</SECTION>
+
+<SECTION>
+<FILE>dfl-main-context</FILE>
+<TITLE>DflMainContext</TITLE>
+DflMainContext
+dfl_main_context_factory_from_event_sequence
+dfl_main_context_new
+<SUBSECTION Standard>
+DFL_TYPE_MAIN_CONTEXT
 </SECTION>

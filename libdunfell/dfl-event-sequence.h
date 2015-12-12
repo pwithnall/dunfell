@@ -39,7 +39,21 @@ G_DECLARE_FINAL_TYPE (DflEventSequence, dfl_event_sequence, DFL, EVENT_SEQUENCE,
 
 DflEventSequence *dfl_event_sequence_new (const DflEvent **events,
                                           guint            n_events,
-                                          guint64          initial_timestamp);
+                                          DflTimestamp     initial_timestamp);
+
+typedef void (*DflEventWalker) (DflEventSequence *sequence,
+                                DflEvent         *event,
+                                gpointer          user_data);
+
+guint dfl_event_sequence_add_walker    (DflEventSequence *self,
+                                        const gchar      *event_type,
+                                        DflEventWalker    walker,
+                                        gpointer          user_data,
+                                        GDestroyNotify    destroy_user_data);
+void  dfl_event_sequence_remove_walker (DflEventSequence *self,
+                                        guint             walker_id);
+
+void  dfl_event_sequence_walk          (DflEventSequence *self);
 
 G_END_DECLS
 

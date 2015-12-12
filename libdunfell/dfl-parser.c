@@ -75,24 +75,18 @@ dfl_parser_dispose (GObject *object)
   G_OBJECT_CLASS (dfl_parser_parent_class)->dispose (object);
 }
 
-typedef DflEvent *(*EventParserFunc) (const gchar *event_type,
-                                      guint64 timestamp,
-                                      guint64 tid,
-                                      const gchar * const *parameters,
-                                      GError **error);
-
-#include "dfl-event-parsers.c"
-
 typedef struct
 {
   const gchar *event_type;
-  guint n_parameters;
-  EventParserFunc parse;
+  guint n_parameters;  /* excluding event type, timestamp and thread ID */
 } EventData;
 
 const EventData event_type_array[] =
 {
-  { "g_main_context_acquire", 2, parse_main_context_acquire },
+  { "g_main_context_new", 1 },
+  { "g_main_context_acquire", 2 },
+  { "g_main_context_release", 1 },
+  { "g_main_context_free", 1 },
 };
 
 static const EventData *
@@ -372,7 +366,7 @@ dfl_parser_load_from_stream (DflParser     *self,
             }
 
           /* Extract the event type. */
-          event_type = components[0];
+          event_type = g_intern_string (components[0]);
 
           if (*event_type == '\0')
             {
@@ -389,12 +383,12 @@ dfl_parser_load_from_stream (DflParser     *self,
 
           if (event_data == NULL)
             {
-              /* TODO: Use a proper error code here. */
-              g_set_error (&child_error, G_IO_ERROR, G_IO_ERROR_UNKNOWN,
-                           "Invalid log file line %u — %s: %s", line_number,
-                           "event type unknown", line);
+              /* Ignore unknown event types to allow for more probe points to be
+               * added to GLib in future. */
+              g_debug ("%s: Ignoring unrecognised event type ‘%s’ on "
+                       "line %u: %s", G_STRFUNC, event_type, line_number, line);
               g_strfreev (components);
-              break;
+              continue;
             }
 
           /* Check the number of components (ignoring the event type, timestamp
@@ -455,25 +449,9 @@ dfl_parser_load_from_stream (DflParser     *self,
 
           highest_timestamp = timestamp_int;
 
-          /* Call the parser, or ignore the event if no parser is specified. */
-          if (event_data->parse == NULL)
-            {
-              g_debug ("%s: Ignoring event ‘%s’ on line %u due to having no "
-                       "parser for it", G_STRFUNC, event_type, line_number);
-              g_strfreev (components);
-              continue;
-            }
-
-          event = event_data->parse (event_type, timestamp_int, tid_int,
-                                     (const gchar * const *) components + 3,
-                                     &child_error);
-
-          if (event == NULL)
-            {
-              g_strfreev (components);
-              break;
-            }
-
+          /* Create the event. */
+          event = dfl_event_new (event_type, timestamp_int, tid_int,
+                                 (const gchar * const *) components + 3);
           g_ptr_array_add (events, event);  /* transfer ownership */
         }
 

@@ -16,39 +16,69 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_EVENT_H
-#define DFL_EVENT_H
+#ifndef DFL_TYPES_H
+#define DFL_TYPES_H
+
+/**
+ * SECTION:dfl-types
+ * @short_description: common data types
+ * @stability: Unstable
+ * @include: libdunfell/dfl-types.h
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
 
 #include <glib.h>
-#include <glib-object.h>
-#include <gio/gio.h>
-
-#include "dfl-types.h"
 
 G_BEGIN_DECLS
 
 /**
- * DflEvent:
+ * DflTimestamp:
  *
- * All the fields in this structure are private.
+ * TODO
  *
  * Since: UNRELEASED
  */
-#define DFL_TYPE_EVENT dfl_event_get_type ()
-G_DECLARE_FINAL_TYPE (DflEvent, dfl_event, DFL, EVENT, GObject)
+typedef guint64 DflTimestamp;
 
-DflEvent *dfl_event_new (const gchar         *event_type,
-                         DflTimestamp         timestamp,
-                         DflThreadId          thread_id,
-                         const gchar * const *parameters);
+/**
+ * DflThreadId:
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef guint64 DflThreadId;
 
-const gchar *dfl_event_get_event_type   (DflEvent *self);
-DflTimestamp dfl_event_get_timestamp    (DflEvent *self);
-DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
+/**
+ * DflDuration:
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef gint64 DflDuration;
 
-DflId        dfl_event_get_parameter_id (DflEvent *self,
-                                         guint     parameter_index);
+/**
+ * DflId:
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef guintptr DflId;
+
+/**
+ * DFL_ID_INVALID:
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+#define DFL_ID_INVALID ((guintptr) 0)
 
 G_END_DECLS
 
-#endif /* !DFL_EVENT_H */
+#endif /* !DFL_TYPES_H */

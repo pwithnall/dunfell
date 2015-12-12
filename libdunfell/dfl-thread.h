@@ -16,39 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFL_EVENT_H
-#define DFL_EVENT_H
+#ifndef DFL_THREAD_H
+#define DFL_THREAD_H
 
 #include <glib.h>
 #include <glib-object.h>
-#include <gio/gio.h>
 
-#include "dfl-types.h"
+#include "dfl-event-sequence.h"
 
 G_BEGIN_DECLS
 
 /**
- * DflEvent:
+ * DflThread:
  *
  * All the fields in this structure are private.
  *
  * Since: UNRELEASED
  */
-#define DFL_TYPE_EVENT dfl_event_get_type ()
-G_DECLARE_FINAL_TYPE (DflEvent, dfl_event, DFL, EVENT, GObject)
+#define DFL_TYPE_THREAD dfl_thread_get_type ()
+G_DECLARE_FINAL_TYPE (DflThread, dfl_thread, DFL, THREAD, GObject)
 
-DflEvent *dfl_event_new (const gchar         *event_type,
-                         DflTimestamp         timestamp,
-                         DflThreadId          thread_id,
-                         const gchar * const *parameters);
+DflThread *dfl_thread_new (DflThreadId  id,
+                           DflTimestamp new_timestamp);
 
-const gchar *dfl_event_get_event_type   (DflEvent *self);
-DflTimestamp dfl_event_get_timestamp    (DflEvent *self);
-DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
-
-DflId        dfl_event_get_parameter_id (DflEvent *self,
-                                         guint     parameter_index);
+GPtrArray *dfl_thread_factory_from_event_sequence (DflEventSequence *sequence);
 
 G_END_DECLS
 
-#endif /* !DFL_EVENT_H */
+#endif /* !DFL_THREAD_H */

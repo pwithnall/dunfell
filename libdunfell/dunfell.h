@@ -22,7 +22,10 @@
 /* Core files */
 #include <dunfell/dfl-event.h>
 #include <dunfell/dfl-event-sequence.h>
+#include <dunfell/dfl-main-context.h>
 #include <dunfell/dfl-parser.h>
+#include <dunfell/dfl-thread.h>
+#include <dunfell/dfl-types.h>
 #include <dunfell/dfl-version.h>
 
 #endif /* !DFL_H */

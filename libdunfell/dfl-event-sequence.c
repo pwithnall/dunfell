@@ -45,6 +45,14 @@ static guint dfl_event_sequence_get_n_items (GListModel *list);
 static gpointer dfl_event_sequence_get_item (GListModel  *list,
                                              guint        position);
 
+typedef struct
+{
+  const gchar *event_type;  /* nullable, unowned, interned */
+  DflEventWalker walker;
+  gpointer user_data;  /* nullable */
+  GDestroyNotify destroy_user_data;  /* nullable */
+} DflEventSequenceWalkerClosure;
+
 struct _DflEventSequence
 {
   GObject parent;
@@ -52,6 +60,8 @@ struct _DflEventSequence
   DflEvent **events;  /* owned */
   guint n_events;
   guint64 initial_timestamp;
+
+  GArray/*<DflEventWalkerClosure>*/ *walkers;  /* owned */
 };
 
 G_DEFINE_TYPE_WITH_CODE (DflEventSequence, dfl_event_sequence, G_TYPE_OBJECT,
@@ -75,9 +85,25 @@ dfl_event_sequence_list_model_init (GListModelInterface *iface)
 }
 
 static void
+walkers_clear_cb (gpointer user_data)
+{
+  DflEventSequenceWalkerClosure *closure = user_data;
+
+  if (closure->user_data != NULL && closure->destroy_user_data != NULL)
+    closure->destroy_user_data (closure->user_data);
+
+  closure->event_type = NULL;
+  closure->walker = NULL;
+  closure->user_data = NULL;
+  closure->destroy_user_data = NULL;
+}
+
+static void
 dfl_event_sequence_init (DflEventSequence *self)
 {
-  /* Nothing to see here. */
+  self->walkers = g_array_new (FALSE, FALSE,
+                               sizeof (DflEventSequenceWalkerClosure));
+  g_array_set_clear_func (self->walkers, walkers_clear_cb);
 }
 
 static void
@@ -86,6 +112,7 @@ dfl_event_sequence_dispose (GObject *object)
   DflEventSequence *self = DFL_EVENT_SEQUENCE (object);
 
   g_clear_pointer (&self->events, g_ptr_array_unref);
+  g_clear_pointer (&self->walkers, g_array_unref);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dfl_event_sequence_parent_class)->dispose (object);
@@ -153,4 +180,114 @@ dfl_event_sequence_new (const DflEvent **events,
     }
 
   return obj;
+}
+
+/**
+ * dfl_event_sequence_add_walker:
+ * @self: a #DflEventSequence
+ * @event_type: (nullable): event type to match, or %NULL to match all event
+ *    types
+ * @walker: the event walker to add
+ * @user_data: user data to pass to @walker
+ * @destroy_user_data: (nullable): destroy handler for @user_data
+ *
+ * TODO
+ *
+ * Returns: the ID of the walker
+ * Since: UNRELEASED
+ */
+guint
+dfl_event_sequence_add_walker (DflEventSequence *self,
+                               const gchar      *event_type,
+                               DflEventWalker    walker,
+                               gpointer          user_data,
+                               GDestroyNotify    destroy_user_data)
+{
+  DflEventSequenceWalkerClosure closure;
+
+  g_return_val_if_fail (DFL_IS_EVENT_SEQUENCE (self), 0);
+  g_return_val_if_fail (event_type == NULL || *event_type != '\0', 0);
+  g_return_val_if_fail (walker != NULL, 0);
+
+  closure.event_type = g_intern_string (event_type);
+  closure.walker = walker;
+  closure.user_data = user_data;
+  closure.destroy_user_data = destroy_user_data;
+
+  g_array_append_val (self->walkers, closure);
+
+  return self->walkers->len;
+}
+
+/**
+ * dfl_event_sequence_remove_walker:
+ * @self: a #DflEventSequence
+ * @walker_id: ID of the walker to remove
+ *
+ * TODO
+ *
+ * Removing the same ID twice is an error.
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_event_sequence_remove_walker (DflEventSequence *self,
+                                  guint             walker_id)
+{
+  DflEventSequenceWalkerClosure *closure;
+
+  g_return_if_fail (DFL_IS_EVENT_SEQUENCE (self));
+  g_return_if_fail (walker_id != 0 && walker_id >= self->walkers->len);
+
+  /* Clear the given element of the walkers array, but don’t remove it so we
+   * don’t muck up the IDs of other walkers. */
+  closure = &g_array_index (self->walkers, DflEventSequenceWalkerClosure,
+                            walker_id);
+
+  g_return_if_fail (closure->walker != NULL);
+  walkers_clear_cb (closure);
+}
+
+/**
+ * dfl_event_sequence_walk:
+ * @self: a #DflEventSequence
+ *
+ * TODO
+ *
+ * It is allowed to add and remove walkers from callbacks within this function.
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_event_sequence_walk (DflEventSequence *self)
+{
+  guint i, j;
+
+  g_return_if_fail (DFL_IS_EVENT_SEQUENCE (self));
+
+  if (self->walkers->len == 0)
+    return;
+
+  for (i = 0; i < self->n_events; i++)
+    {
+      DflEvent *event = self->events[i];
+
+      for (j = 0; j < self->walkers->len; j++)
+        {
+          const DflEventSequenceWalkerClosure *closure;
+
+          closure = &g_array_index (self->walkers,
+                                    DflEventSequenceWalkerClosure, j);
+
+          /* Has the walker been removed? */
+          if (closure->walker == NULL)
+            continue;
+
+          if (closure->event_type == NULL ||
+              closure->event_type == dfl_event_get_event_type (event))
+            {
+              closure->walker (self, event, closure->user_data);
+            }
+        }
+    }
 }
