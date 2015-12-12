@@ -48,6 +48,25 @@ gpointer dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
 gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,
                                              DflTimestamp     timestamp);
 
+/**
+ * DflTimeSequenceIter:
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef struct
+{
+  gpointer dummy[2];
+} DflTimeSequenceIter;
+
+void     dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
+                                      DflTimeSequence     *sequence,
+                                      DflTimestamp         start);
+gboolean dfl_time_sequence_iter_next (DflTimeSequenceIter *iter,
+                                      DflTimestamp        *timestamp,
+                                      gpointer            *data);
+
 G_END_DECLS
 
 #endif /* !DFL_TIME_SEQUENCE_H */

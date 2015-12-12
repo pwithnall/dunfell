@@ -23,8 +23,24 @@
 #include <glib-object.h>
 
 #include "dfl-event-sequence.h"
+#include "dfl-time-sequence.h"
 
 G_BEGIN_DECLS
+
+/**
+ * DflThreadOwnershipData:
+ * @thread_id: TODO
+ * @duration: TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef struct
+{
+  DflThreadId thread_id;
+  DflDuration duration;
+} DflThreadOwnershipData;
 
 /**
  * DflMainContext:
@@ -44,6 +60,10 @@ GPtrArray *dfl_main_context_factory_from_event_sequence (DflEventSequence *seque
 DflId dfl_main_context_get_id (DflMainContext *self);
 DflTimestamp dfl_main_context_get_new_timestamp (DflMainContext *self);
 DflTimestamp dfl_main_context_get_free_timestamp (DflMainContext *self);
+
+void dfl_main_context_thread_ownership_iter (DflMainContext      *self,
+                                             DflTimeSequenceIter *iter,
+                                             DflTimestamp         start);
 
 G_END_DECLS
 

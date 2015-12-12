@@ -12,6 +12,41 @@ man8_MANS =
 VAPIGEN_VAPIS =
 lib_LTLIBRARIES =
 
+# TODO: test
+bin_PROGRAMS += libdunfell-ui/test
+libdunfell_ui_test_SOURCES = libdunfell-ui/main.c
+libdunfell_ui_test_CPPFLAGS = \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/libdunfell \
+	-I$(top_builddir)/libdunfell \
+	-I$(top_srcdir)/libdunfell-ui \
+	-I$(top_builddir)/libdunfell-ui \
+	$(DISABLE_DEPRECATED) \
+	$(AM_CPPFLAGS) \
+	$(NULL)
+libdunfell_ui_test_CFLAGS = \
+	$(GLIB_CFLAGS) \
+	$(GTK_CFLAGS) \
+	$(CODE_COVERAGE_CFLAGS) \
+	$(WARN_CFLAGS) \
+	$(AM_CFLAGS) \
+	$(NULL)
+libdunfell_ui_test_LDADD = \
+	$(top_builddir)/libdunfell/libdunfell-@DFL_API_VERSION@.la \
+	$(top_builddir)/libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la \
+	$(GLIB_LIBS) \
+	$(GTK_LIBS) \
+	$(CODE_COVERAGE_LDFLAGS) \
+	$(WARN_LDFLAGS) \
+	$(AM_LIBADD) \
+	$(NULL)
+libdunfell_ui_test_LDFLAGS = \
+	-no-undefined \
+	$(AM_LDFLAGS) \
+	$(NULL)
+
+
+
 # libdunfell library
 lib_LTLIBRARIES += libdunfell/libdunfell-@DFL_API_VERSION@.la
 
@@ -22,13 +57,13 @@ dfl_headers = \
 	libdunfell/dfl-main-context.h \
 	libdunfell/dfl-parser.h \
 	libdunfell/dfl-thread.h \
+	libdunfell/dfl-time-sequence.h \
 	libdunfell/dfl-types.h \
 	libdunfell/dfl-version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
 dfl_private_headers = \
-	libdunfell/dfl-time-sequence.h \
 	$(NULL)
 dflinclude_HEADERS = \
 	$(dfl_main_header) \
@@ -125,6 +160,8 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS = \
 	-I$(top_srcdir) \
+	-I$(top_srcdir)/libdunfell \
+	-I$(top_builddir)/libdunfell \
 	-I$(top_srcdir)/libdunfell-ui \
 	-I$(top_builddir)/libdunfell-ui \
 	-DG_LOG_DOMAIN=\"libdunfell-ui\" \
@@ -141,6 +178,7 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CFLAGS = \
 	$(NULL)
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LIBADD = \
+	$(top_builddir)/libdunfell/libdunfell-@DFL_API_VERSION@.la \
 	$(GLIB_LIBS) \
 	$(GTK_LIBS) \
 	$(CODE_COVERAGE_LDFLAGS) \
@@ -223,8 +261,8 @@ libdunfell_Dunfell_@DFL_API_VERSION@_gir_SCANNERFLAGS = \
 
 INTROSPECTION_GIRS += libdunfell/Dunfell-@DFL_API_VERSION@.gir
 
-libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir: libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
-libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_INCLUDES = GObject-2.0 Gio-2.0 Gtk-3.0
+libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir: libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la libdunfell/Dunfell-@DFL_API_VERSION@.gir
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_INCLUDES = GObject-2.0 Gio-2.0 Gtk-3.0 Dunfell-@DFL_API_VERSION@
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_CFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GTK_CFLAGS) \

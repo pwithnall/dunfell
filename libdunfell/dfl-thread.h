@@ -41,6 +41,11 @@ DflThread *dfl_thread_new (DflThreadId  id,
 
 GPtrArray *dfl_thread_factory_from_event_sequence (DflEventSequence *sequence);
 
+DflThreadId dfl_thread_get_id (DflThread *self);
+
+DflTimestamp dfl_thread_get_new_timestamp (DflThread *self);
+DflTimestamp dfl_thread_get_free_timestamp (DflThread *self);
+
 G_END_DECLS
 
 #endif /* !DFL_THREAD_H */

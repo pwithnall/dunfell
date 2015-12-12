@@ -43,8 +43,9 @@ struct _DflThread
 {
   GObject parent;
 
-  DflId id;
+  DflThreadId id;
 
+  /* Invariant: @free_timestamp >= @new_timestamp. */
   DflTimestamp new_timestamp;
   DflTimestamp free_timestamp;
 };
@@ -74,7 +75,7 @@ dfl_thread_init (DflThread *self)
  * Since: UNRELEASED
  */
 DflThread *
-dfl_thread_new (DflId        id,
+dfl_thread_new (DflThreadId  id,
                 DflTimestamp new_timestamp)
 {
   DflThread *thread = NULL;
@@ -84,6 +85,7 @@ dfl_thread_new (DflId        id,
   /* TODO: Use properties properly. */
   thread->id = id;
   thread->new_timestamp = new_timestamp;
+  thread->free_timestamp = new_timestamp;
 
   return thread;
 }
@@ -103,13 +105,17 @@ event_cb (DflEventSequence *sequence,
 
   thread_id = dfl_event_get_thread_id (event);
 
-  /* Check the ID doesn’t already exist. */
+  /* Check the ID doesn’t already exist. If it does, update its final
+   * timestamp. */
   for (i = 0; i < threads->len; i++)
     {
       DflThread *t = threads->pdata[i];
 
       if (t->id == thread_id)
-        return;
+        {
+          t->free_timestamp = dfl_event_get_timestamp (event);
+          return;
+        }
     }
 
   thread = dfl_thread_new (thread_id, dfl_event_get_timestamp (event));
@@ -137,4 +143,55 @@ dfl_thread_factory_from_event_sequence (DflEventSequence *sequence)
                                  (GDestroyNotify) g_ptr_array_unref);
 
   return threads;
+}
+
+/**
+ * dfl_thread_get_id:
+ * @self: a #DflThread
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflThreadId
+dfl_thread_get_id (DflThread *self)
+{
+  g_return_val_if_fail (DFL_IS_THREAD (self), DFL_ID_INVALID);
+
+  return self->id;
+}
+
+/**
+ * dfl_thread_get_new_timestamp:
+ * @self: a #DflThread
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflTimestamp
+dfl_thread_get_new_timestamp (DflThread *self)
+{
+  g_return_val_if_fail (DFL_IS_THREAD (self), 0);
+
+  return self->new_timestamp;
+}
+
+/**
+ * dfl_thread_get_free_timestamp:
+ * @self: a #DflThread
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflTimestamp
+dfl_thread_get_free_timestamp (DflThread *self)
+{
+  g_return_val_if_fail (DFL_IS_THREAD (self), 0);
+
+  return self->free_timestamp;
 }

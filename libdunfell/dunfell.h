@@ -25,6 +25,7 @@
 #include <dunfell/dfl-main-context.h>
 #include <dunfell/dfl-parser.h>
 #include <dunfell/dfl-thread.h>
+#include <dunfell/dfl-time-sequence.h>
 #include <dunfell/dfl-types.h>
 #include <dunfell/dfl-version.h>
 

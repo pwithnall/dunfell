@@ -36,7 +36,8 @@ G_BEGIN_DECLS
 #define DWL_TYPE_TIMELINE dwl_timeline_get_type ()
 G_DECLARE_FINAL_TYPE (DwlTimeline, dwl_timeline, DWL, TIMELINE, GtkWidget)
 
-DwlTimeline *dwl_timeline_new (void);
+DwlTimeline *dwl_timeline_new (GPtrArray/*<owned DflThread>*/      *threads,
+                               GPtrArray/*<owned DflMainContext>*/ *main_contexts);
 
 G_END_DECLS
 

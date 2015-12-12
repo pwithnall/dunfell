@@ -41,12 +41,6 @@
 
 static void dfl_main_context_dispose (GObject *object);
 
-typedef struct
-{
-  DflThreadId thread_id;
-  DflDuration duration;
-} DflThreadOwnershipData;
-
 struct _DflMainContext
 {
   GObject parent;
@@ -369,4 +363,25 @@ dfl_main_context_get_free_timestamp (DflMainContext *self)
   g_return_val_if_fail (DFL_IS_MAIN_CONTEXT (self), 0);
 
   return self->free_timestamp;
+}
+
+/**
+ * dfl_main_context_thread_ownership_iter:
+ * @self: a #DflMainContext
+ * @iter: an uninitialised #DflTimeSequenceIter to use
+ * @start: optional timestamp to start iterating from, or 0
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_main_context_thread_ownership_iter (DflMainContext      *self,
+                                        DflTimeSequenceIter *iter,
+                                        DflTimestamp         start)
+{
+  g_return_if_fail (DFL_IS_MAIN_CONTEXT (self));
+  g_return_if_fail (iter != NULL);
+
+  dfl_time_sequence_iter_init (iter, &self->thread_ownership_events, start);
 }

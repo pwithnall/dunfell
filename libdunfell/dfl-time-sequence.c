@@ -43,11 +43,20 @@ typedef struct
 
 typedef struct
 {
+  DflTimeSequence *sequence;
+  gsize index;
+} DflTimeSequenceIterReal;
+
+G_STATIC_ASSERT (sizeof (DflTimeSequenceIterReal) ==
+                 sizeof (DflTimeSequenceIter));
+
+typedef struct
+{
   gsize element_size;
   GDestroyNotify element_destroy_notify;
   gsize n_elements_valid;
   gsize n_elements_allocated;
-  DflTimeSequenceElement *elements;
+  gpointer *elements;  /* actually DflTimeSequenceElement+element_size */
 } DflTimeSequenceReal;
 
 G_STATIC_ASSERT (sizeof (DflTimeSequenceReal) == sizeof (DflTimeSequence));
@@ -83,6 +92,18 @@ dfl_time_sequence_init (DflTimeSequence *sequence,
                                sizeof (DflTimeSequenceElement) + element_size);
 }
 
+static DflTimeSequenceElement *
+dfl_time_sequence_index (DflTimeSequence *sequence,
+                         gsize            index)
+{
+  DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
+  gpointer element;
+
+  element = ((guint8 *) self->elements +
+             index * (sizeof (DflTimeSequenceElement) + self->element_size));
+  return (DflTimeSequenceElement *) element;
+}
+
 /**
  * dfl_time_sequence_clear:
  * @sequence: an initialised #DflTimeSequence
@@ -100,8 +121,15 @@ dfl_time_sequence_clear (DflTimeSequence *sequence)
   g_return_if_fail (sequence != NULL);
 
   if (self->element_destroy_notify != NULL)
-    for (i = 0; i < self->n_elements_valid; i++)
-        self->element_destroy_notify (self->elements[i].data);
+    {
+      for (i = 0; i < self->n_elements_valid; i++)
+        {
+          DflTimeSequenceElement *element;
+
+          element = dfl_time_sequence_index (sequence, i);
+          self->element_destroy_notify (element->data);
+        }
+    }
 
   g_free (self->elements);
   self->elements = NULL;
@@ -136,8 +164,11 @@ dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
     }
   else
     {
-      element_data = self->elements[self->n_elements_valid -1].data;
-      element_timestamp = self->elements[self->n_elements_valid -1].timestamp;
+      DflTimeSequenceElement *element;
+
+      element = dfl_time_sequence_index (sequence, self->n_elements_valid - 1);
+      element_data = element->data;
+      element_timestamp = element->timestamp;
     }
 
   if (timestamp != NULL)
@@ -163,6 +194,7 @@ dfl_time_sequence_append (DflTimeSequence *sequence,
   DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
   DflTimestamp last_timestamp;
   gpointer last_element;
+  DflTimeSequenceElement *element;
 
   g_return_val_if_fail (sequence != NULL, NULL);
   g_return_val_if_fail (self->n_elements_valid < G_MAXSIZE, NULL);
@@ -186,7 +218,85 @@ dfl_time_sequence_append (DflTimeSequence *sequence,
 
   /* Append the new element. */
   self->n_elements_valid++;
-  self->elements[self->n_elements_valid - 1].timestamp = timestamp;
 
-  return self->elements[self->n_elements_valid - 1].data;
+  element = dfl_time_sequence_index (sequence, self->n_elements_valid - 1);
+  element->timestamp = timestamp;
+
+  return element->data;
+}
+
+static gboolean
+dfl_time_sequence_iter_is_valid (DflTimeSequenceIter *iter)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+
+  return (self != NULL &&
+          self->sequence != NULL &&
+          self->index <=
+          ((DflTimeSequenceReal *) self->sequence)->n_elements_valid);
+}
+
+/**
+ * dfl_time_sequence_iter_init:
+ * @iter: an uninitialised #DflTimeSequenceIter
+ * @sequence: the #DflTimeSequence to iterate over
+ * @start: TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
+                             DflTimeSequence     *sequence,
+                             DflTimestamp         start)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+
+  g_return_if_fail (iter != NULL);
+  g_return_if_fail (sequence != NULL);
+
+  self->sequence = sequence;
+  self->index = 0;  /* TODO: handle @start */
+}
+
+/**
+ * dfl_time_sequence_iter_next:
+ * @iter: a #DflTimeSequenceIter
+ * @timestamp: (out caller-allocates) (optional): TODO
+ * @data: (out caller-allocates) (optional) (nullable): TODO
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+gboolean
+dfl_time_sequence_iter_next (DflTimeSequenceIter *iter,
+                             DflTimestamp        *timestamp,
+                             gpointer            *data)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+  DflTimeSequenceReal *sequence;
+  DflTimeSequenceElement *element;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), FALSE);
+
+  sequence = (DflTimeSequenceReal *) self->sequence;
+
+  /* Reached the end? */
+  if (self->index >= sequence->n_elements_valid)
+    return FALSE;
+
+  /* Return the next element. */
+  element = dfl_time_sequence_index (self->sequence, self->index);
+
+  if (timestamp != NULL)
+    *timestamp = element->timestamp;
+  if (data != NULL)
+    *data = element->data;
+
+  self->index++;
+
+  return TRUE;
 }
