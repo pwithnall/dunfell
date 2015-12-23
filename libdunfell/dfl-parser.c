@@ -89,6 +89,8 @@ const EventData event_type_array[] =
   { "g_main_context_free", 1 },
   { "g_main_context_before_dispatch", 1 },
   { "g_main_context_after_dispatch", 1 },
+  { "g_source_new", 6 },
+  { "g_source_before_free", 3 },
 };
 
 static const EventData *

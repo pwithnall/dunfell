@@ -282,8 +282,7 @@ main_context_before_after_dispatch_cb (DflEventSequence *sequence,
                g_intern_static_string ("g_main_context_before_dispatch"));
   timestamp = dfl_event_get_timestamp (event);
   thread_id = dfl_event_get_thread_id (event);
-g_message ("%s: event: %p, is_before: %u, timestamp: %lu, thread_id: %lu",
-           G_STRFUNC, event, is_before, timestamp, thread_id);
+
   if (is_before)
     {
       DflMainContextDispatchData *last_element;

@@ -56,6 +56,7 @@ dfl_headers = \
 	libdunfell/dfl-event-sequence.h \
 	libdunfell/dfl-main-context.h \
 	libdunfell/dfl-parser.h \
+	libdunfell/dfl-source.h \
 	libdunfell/dfl-thread.h \
 	libdunfell/dfl-time-sequence.h \
 	libdunfell/dfl-types.h \
@@ -75,6 +76,7 @@ dfl_sources = \
 	libdunfell/dfl-event-sequence.c \
 	libdunfell/dfl-main-context.c \
 	libdunfell/dfl-parser.c \
+	libdunfell/dfl-source.c \
 	libdunfell/dfl-thread.c \
 	libdunfell/dfl-time-sequence.c \
 	$(NULL)
