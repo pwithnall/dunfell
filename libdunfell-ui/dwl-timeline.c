@@ -204,7 +204,9 @@ add_default_css (GtkStyleContext *context)
 
   css =
     "timeline.thread_guide { color: #cccccc }\n"
-    "timeline.thread { color: rgb(139, 142, 143) }\n";
+    "timeline.thread { color: rgb(139, 142, 143) }\n"
+    "timeline.main_context_dispatch { background-color: red; "
+                                     "border: 1px solid black }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
@@ -217,16 +219,25 @@ add_default_css (GtkStyleContext *context)
 }
 
 static gint
-timestamp_to_coordinate (DwlTimeline  *self,
-                         DflTimestamp  timestamp)
+timestamp_to_pixels (DwlTimeline  *self,
+                     DflTimestamp  timestamp)
 {
   return timestamp * self->zoom;
+}
+
+static gint
+duration_to_pixels (DwlTimeline *self,
+                    DflDuration  duration)
+{
+  return duration * self->zoom;
 }
 
 #define THREAD_MIN_WIDTH 100 /* pixels */
 #define THREAD_NATURAL_WIDTH 140 /* pixels */
 #define HEADER_HEIGHT 100 /* pixels */
 #define FOOTER_HEIGHT 30 /* pixels */
+#define MAIN_CONTEXT_ACQUIRED_WIDTH 3 /* pixels */
+#define MAIN_CONTEXT_DISPATCH_WIDTH 10 /* pixels */
 
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
@@ -234,12 +245,12 @@ dwl_timeline_draw (GtkWidget *widget,
 {
   DwlTimeline *self = DWL_TIMELINE (widget);
   GtkStyleContext *context;
-  gint width;
+  gint widget_width;
   guint i, n_threads;
   DflTimestamp min_timestamp, max_timestamp;
 
   context = gtk_widget_get_style_context (widget);
-  width = gtk_widget_get_allocated_width (widget);
+  widget_width = gtk_widget_get_allocated_width (widget);
 
   /* TODO: Move these pre-calculations elsewhere */
   n_threads = self->threads->len;
@@ -262,24 +273,24 @@ dwl_timeline_draw (GtkWidget *widget,
       gchar *text = NULL;
       PangoRectangle layout_rect;
 
-      thread_centre = width / n_threads * (2 * i + 1) / 2;
+      thread_centre = widget_width / n_threads * (2 * i + 1) / 2;
 
       /* Guide line for the entire length of the thread. */
       gtk_style_context_add_class (context, "thread_guide");
       gtk_render_line (context, cr,
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_coordinate (self, 0),
+                       HEADER_HEIGHT + timestamp_to_pixels (self, 0),
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_coordinate (self, max_timestamp - min_timestamp));
+                       HEADER_HEIGHT + timestamp_to_pixels (self, max_timestamp - min_timestamp));
       gtk_style_context_remove_class (context, "thread_guide");
 
       /* Line for the actual live length of the thread, plus its label. */
       gtk_style_context_add_class (context, "thread");
       gtk_render_line (context, cr,
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_coordinate (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
+                       HEADER_HEIGHT + timestamp_to_pixels (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_coordinate (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
+                       HEADER_HEIGHT + timestamp_to_pixels (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
       gtk_style_context_remove_class (context, "thread");
 
       /* Thread label. */
@@ -317,7 +328,7 @@ dwl_timeline_draw (GtkWidget *widget,
                                    &color);
 
       cairo_set_line_cap (cr, CAIRO_LINE_CAP_ROUND);
-      cairo_set_line_width (cr, 3);
+      cairo_set_line_width (cr, MAIN_CONTEXT_ACQUIRED_WIDTH);
       cairo_new_path (cr);
 
       /* TODO: Set the start timestamp according to the clip area */
@@ -336,19 +347,18 @@ dwl_timeline_draw (GtkWidget *widget,
                   data->thread_id)
                 break;
             }
-g_assert (thread_index < n_threads);
-          thread_centre = width / n_threads * (2 * thread_index + 1) / 2;;
-          timestamp_y = HEADER_HEIGHT + timestamp_to_coordinate (self, timestamp - min_timestamp);
+          g_assert (thread_index < n_threads);
 
-          g_message ("%s: thread ID: %lu, index: %u, timestamp: %lu", G_STRFUNC,
-                     data->thread_id, thread_index, timestamp);
+          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          timestamp_y = HEADER_HEIGHT + timestamp_to_pixels (self, timestamp - min_timestamp);
 
           cairo_line_to (cr,
                          thread_centre + 0.5,
                          timestamp_y + 0.5);
           cairo_line_to (cr,
                          thread_centre + 0.5,
-                         timestamp_y + data->duration + 0.5);
+                         timestamp_y +
+                         duration_to_pixels (self, data->duration) + 0.5);
         }
 
       gdk_cairo_set_source_rgba (cr, &color);
@@ -356,6 +366,47 @@ g_assert (thread_index < n_threads);
 
       cairo_restore (cr);
       gtk_style_context_remove_class (context, "main_context");
+
+      /* Iterate through the dispatch events. */
+      gtk_style_context_add_class (context, "main_context_dispatch");
+
+      /* TODO: Set the start timestamp according to the clip area */
+      dfl_main_context_dispatch_iter (main_context, &iter, 0);
+
+      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
+        {
+          gdouble thread_centre, dispatch_width, dispatch_height;
+          gint timestamp_y;
+          guint thread_index;
+
+          /* TODO: This should not be so slow. */
+          for (thread_index = 0; thread_index < n_threads; thread_index++)
+            {
+              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+                  data->thread_id)
+                break;
+            }
+          g_assert (thread_index < n_threads);
+
+          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          timestamp_y = HEADER_HEIGHT + timestamp_to_pixels (self, timestamp - min_timestamp);
+
+          dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
+          dispatch_height = duration_to_pixels (self, data->duration);
+
+          gtk_render_background (context, cr,
+                                 thread_centre - dispatch_width / 2.0,
+                                 timestamp_y,
+                                 dispatch_width,
+                                 dispatch_height);
+          gtk_render_frame (context, cr,
+                            thread_centre - dispatch_width / 2.0,
+                            timestamp_y,
+                            dispatch_width,
+                            dispatch_height);
+        }
+
+      gtk_style_context_remove_class (context, "main_context_dispatch");
     }
 
   return FALSE;
@@ -400,7 +451,7 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
 
   g_assert (max_timestamp >= min_timestamp);
 
-  height = timestamp_to_coordinate (self, max_timestamp - min_timestamp);
+  height = timestamp_to_pixels (self, max_timestamp - min_timestamp);
 
   if (height > 0)
     height += HEADER_HEIGHT + FOOTER_HEIGHT;
