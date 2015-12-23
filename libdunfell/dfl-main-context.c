@@ -51,17 +51,20 @@ struct _DflMainContext
   DflTimestamp free_timestamp;
 
   /* Sequence of thread IDs and the duration between the thread acquiring and
-   * releasing this main context. A duration of >= 0 is valid; < 0 is not. */
+   * releasing this main context. A duration of ≥ 0 is valid; < 0 is not. */
   DflTimeSequence/*<DflThreadOwnershipData>*/ thread_ownership_events;
 
   /* Sequence of thread IDs which tried, and failed, to acquire ownership of
    * this main context. */
   DflTimeSequence/*<DflThreadId>*/ thread_acquisition_failure_events;
 
+  /* Sequence of thread IDs and the duration between the start and end of the
+   * dispatch. A duration of ≥ 0 is valid; < 0 is not. */
+  DflTimeSequence/*<DflMainContextDispatchData>*/ dispatch_events;
+
   /* TODO */
   DflTimeSequence source_events;
   DflTimeSequence thread_default_events;
-  DflTimeSequence dispatch_events;
 };
 
 G_DEFINE_TYPE (DflMainContext, dfl_main_context, G_TYPE_OBJECT)
@@ -81,12 +84,13 @@ dfl_main_context_init (DflMainContext *self)
                           sizeof (DflThreadOwnershipData), NULL, 0);
   dfl_time_sequence_init (&self->thread_acquisition_failure_events,
                           sizeof (DflThreadId), NULL, 0);
+  dfl_time_sequence_init (&self->dispatch_events,
+                          sizeof (DflMainContextDispatchData), NULL, 0);
 
 #if 0
 TODO
   dfl_time_sequence_init (&self->source_events, 0, 0);
   dfl_time_sequence_init (&self->thread_default_events, 0, 0);
-  dfl_time_sequence_init (&self->dispatch_events, 0, 0);
 #endif
 }
 
@@ -261,6 +265,112 @@ main_context_free_cb (DflEventSequence *sequence,
 }
 
 static void
+main_context_before_after_dispatch_cb (DflEventSequence *sequence,
+                                       DflEvent         *event,
+                                       gpointer          user_data)
+{
+  DflMainContext *main_context = user_data;
+  gboolean is_before;
+  DflTimestamp timestamp;
+  DflThreadId thread_id;
+
+  /* Does this event correspond to the right main context? */
+  if (dfl_event_get_parameter_id (event, 0) != main_context->id)
+    return;
+
+  is_before = (dfl_event_get_event_type (event) ==
+               g_intern_static_string ("g_main_context_before_dispatch"));
+  timestamp = dfl_event_get_timestamp (event);
+  thread_id = dfl_event_get_thread_id (event);
+g_message ("%s: event: %p, is_before: %u, timestamp: %lu, thread_id: %lu",
+           G_STRFUNC, event, is_before, timestamp, thread_id);
+  if (is_before)
+    {
+      DflMainContextDispatchData *last_element;
+      DflTimestamp last_timestamp;
+      DflMainContextDispatchData *next_element;
+
+      /* Check that the previous element in the sequence has a valid (non-zero)
+       * duration, otherwise no //after// event was logged and something very
+       * odd is happening.
+       *
+       * @last_element will be %NULL if this is the first //before//. */
+      last_element = dfl_time_sequence_get_last_element (&main_context->dispatch_events,
+                                                         &last_timestamp);
+
+      if (last_element != NULL && last_element->duration < 0)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw two g_main_context_dispatch() calls in a row for the"
+                     "same context with no finish in between.");
+
+          /* Fudge it. */
+          last_element->duration = timestamp - last_timestamp;
+        }
+
+      /* Start the next element. */
+      next_element = dfl_time_sequence_append (&main_context->dispatch_events,
+                                               timestamp);
+      next_element->thread_id = thread_id;
+      next_element->duration = -1;  /* will be set by the paired //after// */
+    }
+  else
+    {
+      DflMainContextDispatchData *last_element;
+      DflTimestamp last_timestamp;
+
+      /* Check that the previous element in the sequence has an invalid (zero)
+       * duration, otherwise no //before// event was logged.
+       *
+       * @last_element should only be %NULL if something odd is happening. */
+      last_element = dfl_time_sequence_get_last_element (&main_context->dispatch_events,
+                                                         &last_timestamp);
+
+      if (last_element == NULL)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw a g_main_context_dispatch() call finish for a "
+                     "context with no g_main_context_dispatch() call starting "
+                     "beforehand.");
+
+          /* Fudge it. */
+          last_element = dfl_time_sequence_append (&main_context->dispatch_events,
+                                                   timestamp);
+          last_timestamp = timestamp;
+          last_element->thread_id = thread_id;
+          last_element->duration = -1;
+        }
+      else if (last_element->duration >= 0)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw two g_main_context_dispatch() calls finish in a row "
+                     "for the same context with no g_main_context_dispatch() "
+                     "start in between.");
+        }
+      else if (last_element->thread_id != thread_id)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw a g_main_context_dispatch() call finish for one "
+                     "thread immediately following a "
+                     "g_main_context_dispatch() call for a different one, "
+                     "both on the same context.");
+
+          /* Fudge it. */
+          last_element->duration = timestamp - last_timestamp;
+
+          last_element = dfl_time_sequence_append (&main_context->dispatch_events,
+                                                   timestamp);
+          last_timestamp = timestamp;
+          last_element->thread_id = thread_id;
+          last_element->duration = -1;
+        }
+
+      /* Update the element’s duration. */
+      last_element->duration = timestamp - last_timestamp;
+    }
+}
+
+static void
 main_context_new_cb (DflEventSequence *sequence,
                      DflEvent         *event,
                      gpointer          user_data)
@@ -283,6 +393,16 @@ main_context_new_cb (DflEventSequence *sequence,
                                  main_context_free_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
+
+  dfl_event_sequence_add_walker (sequence, "g_main_context_before_dispatch",
+                                 main_context_before_after_dispatch_cb,
+                                 g_object_ref (main_context),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_main_context_after_dispatch",
+                                 main_context_before_after_dispatch_cb,
+                                 g_object_ref (main_context),
+                                 (GDestroyNotify) g_object_unref);
+
   /* TODO: When do these get removed? */
 
   /* TODO: Other walkers for different members. */
@@ -384,4 +504,25 @@ dfl_main_context_thread_ownership_iter (DflMainContext      *self,
   g_return_if_fail (iter != NULL);
 
   dfl_time_sequence_iter_init (iter, &self->thread_ownership_events, start);
+}
+
+/**
+ * dfl_main_context_dispatch_iter:
+ * @self: a #DflMainContext
+ * @iter: an uninitialised #DflTimeSequenceIter to use
+ * @start: optional timestamp to start iterating from, or 0
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_main_context_dispatch_iter (DflMainContext      *self,
+                                DflTimeSequenceIter *iter,
+                                DflTimestamp         start)
+{
+  g_return_if_fail (DFL_IS_MAIN_CONTEXT (self));
+  g_return_if_fail (iter != NULL);
+
+  dfl_time_sequence_iter_init (iter, &self->dispatch_events, start);
 }

@@ -87,6 +87,8 @@ const EventData event_type_array[] =
   { "g_main_context_acquire", 2 },
   { "g_main_context_release", 1 },
   { "g_main_context_free", 1 },
+  { "g_main_context_before_dispatch", 1 },
+  { "g_main_context_after_dispatch", 1 },
 };
 
 static const EventData *

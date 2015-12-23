@@ -43,6 +43,21 @@ typedef struct
 } DflThreadOwnershipData;
 
 /**
+ * DflMainContextDispatchData:
+ * @thread_id: TODO
+ * @duration: TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef struct
+{
+  DflThreadId thread_id;
+  DflDuration duration;
+} DflMainContextDispatchData;
+
+/**
  * DflMainContext:
  *
  * All the fields in this structure are private.
@@ -64,6 +79,9 @@ DflTimestamp dfl_main_context_get_free_timestamp (DflMainContext *self);
 void dfl_main_context_thread_ownership_iter (DflMainContext      *self,
                                              DflTimeSequenceIter *iter,
                                              DflTimestamp         start);
+void dfl_main_context_dispatch_iter (DflMainContext      *self,
+                                     DflTimeSequenceIter *iter,
+                                     DflTimestamp         start);
 
 G_END_DECLS
 
