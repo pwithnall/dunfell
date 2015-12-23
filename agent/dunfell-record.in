@@ -15,8 +15,21 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Check for help options.
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 	exec man dunfell-record
 fi
 
-exec stap --unprivileged --ldd -o "/tmp/dunfell.log" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
+# TODO: Make this configurable.
+log_file="/tmp/dunfell.log"
+
+# Check that stap-server is running to do the compilation.
+if ! systemctl is-active stap-server.service &> /dev/null; then
+	echo "$0: Error: stap-server.service must be running in order to record logs. Please run:" >&2
+	echo "   sudo systemctl start stap-server.service" >&2
+	exit 1
+fi
+
+# Run the stap script.
+echo "$0: Logging to ‘$log_file’ for command ‘$*’." >&2
+exec stap --unprivileged --ldd -o "$log_file" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
