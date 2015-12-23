@@ -35,6 +35,7 @@
 #include <string.h>
 
 #include "dfl-event.h"
+#include "dfl-event-sequence.h"
 #include "dfl-thread.h"
 #include "dfl-time-sequence.h"
 
@@ -89,9 +90,6 @@ dfl_thread_new (DflThreadId  id,
 
   return thread;
 }
-
-
-#include "dfl-event-sequence.h"
 
 static void
 event_cb (DflEventSequence *sequence,
