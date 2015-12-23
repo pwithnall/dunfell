@@ -41,34 +41,23 @@ main (int argc, char *argv[])
   GPtrArray/*<owned DflMainContext>*/ *main_contexts = NULL;
   GPtrArray/*<owned DflMainContext>*/ *threads = NULL;
   GError *error = NULL;
-  const gchar *log;
+  gchar *log = NULL;
 
   setlocale (LC_ALL, "");
 
   gtk_init (&argc, &argv);
 
   /* Parse a log. */
-  log =
-    "Dunfell log,1.0,1\n"
-    "g_main_context_new,1000000,1000,666\n"
-    "g_main_context_acquire,1000020,1000,666,1\n"
-    "g_main_context_release,1000100,1000,666\n"
-    "g_main_context_new,1000140,2000,777\n"
-    "g_main_context_acquire,1000150,1000,666,1\n"
-    "g_main_context_release,1000160,1000,666\n"
-    "g_main_context_acquire,1000160,2000,777,1\n"
-    "g_main_context_release,1000190,2000,777\n"
-    "g_main_context_acquire,1000220,1000,777,1\n"
-    "g_main_context_release,1000260,1000,777\n"
-    "g_main_context_free,1004000,1000,666\n"
-    "g_main_context_free,1004500,2000,777\n";
+  g_file_get_contents ("/tmp/dunfell.log", &log, NULL, &error);
+  g_assert_no_error (error);
 
   /* Parse the log into an event sequence. */
   parser = dfl_parser_new ();
 
-  dfl_parser_load_from_data (parser, (const guint8 *) log, strlen (log),
-                             &error);
+  dfl_parser_load_from_data (parser, (guint8 *) log, strlen (log), &error);
   g_assert_no_error (error);
+
+  g_free (log);
 
   sequence = dfl_parser_get_event_sequence (parser);
   g_assert_nonnull (sequence);
