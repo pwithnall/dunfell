@@ -33,8 +33,10 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <gtk/gtk.h>
+#include <math.h>
 
 #include "dfl-main-context.h"
+#include "dfl-source.h"
 #include "dfl-thread.h"
 #include "dfl-time-sequence.h"
 #include "dfl-types.h"
@@ -67,6 +69,7 @@ struct _DwlTimeline
 
   GPtrArray/*<owned DflMainContext>*/ *main_contexts;  /* owned */
   GPtrArray/*<owned DflThread>*/ *threads;  /* owned */
+  GPtrArray/*<owned DflSource>*/ *sources;  /* owned */
 
   gfloat zoom;
 };
@@ -163,6 +166,7 @@ dwl_timeline_dispose (GObject *object)
 {
   DwlTimeline *self = DWL_TIMELINE (object);
 
+  g_clear_pointer (&self->sources, g_ptr_array_unref);
   g_clear_pointer (&self->main_contexts, g_ptr_array_unref);
   g_clear_pointer (&self->threads, g_ptr_array_unref);
 
@@ -174,6 +178,7 @@ dwl_timeline_dispose (GObject *object)
  * dwl_timeline_new:
  * @threads: (element-type DflThread): TODO
  * @main_contexts: (element-type DflMainContext): TODO
+ * @sources: (element-type DflSource): TODO
  *
  * TODO
  *
@@ -182,7 +187,8 @@ dwl_timeline_dispose (GObject *object)
  */
 DwlTimeline *
 dwl_timeline_new (GPtrArray *threads,
-                  GPtrArray *main_contexts)
+                  GPtrArray *main_contexts,
+                  GPtrArray *sources)
 {
   DwlTimeline *timeline = NULL;
 
@@ -191,6 +197,7 @@ dwl_timeline_new (GPtrArray *threads,
 
   timeline->threads = g_ptr_array_ref (threads);
   timeline->main_contexts = g_ptr_array_ref (main_contexts);
+  timeline->sources = g_ptr_array_ref (sources);
 
   return timeline;
 }
@@ -206,7 +213,9 @@ add_default_css (GtkStyleContext *context)
     "timeline.thread_guide { color: #cccccc }\n"
     "timeline.thread { color: rgb(139, 142, 143) }\n"
     "timeline.main_context_dispatch { background-color: red; "
-                                     "border: 1px solid black }\n";
+                                     "border: 1px solid black }\n"
+    "timeline.source { background-color: blue; "
+                      "color: #cccccc }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
@@ -238,6 +247,9 @@ duration_to_pixels (DwlTimeline *self,
 #define FOOTER_HEIGHT 30 /* pixels */
 #define MAIN_CONTEXT_ACQUIRED_WIDTH 3 /* pixels */
 #define MAIN_CONTEXT_DISPATCH_WIDTH 10 /* pixels */
+#define SOURCE_BORDER_WIDTH 1 /* pixel */
+#define SOURCE_OFFSET 20 /* pixels */
+#define SOURCE_WIDTH 10 /* pixels */
 
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
@@ -407,6 +419,59 @@ dwl_timeline_draw (GtkWidget *widget,
         }
 
       gtk_style_context_remove_class (context, "main_context_dispatch");
+    }
+
+  /* Draw the sources either side. */
+  for (i = 0; i < self->sources->len; i++)
+    {
+      DflSource *source = self->sources->pdata[i];
+      gdouble thread_centre, source_x, source_y;
+      guint thread_index;
+      GdkRGBA color;
+
+      /* TODO: This should not be so slow. */
+      for (thread_index = 0; thread_index < n_threads; thread_index++)
+        {
+          if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+              dfl_source_get_new_thread_id (source))
+            break;
+        }
+      g_assert (thread_index < n_threads);
+
+      thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+
+      /* Source circle. */
+      gtk_style_context_add_class (context, "source");
+      cairo_save (cr);
+
+      cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+      cairo_set_line_width (cr, SOURCE_BORDER_WIDTH);
+      cairo_new_path (cr);
+
+      /* Calculate the centre of the source. */
+      source_x = thread_centre - SOURCE_OFFSET;
+      source_y = HEADER_HEIGHT + timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+
+      cairo_arc (cr,
+                 source_x,
+                 source_y,
+                 SOURCE_WIDTH / 2.0,
+                 0.0, 2 * M_PI);
+
+      cairo_clip_preserve (cr);
+      gtk_render_background (context, cr,
+                             source_x - SOURCE_WIDTH / 2.0,
+                             source_y - SOURCE_WIDTH / 2.0,
+                             SOURCE_WIDTH,
+                             SOURCE_WIDTH);
+
+      gtk_style_context_get_color (context, gtk_widget_get_state_flags (widget),
+                                   &color);
+      gdk_cairo_set_source_rgba (cr, &color);
+      cairo_stroke (cr);
+
+      cairo_restore (cr);
+      gtk_style_context_remove_class (context, "source");
     }
 
   return FALSE;

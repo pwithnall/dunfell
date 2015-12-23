@@ -27,6 +27,7 @@
 #include "dfl-parser.h"
 #include "dfl-event-sequence.h"
 #include "dfl-main-context.h"
+#include "dfl-source.h"
 #include "dfl-thread.h"
 #include "dwl-timeline.h"
 
@@ -39,7 +40,8 @@ main (int argc, char *argv[])
   DflParser *parser = NULL;
   DflEventSequence *sequence;
   GPtrArray/*<owned DflMainContext>*/ *main_contexts = NULL;
-  GPtrArray/*<owned DflMainContext>*/ *threads = NULL;
+  GPtrArray/*<owned DflThread>*/ *threads = NULL;
+  GPtrArray/*<owned DflSource>*/ *sources = NULL;
   GError *error = NULL;
   gchar *log = NULL;
 
@@ -66,6 +68,7 @@ main (int argc, char *argv[])
   /* Analyse the event sequence. */
   main_contexts = dfl_main_context_factory_from_event_sequence (sequence);
   threads = dfl_thread_factory_from_event_sequence (sequence);
+  sources = dfl_source_factory_from_event_sequence (sequence);
   dfl_event_sequence_walk (sequence);
 
   g_object_unref (parser);
@@ -78,7 +81,7 @@ main (int argc, char *argv[])
   scrolled = gtk_scrolled_window_new (NULL, NULL);
   gtk_container_add (GTK_CONTAINER (window), scrolled);
 
-  timeline = GTK_WIDGET (dwl_timeline_new (threads, main_contexts));
+  timeline = GTK_WIDGET (dwl_timeline_new (threads, main_contexts, sources));
   gtk_container_add (GTK_CONTAINER (scrolled), timeline);
 
   gtk_widget_show_all (GTK_WIDGET (window));

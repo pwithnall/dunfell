@@ -37,7 +37,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (DwlTimeline, dwl_timeline, DWL, TIMELINE, GtkWidget)
 
 DwlTimeline *dwl_timeline_new (GPtrArray/*<owned DflThread>*/      *threads,
-                               GPtrArray/*<owned DflMainContext>*/ *main_contexts);
+                               GPtrArray/*<owned DflMainContext>*/ *main_contexts,
+                               GPtrArray/*<owned DflSource>*/      *sources);
 
 G_END_DECLS
 
