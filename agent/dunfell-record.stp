@@ -109,7 +109,7 @@ probe glib.main_context_wakeup_acknowledge {
 }
 
 probe glib.source_new {
-  printdln (",", "g_source_new", gettimeofday_us (), tid (), source, source_funcs, struct_size);
+  printdln (",", "g_source_new", gettimeofday_us (), tid (), source, usymname (prepare), usymname (check), usymname (dispatch), usymname (finalize), struct_size);
 }
 
 probe glib.source_set_callback {
@@ -117,7 +117,7 @@ probe glib.source_set_callback {
 }
 
 probe glib.source_set_callback_indirect {
-  printdln (",", "g_source_set_callback_indirect", gettimeofday_us (), tid (), source, callback_data, callback_funcs);
+  printdln (",", "g_source_set_callback_indirect", gettimeofday_us (), tid (), source, callback_data, usymname (ref), usymname (unref), usymname (get));
 }
 
 probe glib.source_set_ready_time {
