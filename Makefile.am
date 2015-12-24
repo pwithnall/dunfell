@@ -11,41 +11,7 @@ bin_SCRIPTS =
 man8_MANS =
 VAPIGEN_VAPIS =
 lib_LTLIBRARIES =
-
-# TODO: test
-bin_PROGRAMS += libdunfell-ui/test
-libdunfell_ui_test_SOURCES = libdunfell-ui/main.c
-libdunfell_ui_test_CPPFLAGS = \
-	-I$(top_srcdir) \
-	-I$(top_srcdir)/libdunfell \
-	-I$(top_builddir)/libdunfell \
-	-I$(top_srcdir)/libdunfell-ui \
-	-I$(top_builddir)/libdunfell-ui \
-	$(DISABLE_DEPRECATED) \
-	$(AM_CPPFLAGS) \
-	$(NULL)
-libdunfell_ui_test_CFLAGS = \
-	$(GLIB_CFLAGS) \
-	$(GTK_CFLAGS) \
-	$(CODE_COVERAGE_CFLAGS) \
-	$(WARN_CFLAGS) \
-	$(AM_CFLAGS) \
-	$(NULL)
-libdunfell_ui_test_LDADD = \
-	$(top_builddir)/libdunfell/libdunfell-@DFL_API_VERSION@.la \
-	$(top_builddir)/libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la \
-	$(GLIB_LIBS) \
-	$(GTK_LIBS) \
-	$(CODE_COVERAGE_LDFLAGS) \
-	$(WARN_LDFLAGS) \
-	$(AM_LIBADD) \
-	$(NULL)
-libdunfell_ui_test_LDFLAGS = \
-	-no-undefined \
-	$(AM_LDFLAGS) \
-	$(NULL)
-
-
+BUILT_SOURCES =
 
 # libdunfell library
 lib_LTLIBRARIES += libdunfell/libdunfell-@DFL_API_VERSION@.la
@@ -219,6 +185,64 @@ CLEANFILES += agent/dunfell-record
 
 agent/dunfell-record: $(srcdir)/agent/dunfell-record.in
 	$(AM_V_GEN)sed -e "s,[@]datadir[@],$(datadir),g;s,[@]DFL_API_VERSION[@],@DFL_API_VERSION@,g" $< > $@ || rm $@
+
+# Viewer application
+bin_PROGRAMS += viewer/dunfell-viewer
+
+viewer_dunfell_viewer_SOURCES = \
+	viewer/dfv-application.c \
+	viewer/dfv-application.h \
+	viewer/dfv-viewer-window.c \
+	viewer/dfv-viewer-window.h \
+	viewer/main.c \
+	$(NULL)
+nodist_viewer_dunfell_viewer_SOURCES = \
+	viewer/dfv-resources.c \
+	$(NULL)
+viewer_dunfell_viewer_CPPFLAGS = \
+	-I$(top_srcdir) \
+	-I$(top_srcdir)/libdunfell \
+	-I$(top_builddir)/libdunfell \
+	-I$(top_srcdir)/libdunfell-ui \
+	-I$(top_builddir)/libdunfell-ui \
+	-I$(top_srcdir)/viewer \
+	-I$(top_builddir)/viewer \
+	-DG_LOG_DOMAIN=\"dunfell-viewer\" \
+	$(DISABLE_DEPRECATED) \
+	$(AM_CPPFLAGS) \
+	$(NULL)
+viewer_dunfell_viewer_CFLAGS = \
+	$(GLIB_CFLAGS) \
+	$(GTK_CFLAGS) \
+	$(CODE_COVERAGE_CFLAGS) \
+	$(WARN_CFLAGS) \
+	$(AM_CFLAGS) \
+	$(NULL)
+viewer_dunfell_viewer_LDADD = \
+	$(top_builddir)/libdunfell/libdunfell-@DFL_API_VERSION@.la \
+	$(top_builddir)/libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la \
+	$(GLIB_LIBS) \
+	$(GTK_LIBS) \
+	$(CODE_COVERAGE_LDFLAGS) \
+	$(WARN_LDFLAGS) \
+	$(AM_LDADD) \
+	$(NULL)
+viewer_dunfell_viewer_LDFLAGS = \
+	-no-undefined \
+	$(AM_LDFLAGS) \
+	$(NULL)
+
+viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps = \
+	$(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir=$(top_srcdir)/viewer $(top_srcdir)/viewer/org.gnome.Dunfell.Viewer.gresource.xml)
+viewer/dfv-resources.c: $(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(top_srcdir)/viewer --generate-source $(top_srcdir)/viewer/org.gnome.Dunfell.Viewer.gresource.xml
+
+BUILT_SOURCES += viewer/dfv-resources.c
+CLEANFILES += viewer/dfv-resources.c
+EXTRA_DIST += \
+	viewer/org.gnome.Dunfell.Viewer.gresource.xml \
+	$(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps) \
+	$(NULL)
 
 # Macros
 EXTRA_DIST += \
