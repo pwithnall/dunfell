@@ -63,6 +63,9 @@ static void dwl_timeline_get_preferred_height (GtkWidget *widget,
 
 static void add_default_css (GtkStyleContext *context);
 
+#define ZOOM_MIN 0.001
+#define ZOOM_MAX 1000.0
+
 struct _DwlTimeline
 {
   GtkWidget parent;
@@ -109,7 +112,7 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
   g_object_class_install_property (object_class, PROP_ZOOM,
                                    g_param_spec_float ("zoom", "Zoom",
                                                        "Zoom level.",
-                                                       1.0, G_MAXFLOAT, 1.0,
+                                                       ZOOM_MIN, ZOOM_MAX, 1.0,
                                                        G_PARAM_READWRITE |
                                                        G_PARAM_STATIC_STRINGS));
 }
@@ -153,8 +156,7 @@ dwl_timeline_set_property (GObject      *object,
   switch ((DwlTimelineProperty) property_id)
     {
     case PROP_ZOOM:
-      self->zoom = g_value_get_float (value);
-      gtk_widget_queue_resize (GTK_WIDGET (self));
+      dwl_timeline_set_zoom (self, g_value_get_float (value));
       break;
     default:
       g_assert_not_reached ();
@@ -231,6 +233,7 @@ static gint
 timestamp_to_pixels (DwlTimeline  *self,
                      DflTimestamp  timestamp)
 {
+  g_return_val_if_fail (timestamp <= G_MAXINT / self->zoom, G_MAXINT);
   return timestamp * self->zoom;
 }
 
@@ -238,6 +241,7 @@ static gint
 duration_to_pixels (DwlTimeline *self,
                     DflDuration  duration)
 {
+  g_return_val_if_fail (duration <= G_MAXINT / self->zoom, G_MAXINT);
   return duration * self->zoom;
 }
 
@@ -525,4 +529,53 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
     *minimum_height = MAX (1, height);
   if (natural_height != NULL)
     *natural_height = MAX (1, height);
+}
+
+/**
+ * dwl_timeline_get_zoom:
+ * @self: a #DwlTimeline
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+gfloat
+dwl_timeline_get_zoom (DwlTimeline *self)
+{
+  g_return_val_if_fail (DWL_IS_TIMELINE (self), 1.0);
+
+  return self->zoom;
+}
+
+/**
+ * dwl_timeline_set_zoom:
+ * @self: a #DwlTimeline
+ * @zoom: new zoom value, between %ZOOM_MIN and %ZOOM_MAX
+ *
+ * TODO
+ *
+ * Returns: %TRUE if the zoom level changed, %FALSE otherwise
+ * Since: UNRELEASED
+ */
+gboolean
+dwl_timeline_set_zoom (DwlTimeline *self,
+                       gfloat       zoom)
+{
+  gfloat new_zoom;
+
+  g_return_val_if_fail (DWL_IS_TIMELINE (self), FALSE);
+
+  new_zoom = CLAMP (zoom, ZOOM_MIN, ZOOM_MAX);
+
+  if (new_zoom == self->zoom)
+    return FALSE;
+
+  g_debug ("%s: Setting zoom to %f", G_STRFUNC, new_zoom);
+
+  self->zoom = new_zoom;
+  g_object_notify (G_OBJECT (self), "zoom");
+  gtk_widget_queue_resize (GTK_WIDGET (self));
+
+  return TRUE;
 }

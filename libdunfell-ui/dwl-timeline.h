@@ -40,6 +40,10 @@ DwlTimeline *dwl_timeline_new (GPtrArray/*<owned DflThread>*/      *threads,
                                GPtrArray/*<owned DflMainContext>*/ *main_contexts,
                                GPtrArray/*<owned DflSource>*/      *sources);
 
+gfloat   dwl_timeline_get_zoom (DwlTimeline *self);
+gboolean dwl_timeline_set_zoom (DwlTimeline *self,
+                                gfloat       zoom);
+
 G_END_DECLS
 
 #endif /* !DWL_TIMELINE_H */
