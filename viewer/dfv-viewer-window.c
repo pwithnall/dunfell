@@ -58,9 +58,6 @@ static void open_button_clicked            (GtkButton *button,
                                             gpointer   user_data);
 static void record_button_clicked          (GtkButton *button,
                                             gpointer   user_data);
-static gboolean timeline_scrolled_window_scroll_event (GtkWidget *widget,
-                                                       GdkEvent  *event,
-                                                       gpointer   user_data);
 
 struct _DfvViewerWindow
 {
@@ -96,8 +93,6 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
                                         timeline_scrolled_window);
   gtk_widget_class_bind_template_callback (widget_class, open_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, record_button_clicked);
-  gtk_widget_class_bind_template_callback (widget_class,
-                                           timeline_scrolled_window_scroll_event);
 
   object_class->get_property = dfv_viewer_window_get_property;
   object_class->set_property = dfv_viewer_window_set_property;
@@ -531,57 +526,4 @@ set_file_cb_name (GObject      *source_object,
     }
 
   g_object_unref (file_info);
-}
-
-#define SCROLL_SMOOTH_FACTOR_SCALE 2.0 /* pixels per unit zoom factor */
-
-static gboolean
-timeline_scrolled_window_scroll_event (GtkWidget *widget,
-                                       GdkEvent  *event,
-                                       gpointer   user_data)
-{
-  DfvViewerWindow *self = DFV_VIEWER_WINDOW (user_data);
-
-  /* If the user is holding down Ctrl, change the zoom level. Otherwise, pass
-   * the scroll event through to other widgets. */
-  if (event->scroll.state & GDK_CONTROL_MASK)
-    {
-      gdouble factor;
-      gdouble delta;
-      gfloat old_zoom;
-
-      switch (event->scroll.direction)
-        {
-        case GDK_SCROLL_UP:
-          factor = 0.5;
-          break;
-        case GDK_SCROLL_DOWN:
-          factor = 2.0;
-          break;
-        case GDK_SCROLL_SMOOTH:
-          g_assert (gdk_event_get_scroll_deltas (event, NULL, &delta));
-
-          /* Process the delta. */
-          if (delta == 0.0)
-            factor = 1.0;
-          else if (delta > 0.0)
-            factor = delta / SCROLL_SMOOTH_FACTOR_SCALE;
-          else
-            factor = SCROLL_SMOOTH_FACTOR_SCALE / -delta;
-
-          break;
-        case GDK_SCROLL_LEFT:
-        case GDK_SCROLL_RIGHT:
-        default:
-          factor = 1.0;
-          break;
-        }
-
-      old_zoom = dwl_timeline_get_zoom (DWL_TIMELINE (self->timeline));
-      dwl_timeline_set_zoom (DWL_TIMELINE (self->timeline), old_zoom * factor);
-
-      return GDK_EVENT_STOP;
-    }
-
-  return GDK_EVENT_PROPAGATE;
 }

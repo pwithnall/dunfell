@@ -52,6 +52,12 @@ static void dwl_timeline_set_property (GObject      *object,
                                        const GValue *value,
                                        GParamSpec   *pspec);
 static void dwl_timeline_dispose (GObject *object);
+static void dwl_timeline_realize (GtkWidget *widget);
+static void dwl_timeline_unrealize (GtkWidget *widget);
+static void dwl_timeline_map (GtkWidget *widget);
+static void dwl_timeline_unmap (GtkWidget *widget);
+static void dwl_timeline_size_allocate (GtkWidget     *widget,
+                                        GtkAllocation *allocation);
 static gboolean dwl_timeline_draw (GtkWidget *widget,
                                    cairo_t   *cr);
 static void dwl_timeline_get_preferred_width (GtkWidget *widget,
@@ -60,6 +66,8 @@ static void dwl_timeline_get_preferred_width (GtkWidget *widget,
 static void dwl_timeline_get_preferred_height (GtkWidget *widget,
                                                gint      *minimum_height,
                                                gint      *natural_height);
+static gboolean dwl_timeline_scroll_event (GtkWidget      *widget,
+                                           GdkEventScroll *event);
 
 static void add_default_css (GtkStyleContext *context);
 
@@ -69,6 +77,8 @@ static void add_default_css (GtkStyleContext *context);
 struct _DwlTimeline
 {
   GtkWidget parent;
+
+  GdkWindow *event_window;  /* owned */
 
   GPtrArray/*<owned DflMainContext>*/ *main_contexts;  /* owned */
   GPtrArray/*<owned DflThread>*/ *threads;  /* owned */
@@ -94,9 +104,15 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
   object_class->set_property = dwl_timeline_set_property;
   object_class->dispose = dwl_timeline_dispose;
 
+  widget_class->realize = dwl_timeline_realize;
+  widget_class->unrealize = dwl_timeline_unrealize;
+  widget_class->map = dwl_timeline_map;
+  widget_class->unmap = dwl_timeline_unmap;
+  widget_class->size_allocate = dwl_timeline_size_allocate;
   widget_class->draw = dwl_timeline_draw;
   widget_class->get_preferred_width = dwl_timeline_get_preferred_width;
   widget_class->get_preferred_height = dwl_timeline_get_preferred_height;
+  widget_class->scroll_event = dwl_timeline_scroll_event;
 
   /* TODO: Proper accessibility support. */
   gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_CHART);
@@ -120,11 +136,12 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
 static void
 dwl_timeline_init (DwlTimeline *self)
 {
-  gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
-
   self->zoom = 1.0;
 
   add_default_css (gtk_widget_get_style_context (GTK_WIDGET (self)));
+
+  gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
+  gtk_widget_add_events (GTK_WIDGET (self), GDK_SCROLL_MASK);
 }
 
 static void
@@ -243,6 +260,91 @@ duration_to_pixels (DwlTimeline *self,
 {
   g_return_val_if_fail (duration <= G_MAXINT / self->zoom, G_MAXINT);
   return duration * self->zoom;
+}
+
+static void
+dwl_timeline_realize (GtkWidget *widget)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+  GdkWindow *parent_window;
+  GdkWindowAttr attributes;
+  gint attributes_mask;
+  GtkAllocation allocation;
+
+  gtk_widget_set_realized (widget, TRUE);
+  parent_window = gtk_widget_get_parent_window (widget);
+  gtk_widget_set_window (widget, parent_window);
+  g_object_ref (parent_window);
+
+  gtk_widget_get_allocation (widget, &allocation);
+
+  attributes.window_type = GDK_WINDOW_CHILD;
+  attributes.wclass = GDK_INPUT_ONLY;
+  attributes.x = allocation.x;
+  attributes.y = allocation.y;
+  attributes.width = allocation.width;
+  attributes.height = allocation.height;
+  attributes.event_mask = gtk_widget_get_events (widget) |
+                          GDK_SCROLL_MASK;
+  attributes_mask = GDK_WA_X | GDK_WA_Y;
+
+  self->event_window = gdk_window_new (parent_window,
+                                       &attributes,
+                                       attributes_mask);
+  gtk_widget_register_window (widget, self->event_window);
+}
+
+static void
+dwl_timeline_unrealize (GtkWidget *widget)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  if (self->event_window != NULL)
+    {
+      gtk_widget_unregister_window (widget, self->event_window);
+      gdk_window_destroy (self->event_window);
+      self->event_window = NULL;
+    }
+
+  GTK_WIDGET_CLASS (dwl_timeline_parent_class)->unrealize (widget);
+}
+
+static void
+dwl_timeline_map (GtkWidget *widget)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  GTK_WIDGET_CLASS (dwl_timeline_parent_class)->map (widget);
+
+  if (self->event_window)
+    gdk_window_show (self->event_window);
+}
+
+static void
+dwl_timeline_unmap (GtkWidget *widget)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  if (self->event_window)
+    gdk_window_hide (self->event_window);
+
+  GTK_WIDGET_CLASS (dwl_timeline_parent_class)->unmap (widget);
+}
+
+static void
+dwl_timeline_size_allocate (GtkWidget     *widget,
+                            GtkAllocation *allocation)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  gtk_widget_set_allocation (widget, allocation);
+
+  if (gtk_widget_get_realized (widget))
+    gdk_window_move_resize (self->event_window,
+                            allocation->x,
+                            allocation->y,
+                            allocation->width,
+                            allocation->height);
 }
 
 #define THREAD_MIN_WIDTH 100 /* pixels */
@@ -529,6 +631,59 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
     *minimum_height = MAX (1, height);
   if (natural_height != NULL)
     *natural_height = MAX (1, height);
+}
+
+#define SCROLL_SMOOTH_FACTOR_SCALE 2.0 /* pixels per unit zoom factor */
+
+static gboolean
+dwl_timeline_scroll_event (GtkWidget      *widget,
+                           GdkEventScroll *event)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  /* If the user is holding down Ctrl, change the zoom level. Otherwise, pass
+   * the scroll event through to other widgets. */
+  if (event->state & GDK_CONTROL_MASK)
+    {
+      gdouble factor;
+      gdouble delta;
+      gfloat old_zoom;
+
+      switch (event->direction)
+        {
+        case GDK_SCROLL_UP:
+          factor = 0.5;
+          break;
+        case GDK_SCROLL_DOWN:
+          factor = 2.0;
+          break;
+        case GDK_SCROLL_SMOOTH:
+          g_assert (gdk_event_get_scroll_deltas ((GdkEvent *) event, NULL,
+                                                 &delta));
+
+          /* Process the delta. */
+          if (delta == 0.0)
+            factor = 1.0;
+          else if (delta > 0.0)
+            factor = delta / SCROLL_SMOOTH_FACTOR_SCALE;
+          else
+            factor = SCROLL_SMOOTH_FACTOR_SCALE / -delta;
+
+          break;
+        case GDK_SCROLL_LEFT:
+        case GDK_SCROLL_RIGHT:
+        default:
+          factor = 1.0;
+          break;
+        }
+
+      old_zoom = dwl_timeline_get_zoom (self);
+      dwl_timeline_set_zoom (self, old_zoom * factor);
+
+      return GDK_EVENT_STOP;
+    }
+
+  return GDK_EVENT_PROPAGATE;
 }
 
 /**
