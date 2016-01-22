@@ -209,7 +209,7 @@ dfl_parser_load_from_stream (DflParser     *self,
   guint line_number;
   guint n_comment_lines;
   guint64 initial_timestamp;
-  guint64 highest_timestamp;
+  GHashTable/*<owned guint64, owned guint64>*/ *highest_timestamps = NULL;
   guint file_version;
   GPtrArray/*<owned DflEvent*>*/ *events = NULL;
   GError *child_error = NULL;
@@ -223,7 +223,8 @@ dfl_parser_load_from_stream (DflParser     *self,
   data_stream = g_data_input_stream_new (stream);
   n_comment_lines = 0;
   file_version = 0;
-  highest_timestamp = 0;
+  highest_timestamps = g_hash_table_new_full (g_int64_hash, g_int64_equal,
+                                              g_free, g_free);
   events = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
 
   for (line_number = 1,
@@ -339,9 +340,6 @@ dfl_parser_load_from_stream (DflParser     *self,
               g_strfreev (components);
               break;
             }
-
-          g_assert (highest_timestamp == 0);
-          highest_timestamp = initial_timestamp;
         }
       else
         {
@@ -351,6 +349,7 @@ dfl_parser_load_from_stream (DflParser     *self,
           const gchar *tid;
           guint n_components;
           guint64 timestamp_int, tid_int;
+          guint64 *highest_timestamp;
           DflEvent *event = NULL;
 
           /* Non-header line. Looks like:
@@ -438,9 +437,13 @@ dfl_parser_load_from_stream (DflParser     *self,
               break;
             }
 
-          /* Check that the timestamps on each line are monotonically
+          /* Check that the timestamps in each thread are monotonically
            * increasing. */
-          if (timestamp_int < highest_timestamp)
+          highest_timestamp = g_hash_table_lookup (highest_timestamps,
+                                                   (gpointer) &tid_int);
+
+          if ((highest_timestamp == NULL && timestamp_int < initial_timestamp) ||
+              (highest_timestamp != NULL && timestamp_int < *highest_timestamp))
             {
               /* TODO: Use a proper error code here. */
               g_set_error (&child_error, G_IO_ERROR, G_IO_ERROR_UNKNOWN,
@@ -451,7 +454,21 @@ dfl_parser_load_from_stream (DflParser     *self,
               break;
             }
 
-          highest_timestamp = timestamp_int;
+          if (highest_timestamp != NULL)
+            {
+              *highest_timestamp = timestamp_int;
+            }
+          else
+            {
+              guint64 *key = NULL;
+
+              highest_timestamp = g_new0 (guint64, 1);
+              *highest_timestamp = timestamp_int;
+              key = g_new0 (guint64, 1);
+              *key = tid_int;
+
+              g_hash_table_insert (highest_timestamps, key, highest_timestamp);
+            }
 
           /* Create the event. */
           event = dfl_event_new (event_type, timestamp_int, tid_int,
@@ -477,6 +494,7 @@ dfl_parser_load_from_stream (DflParser     *self,
     }
 
   g_clear_pointer (&events, g_ptr_array_unref);
+  g_clear_pointer (&highest_timestamps, g_hash_table_unref);
   g_object_unref (data_stream);
 }
 
