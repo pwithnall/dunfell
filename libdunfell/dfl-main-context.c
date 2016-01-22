@@ -172,7 +172,7 @@ main_context_acquire_release_cb (DflEventSequence *sequence,
       if (last_element != NULL && last_element->duration < 0)
         {
           /* TODO: Some better error reporting framework than g_warning(). */
-          g_warning ("Saw two g_main_context_acquire() calls in a row for the"
+          g_warning ("Saw two g_main_context_acquire() calls in a row for the "
                      "same context with no g_main_context_release() in "
                      "between.");
 
@@ -214,7 +214,7 @@ main_context_acquire_release_cb (DflEventSequence *sequence,
       else if (last_element->duration >= 0)
         {
           /* TODO: Some better error reporting framework than g_warning(). */
-          g_warning ("Saw two g_main_context_release() calls in a row for the"
+          g_warning ("Saw two g_main_context_release() calls in a row for the "
                      "same context with no g_main_context_acquire() in "
                      "between.");
         }
@@ -300,7 +300,7 @@ main_context_before_after_dispatch_cb (DflEventSequence *sequence,
       if (last_element != NULL && last_element->duration < 0)
         {
           /* TODO: Some better error reporting framework than g_warning(). */
-          g_warning ("Saw two g_main_context_dispatch() calls in a row for the"
+          g_warning ("Saw two g_main_context_dispatch() calls in a row for the "
                      "same context with no finish in between.");
 
           /* Fudge it. */
