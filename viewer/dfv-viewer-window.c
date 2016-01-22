@@ -369,8 +369,7 @@ dfv_viewer_window_clear_file (DfvViewerWindow *self)
 
   if (self->timeline != NULL)
     {
-      gtk_container_remove (GTK_CONTAINER (self->timeline_scrolled_window),
-                            self->timeline);
+      gtk_widget_destroy (self->timeline);
       self->timeline = NULL;
     }
 }
