@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -110,8 +110,14 @@ static void
 dfl_event_sequence_dispose (GObject *object)
 {
   DflEventSequence *self = DFL_EVENT_SEQUENCE (object);
+  guint i;
 
-  g_clear_pointer (&self->events, g_ptr_array_unref);
+  for (i = 0; i < self->n_events; i++)
+    g_object_unref (self->events[i]);
+
+  g_clear_pointer (&self->events, g_free);
+  self->n_events = 0;
+
   g_clear_pointer (&self->walkers, g_array_unref);
 
   /* Chain up to the parent class */
