@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -246,12 +246,22 @@ add_default_css (GtkStyleContext *context)
   g_object_unref (provider);
 }
 
+#define THREAD_MIN_WIDTH 100 /* pixels */
+#define THREAD_NATURAL_WIDTH 140 /* pixels */
+#define HEADER_HEIGHT 100 /* pixels */
+#define FOOTER_HEIGHT 30 /* pixels */
+#define MAIN_CONTEXT_ACQUIRED_WIDTH 3 /* pixels */
+#define MAIN_CONTEXT_DISPATCH_WIDTH 10 /* pixels */
+#define SOURCE_BORDER_WIDTH 1 /* pixel */
+#define SOURCE_OFFSET 20 /* pixels */
+#define SOURCE_WIDTH 10 /* pixels */
+
 static gint
 timestamp_to_pixels (DwlTimeline  *self,
                      DflTimestamp  timestamp)
 {
   g_return_val_if_fail (timestamp <= G_MAXINT / self->zoom, G_MAXINT);
-  return timestamp * self->zoom;
+  return HEADER_HEIGHT + timestamp * self->zoom;
 }
 
 static gint
@@ -347,16 +357,6 @@ dwl_timeline_size_allocate (GtkWidget     *widget,
                             allocation->height);
 }
 
-#define THREAD_MIN_WIDTH 100 /* pixels */
-#define THREAD_NATURAL_WIDTH 140 /* pixels */
-#define HEADER_HEIGHT 100 /* pixels */
-#define FOOTER_HEIGHT 30 /* pixels */
-#define MAIN_CONTEXT_ACQUIRED_WIDTH 3 /* pixels */
-#define MAIN_CONTEXT_DISPATCH_WIDTH 10 /* pixels */
-#define SOURCE_BORDER_WIDTH 1 /* pixel */
-#define SOURCE_OFFSET 20 /* pixels */
-#define SOURCE_WIDTH 10 /* pixels */
-
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
                    cairo_t   *cr)
@@ -397,18 +397,18 @@ dwl_timeline_draw (GtkWidget *widget,
       gtk_style_context_add_class (context, "thread_guide");
       gtk_render_line (context, cr,
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_pixels (self, 0),
+                       timestamp_to_pixels (self, 0),
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_pixels (self, max_timestamp - min_timestamp));
+                       timestamp_to_pixels (self, max_timestamp - min_timestamp));
       gtk_style_context_remove_class (context, "thread_guide");
 
       /* Line for the actual live length of the thread, plus its label. */
       gtk_style_context_add_class (context, "thread");
       gtk_render_line (context, cr,
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_pixels (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
+                       timestamp_to_pixels (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
                        thread_centre,
-                       HEADER_HEIGHT + timestamp_to_pixels (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
+                       timestamp_to_pixels (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
       gtk_style_context_remove_class (context, "thread");
 
       /* Thread label. */
@@ -468,7 +468,7 @@ dwl_timeline_draw (GtkWidget *widget,
           g_assert (thread_index < n_threads);
 
           thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
-          timestamp_y = HEADER_HEIGHT + timestamp_to_pixels (self, timestamp - min_timestamp);
+          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
 
           cairo_line_to (cr,
                          thread_centre + 0.5,
@@ -507,7 +507,7 @@ dwl_timeline_draw (GtkWidget *widget,
           g_assert (thread_index < n_threads);
 
           thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
-          timestamp_y = HEADER_HEIGHT + timestamp_to_pixels (self, timestamp - min_timestamp);
+          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
 
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
           dispatch_height = duration_to_pixels (self, data->duration);
@@ -556,7 +556,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
-      source_y = HEADER_HEIGHT + timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+      source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
 
       cairo_arc (cr,
                  source_x,
@@ -625,7 +625,7 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
   height = timestamp_to_pixels (self, max_timestamp - min_timestamp);
 
   if (height > 0)
-    height += HEADER_HEIGHT + FOOTER_HEIGHT;
+    height += FOOTER_HEIGHT;
 
   if (minimum_height != NULL)
     *minimum_height = MAX (1, height);
