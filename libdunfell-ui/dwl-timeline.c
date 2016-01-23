@@ -299,12 +299,28 @@ timestamp_to_pixels (DwlTimeline  *self,
   return HEADER_HEIGHT + timestamp * self->zoom;
 }
 
+static DflTimestamp
+pixels_to_timestamp (DwlTimeline  *self,
+                     gint          pixels)
+{
+  g_return_val_if_fail (pixels > HEADER_HEIGHT, 0);
+  return (pixels - HEADER_HEIGHT) / self->zoom;
+}
+
 static gint
 duration_to_pixels (DwlTimeline *self,
                     DflDuration  duration)
 {
   g_return_val_if_fail (duration <= G_MAXINT / self->zoom, G_MAXINT);
   return duration * self->zoom;
+}
+
+static gboolean
+pixel_is_timestamp (DwlTimeline *self,
+                    gint         pixel)
+{
+  return (pixel > HEADER_HEIGHT &&
+          pixel <= HEADER_HEIGHT + duration_to_pixels (self, self->duration));
 }
 
 static void
@@ -662,6 +678,8 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
       gdouble factor;
       gdouble delta;
       gfloat old_zoom;
+      DflTimestamp old_focus_timestamp;
+      gboolean use_focus_timestamp;
 
       switch (event->direction)
         {
@@ -691,8 +709,40 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
           break;
         }
 
+      /* Store some of the old state. */
+      use_focus_timestamp = pixel_is_timestamp (self, event->y);
+
+      if (use_focus_timestamp)
+        old_focus_timestamp = pixels_to_timestamp (self, event->y);
       old_zoom = dwl_timeline_get_zoom (self);
+
+      /* Set the updated zoom and schedule a redraw. */
       dwl_timeline_set_zoom (self, old_zoom * factor);
+
+      /* Adjust the scroll position so the cursor continues to be focused on the
+       * same point. They use the same units, modulo the zoom level.
+       *
+       * The fact that we check whether the parent widget is a GtkScrollable is
+       * because we don’t yet implement it ourselves, and hence expect to be
+       * implicitly packed in a GtkViewport. */
+      if (GTK_IS_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self))) &&
+          use_focus_timestamp)
+        {
+          GtkScrollable *scrollable;
+          GtkAdjustment *vadjustment;
+          gdouble new_position, old_position;
+
+          scrollable = GTK_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self)));
+          vadjustment = gtk_scrollable_get_vadjustment (scrollable);
+
+          new_position = timestamp_to_pixels (self, old_focus_timestamp);
+          old_position = event->y;
+
+          gtk_adjustment_set_value (vadjustment,
+                                    gtk_adjustment_get_value (vadjustment) -
+                                    old_position +
+                                    new_position);
+        }
 
       return GDK_EVENT_STOP;
     }
