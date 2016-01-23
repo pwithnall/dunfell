@@ -70,6 +70,7 @@ static gboolean dwl_timeline_scroll_event (GtkWidget      *widget,
                                            GdkEventScroll *event);
 
 static void add_default_css (GtkStyleContext *context);
+static void update_cache    (DwlTimeline     *self);
 
 #define ZOOM_MIN 0.001
 #define ZOOM_MAX 1000.0
@@ -85,6 +86,11 @@ struct _DwlTimeline
   GPtrArray/*<owned DflSource>*/ *sources;  /* owned */
 
   gfloat zoom;
+
+  /* Cached dimensions. */
+  DflTimestamp min_timestamp;
+  DflTimestamp max_timestamp;
+  DflDuration duration;
 };
 
 typedef enum
@@ -218,6 +224,8 @@ dwl_timeline_new (GPtrArray *threads,
   timeline->main_contexts = g_ptr_array_ref (main_contexts);
   timeline->sources = g_ptr_array_ref (sources);
 
+  update_cache (timeline);
+
   return timeline;
 }
 
@@ -255,6 +263,33 @@ add_default_css (GtkStyleContext *context)
 #define SOURCE_BORDER_WIDTH 1 /* pixel */
 #define SOURCE_OFFSET 20 /* pixels */
 #define SOURCE_WIDTH 10 /* pixels */
+
+/* Calculate various values from the data model we have (the threads, main
+ * contexts and sources). The calculated values will be used frequently when
+ * drawing. */
+static void
+update_cache (DwlTimeline *self)
+{
+  guint i;
+  DflTimestamp min_timestamp, max_timestamp;
+
+  min_timestamp = G_MAXUINT64;
+  max_timestamp = 0;
+
+  for (i = 0; i < self->threads->len; i++)
+    {
+      DflThread *thread = self->threads->pdata[i];
+      min_timestamp = MIN (min_timestamp, dfl_thread_get_new_timestamp (thread));
+      max_timestamp = MAX (max_timestamp, dfl_thread_get_free_timestamp (thread));
+    }
+
+  g_assert (max_timestamp >= min_timestamp);
+
+  /* Update the cache. */
+  self->min_timestamp = min_timestamp;
+  self->max_timestamp = max_timestamp;
+  self->duration = max_timestamp - min_timestamp;
+}
 
 static gint
 timestamp_to_pixels (DwlTimeline  *self,
@@ -370,17 +405,9 @@ dwl_timeline_draw (GtkWidget *widget,
   context = gtk_widget_get_style_context (widget);
   widget_width = gtk_widget_get_allocated_width (widget);
 
-  /* TODO: Move these pre-calculations elsewhere */
   n_threads = self->threads->len;
-  min_timestamp = G_MAXUINT64;
-  max_timestamp = 0;
-
-  for (i = 0; i < n_threads; i++)
-    {
-      DflThread *thread = self->threads->pdata[i];
-      min_timestamp = MIN (min_timestamp, dfl_thread_get_new_timestamp (thread));
-      max_timestamp = MAX (max_timestamp, dfl_thread_get_free_timestamp (thread));
-    }
+  min_timestamp = self->min_timestamp;
+  max_timestamp = self->max_timestamp;
 
   /* Draw the threads. */
   for (i = 0; i < n_threads; i++)
@@ -605,24 +632,11 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
                                    gint      *natural_height)
 {
   DwlTimeline *self = DWL_TIMELINE (widget);
-  DflTimestamp min_timestamp = G_MAXUINT64, max_timestamp = 0;
   gint height;
-  guint i;
 
   /* What’s the maximum height of any of the threads? */
-  for (i = 0; i < self->threads->len; i++)
-    {
-      DflThread *thread = self->threads->pdata[i];
-
-      min_timestamp = MIN (min_timestamp,
-                           dfl_thread_get_new_timestamp (thread));
-      max_timestamp = MAX (max_timestamp,
-                           dfl_thread_get_free_timestamp (thread));
-    }
-
-  g_assert (max_timestamp >= min_timestamp);
-
-  height = timestamp_to_pixels (self, max_timestamp - min_timestamp);
+  height = timestamp_to_pixels (self,
+                                self->max_timestamp - self->min_timestamp);
 
   if (height > 0)
     height += FOOTER_HEIGHT;
