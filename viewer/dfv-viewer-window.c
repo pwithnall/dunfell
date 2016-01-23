@@ -362,11 +362,7 @@ dfv_viewer_window_clear_file (DfvViewerWindow *self)
   gtk_window_set_title (GTK_WINDOW (self), _("Dunfell Viewer"));
   gtk_stack_set_visible_child_name (self->main_stack, "intro");
 
-  if (self->timeline != NULL)
-    {
-      gtk_widget_destroy (self->timeline);
-      self->timeline = NULL;
-    }
+  g_clear_pointer (&self->timeline, gtk_widget_destroy);
 }
 
 static void
