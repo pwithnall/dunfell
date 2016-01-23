@@ -652,10 +652,10 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
       switch (event->direction)
         {
         case GDK_SCROLL_UP:
-          factor = 0.5;
+          factor = 2.0;
           break;
         case GDK_SCROLL_DOWN:
-          factor = 2.0;
+          factor = 0.5;
           break;
         case GDK_SCROLL_SMOOTH:
           g_assert (gdk_event_get_scroll_deltas ((GdkEvent *) event, NULL,
