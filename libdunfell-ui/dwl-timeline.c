@@ -266,14 +266,13 @@ add_default_css (GtkStyleContext *context)
   css =
     "timeline.thread_guide { color: #cccccc }\n"
     "timeline.thread { color: rgb(139, 142, 143) }\n"
-    "timeline.main_context_dispatch { background-color: red; "
-                                     "border: 1px solid black }\n"
-    "timeline.main_context_dispatch_hover { background-color: blue }\n"
-    "timeline.main_context_dispatch_selected { background-color: green }\n"
-    "timeline.source { background-color: blue; "
-                      "color: #cccccc }\n"
-    "timeline.source_hover { background-color: red }\n"
-   "timeline.source_selected { background-color: green }\n";
+    "timeline.main_context_dispatch { background-color: #3465a4; "
+                                     "border: 1px solid #2e3436 }\n"
+    "timeline.main_context_dispatch_hover { background-color: #729fcf }\n"
+    "timeline.main_context_dispatch_selected { background-color: #73d216 }\n"
+    "timeline.source { background-color: #c17d11 }\n"
+    "timeline.source_hover { background-color: #e9b96e }\n"
+    "timeline.source_selected { background-color: #73d216 }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
