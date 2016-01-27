@@ -68,12 +68,21 @@ static void dwl_timeline_get_preferred_height (GtkWidget *widget,
                                                gint      *natural_height);
 static gboolean dwl_timeline_scroll_event (GtkWidget      *widget,
                                            GdkEventScroll *event);
+static gboolean dwl_timeline_motion_notify_event (GtkWidget      *widget,
+                                                  GdkEventMotion *event);
 
 static void add_default_css (GtkStyleContext *context);
 static void update_cache    (DwlTimeline     *self);
 
 #define ZOOM_MIN 0.001
 #define ZOOM_MAX 1000.0
+
+typedef enum
+{
+  ELEMENT_NONE,
+  ELEMENT_SOURCE,
+  ELEMENT_CONTEXT_DISPATCH,
+} DwlTimelineElement;
 
 struct _DwlTimeline
 {
@@ -91,6 +100,13 @@ struct _DwlTimeline
   DflTimestamp min_timestamp;
   DflTimestamp max_timestamp;
   DflDuration duration;
+
+  /* Current hover item. */
+  struct {
+    DwlTimelineElement type;
+    guint index;
+    DflTimestamp timestamp;
+  } hover_element;
 };
 
 typedef enum
@@ -119,6 +135,7 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
   widget_class->get_preferred_width = dwl_timeline_get_preferred_width;
   widget_class->get_preferred_height = dwl_timeline_get_preferred_height;
   widget_class->scroll_event = dwl_timeline_scroll_event;
+  widget_class->motion_notify_event = dwl_timeline_motion_notify_event;
 
   /* TODO: Proper accessibility support. */
   gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_CHART);
@@ -241,8 +258,10 @@ add_default_css (GtkStyleContext *context)
     "timeline.thread { color: rgb(139, 142, 143) }\n"
     "timeline.main_context_dispatch { background-color: red; "
                                      "border: 1px solid black }\n"
+    "timeline.main_context_dispatch_hover { background-color: blue }\n"
     "timeline.source { background-color: blue; "
-                      "color: #cccccc }\n";
+                      "color: #cccccc }\n"
+    "timeline.source_hover { background-color: red }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
@@ -346,7 +365,7 @@ dwl_timeline_realize (GtkWidget *widget)
   attributes.width = allocation.width;
   attributes.height = allocation.height;
   attributes.event_mask = gtk_widget_get_events (widget) |
-                          GDK_SCROLL_MASK;
+                          GDK_SCROLL_MASK | GDK_POINTER_MOTION_MASK;
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
   self->event_window = gdk_window_new (parent_window,
@@ -555,6 +574,11 @@ dwl_timeline_draw (GtkWidget *widget,
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
           dispatch_height = duration_to_pixels (self, data->duration);
 
+          if (self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
+              self->hover_element.index == i &&
+              self->hover_element.timestamp == timestamp)
+            gtk_style_context_add_class (context, "main_context_dispatch_hover");
+
           gtk_render_background (context, cr,
                                  thread_centre - dispatch_width / 2.0,
                                  timestamp_y,
@@ -565,6 +589,11 @@ dwl_timeline_draw (GtkWidget *widget,
                             timestamp_y,
                             dispatch_width,
                             dispatch_height);
+
+          if (self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
+              self->hover_element.index == i &&
+              self->hover_element.timestamp == timestamp)
+            gtk_style_context_remove_class (context, "main_context_dispatch_hover");
         }
 
       gtk_style_context_remove_class (context, "main_context_dispatch");
@@ -591,6 +620,11 @@ dwl_timeline_draw (GtkWidget *widget,
 
       /* Source circle. */
       gtk_style_context_add_class (context, "source");
+
+      if (self->hover_element.type == ELEMENT_SOURCE &&
+          self->hover_element.index == i)
+        gtk_style_context_add_class (context, "source_hover");
+
       cairo_save (cr);
 
       cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
@@ -620,6 +654,11 @@ dwl_timeline_draw (GtkWidget *widget,
       cairo_stroke (cr);
 
       cairo_restore (cr);
+
+      if (self->hover_element.type == ELEMENT_SOURCE &&
+          self->hover_element.index == i)
+        gtk_style_context_remove_class (context, "source_hover");
+
       gtk_style_context_remove_class (context, "source");
     }
 
@@ -748,6 +787,149 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
     }
 
   return GDK_EVENT_PROPAGATE;
+}
+
+static gboolean
+dwl_timeline_motion_notify_event (GtkWidget      *widget,
+                                  GdkEventMotion *event)
+{
+  /* Try and work out which part of the diagram we’re on top of. In the absence
+   * of child actors, this is going to end up being a horrible mess of
+   * hard-coded checks for collisions with various rendered primitives. */
+
+  DwlTimeline *self = DWL_TIMELINE (widget);
+  gint widget_width;
+  guint i, n_threads;
+  DflTimestamp min_timestamp;
+  gdouble thread_width, nearest_thread_centre;
+  guint nearest_thread_index;
+  DwlTimelineElement new_hover_type = ELEMENT_NONE;
+  guint new_hover_index = 0;
+  DflTimestamp new_hover_timestamp = 0;
+
+  widget_width = gtk_widget_get_allocated_width (widget);
+  n_threads = self->threads->len;
+  min_timestamp = self->min_timestamp;
+
+  /* Find the nearest thread. */
+  thread_width = widget_width / n_threads;
+  nearest_thread_index = event->x / thread_width;
+  nearest_thread_centre = widget_width / n_threads *
+                          (2 * nearest_thread_index + 1) / 2;
+
+  if (ABS (nearest_thread_centre - event->x) > SOURCE_OFFSET + SOURCE_WIDTH / 2.0)
+    {
+      /* No hover element found. */
+      new_hover_type = ELEMENT_NONE;
+      goto done;
+    }
+
+  /* Within nearest_thread_index’s column. Search for sources. */
+  for (i = 0; i < self->sources->len; i++)
+    {
+      DflSource *source = self->sources->pdata[i];
+      gdouble thread_centre, source_x, source_y;
+      guint thread_index;
+
+      /* TODO: This should not be so slow. */
+      for (thread_index = 0; thread_index < n_threads; thread_index++)
+        {
+          if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+              dfl_source_get_new_thread_id (source))
+            break;
+        }
+      g_assert (thread_index < n_threads);
+
+      if (thread_index != nearest_thread_index)
+        continue;
+
+      thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+
+      /* Calculate the centre of the source. */
+      source_x = thread_centre - SOURCE_OFFSET;
+      source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+
+      /* See if the event was within this source. */
+      if (event->x >= source_x - SOURCE_WIDTH / 2.0 &&
+          event->x <= source_x + SOURCE_WIDTH / 2.0 &&
+          event->y >= source_y - SOURCE_WIDTH / 2.0 &&
+          event->y <= source_y + SOURCE_WIDTH / 2.0)
+        {
+          new_hover_type = ELEMENT_SOURCE;
+          new_hover_index = i;
+          goto done;
+        }
+    }
+
+  /* What about main context dispatches? */
+  for (i = 0; i < self->main_contexts->len; i++)
+    {
+      DflMainContext *main_context = self->main_contexts->pdata[i];
+      DflTimeSequenceIter iter;
+      DflTimestamp timestamp;
+      DflThreadOwnershipData *data;
+
+      /* Iterate through the thread ownership events. */
+
+      /* TODO: Set the start timestamp according to the clip area */
+      dfl_main_context_dispatch_iter (main_context, &iter, 0);
+
+      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
+        {
+          gdouble thread_centre, dispatch_width, dispatch_height;
+          gdouble dispatch_left, dispatch_right, dispatch_top, dispatch_bottom;
+          gint timestamp_y;
+          guint thread_index;
+
+          /* TODO: This should not be so slow. */
+          for (thread_index = 0; thread_index < n_threads; thread_index++)
+            {
+              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+                  data->thread_id)
+                break;
+            }
+          g_assert (thread_index < n_threads);
+
+          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
+
+          dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
+          dispatch_height = duration_to_pixels (self, data->duration);
+
+          dispatch_left = thread_centre - dispatch_width / 2.0;
+          dispatch_right = thread_centre + dispatch_width / 2.0;
+          dispatch_bottom = timestamp_y;
+          dispatch_top = timestamp_y + dispatch_height;
+
+          if (event->x >= dispatch_left &&
+              event->x <= dispatch_right &&
+              event->y >= dispatch_bottom &&
+              event->y <= dispatch_top)
+            {
+              new_hover_type = ELEMENT_CONTEXT_DISPATCH;
+              new_hover_index = i;
+              new_hover_timestamp = timestamp;
+              goto done;
+            }
+        }
+    }
+
+  /* No hover element found. */
+  self->hover_element.type = ELEMENT_NONE;
+
+done:
+  if (new_hover_type != self->hover_element.type ||
+      new_hover_index != self->hover_element.index ||
+      new_hover_timestamp != self->hover_element.timestamp)
+    {
+      self->hover_element.type = new_hover_type;
+      self->hover_element.index = new_hover_index;
+      self->hover_element.timestamp = new_hover_timestamp;
+
+      gtk_widget_queue_draw (widget);
+    }
+
+  return GDK_EVENT_STOP;
 }
 
 /**
