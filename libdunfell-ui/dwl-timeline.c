@@ -175,7 +175,6 @@ dwl_timeline_init (DwlTimeline *self)
   add_default_css (gtk_widget_get_style_context (GTK_WIDGET (self)));
 
   gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
-  gtk_widget_add_events (GTK_WIDGET (self), GDK_SCROLL_MASK);
 }
 
 static void
