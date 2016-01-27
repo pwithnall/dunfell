@@ -34,6 +34,7 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 #include <math.h>
+#include <string.h>
 
 #include "dfl-main-context.h"
 #include "dfl-source.h"
@@ -70,6 +71,8 @@ static gboolean dwl_timeline_scroll_event (GtkWidget      *widget,
                                            GdkEventScroll *event);
 static gboolean dwl_timeline_motion_notify_event (GtkWidget      *widget,
                                                   GdkEventMotion *event);
+static gboolean dwl_timeline_button_release_event (GtkWidget      *widget,
+                                                   GdkEventButton *event);
 
 static void add_default_css (GtkStyleContext *context);
 static void update_cache    (DwlTimeline     *self);
@@ -107,6 +110,13 @@ struct _DwlTimeline
     guint index;
     DflTimestamp timestamp;
   } hover_element;
+
+  /* Currently selected item. */
+  struct {
+    DwlTimelineElement type;
+    guint index;
+    DflTimestamp timestamp;
+  } selected_element;
 };
 
 typedef enum
@@ -136,6 +146,7 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
   widget_class->get_preferred_height = dwl_timeline_get_preferred_height;
   widget_class->scroll_event = dwl_timeline_scroll_event;
   widget_class->motion_notify_event = dwl_timeline_motion_notify_event;
+  widget_class->button_release_event = dwl_timeline_button_release_event;
 
   /* TODO: Proper accessibility support. */
   gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_CHART);
@@ -259,9 +270,11 @@ add_default_css (GtkStyleContext *context)
     "timeline.main_context_dispatch { background-color: red; "
                                      "border: 1px solid black }\n"
     "timeline.main_context_dispatch_hover { background-color: blue }\n"
+    "timeline.main_context_dispatch_selected { background-color: green }\n"
     "timeline.source { background-color: blue; "
                       "color: #cccccc }\n"
-    "timeline.source_hover { background-color: red }\n";
+    "timeline.source_hover { background-color: red }\n"
+   "timeline.source_selected { background-color: green }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
@@ -365,7 +378,8 @@ dwl_timeline_realize (GtkWidget *widget)
   attributes.width = allocation.width;
   attributes.height = allocation.height;
   attributes.event_mask = gtk_widget_get_events (widget) |
-                          GDK_SCROLL_MASK | GDK_POINTER_MOTION_MASK;
+                          GDK_SCROLL_MASK | GDK_POINTER_MOTION_MASK |
+                          GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK;
   attributes_mask = GDK_WA_X | GDK_WA_Y;
 
   self->event_window = gdk_window_new (parent_window,
@@ -578,6 +592,10 @@ dwl_timeline_draw (GtkWidget *widget,
               self->hover_element.index == i &&
               self->hover_element.timestamp == timestamp)
             gtk_style_context_add_class (context, "main_context_dispatch_hover");
+          if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH &&
+              self->selected_element.index == i &&
+              self->selected_element.timestamp == timestamp)
+            gtk_style_context_add_class (context, "main_context_dispatch_selected");
 
           gtk_render_background (context, cr,
                                  thread_centre - dispatch_width / 2.0,
@@ -590,6 +608,10 @@ dwl_timeline_draw (GtkWidget *widget,
                             dispatch_width,
                             dispatch_height);
 
+          if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH &&
+              self->selected_element.index == i &&
+              self->selected_element.timestamp == timestamp)
+            gtk_style_context_remove_class (context, "main_context_dispatch_selected");
           if (self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
               self->hover_element.index == i &&
               self->hover_element.timestamp == timestamp)
@@ -624,6 +646,9 @@ dwl_timeline_draw (GtkWidget *widget,
       if (self->hover_element.type == ELEMENT_SOURCE &&
           self->hover_element.index == i)
         gtk_style_context_add_class (context, "source_hover");
+      if (self->selected_element.type == ELEMENT_SOURCE &&
+          self->selected_element.index == i)
+        gtk_style_context_add_class (context, "source_selected");
 
       cairo_save (cr);
 
@@ -655,6 +680,9 @@ dwl_timeline_draw (GtkWidget *widget,
 
       cairo_restore (cr);
 
+      if (self->selected_element.type == ELEMENT_SOURCE &&
+          self->selected_element.index == i)
+        gtk_style_context_remove_class (context, "source_selected");
       if (self->hover_element.type == ELEMENT_SOURCE &&
           self->hover_element.index == i)
         gtk_style_context_remove_class (context, "source_hover");
@@ -926,6 +954,26 @@ done:
       self->hover_element.index = new_hover_index;
       self->hover_element.timestamp = new_hover_timestamp;
 
+      gtk_widget_queue_draw (widget);
+    }
+
+  return GDK_EVENT_STOP;
+}
+
+static gboolean
+dwl_timeline_button_release_event (GtkWidget      *widget,
+                                   GdkEventButton *event)
+{
+  DwlTimeline *self = DWL_TIMELINE (widget);
+
+  /* If an element is being hovered over, turn it into the currently selected
+   * element. */
+  if (self->hover_element.type != self->selected_element.type ||
+      self->hover_element.index != self->selected_element.index ||
+      self->hover_element.timestamp != self->selected_element.timestamp)
+    {
+      memcpy (&self->selected_element, &self->hover_element,
+              sizeof (self->selected_element));
       gtk_widget_queue_draw (widget);
     }
 
