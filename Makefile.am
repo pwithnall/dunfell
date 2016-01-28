@@ -326,7 +326,7 @@ libdunfell/libdunfell-@DFL_API_VERSION@.vapi: libdunfell/Dunfell-@DFL_API_VERSIO
 
 VAPIGEN_VAPIS += libdunfell/libdunfell-@DFL_API_VERSION@.vapi
 
-libdunfell_libdunfell_@DFL_API_VERSION@_vapi_DEPS =
+libdunfell_libdunfell_@DFL_API_VERSION@_vapi_DEPS = gio-2.0
 libdunfell_libdunfell_@DFL_API_VERSION@_vapi_METADATADIRS = $(srcdir)/libdunfell
 libdunfell_libdunfell_@DFL_API_VERSION@_vapi_FILES = libdunfell/Dunfell-@DFL_API_VERSION@.gir
 
@@ -340,7 +340,7 @@ libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.vapi: libdunfell-ui/DunfellUi-@DWL
 
 VAPIGEN_VAPIS += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.vapi
 
-libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_DEPS = gtk+-3.0
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_DEPS = gio-2.0 gtk+-3.0
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_METADATADIRS = $(srcdir)/libdunfell-ui
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_FILES = libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
 
