@@ -12,6 +12,8 @@ DWL_CHECK_VERSION
 <TITLE>DwlTimeline</TITLE>
 DwlTimeline
 dwl_timeline_new
+dwl_timeline_get_zoom
+dwl_timeline_set_zoom
 <SUBSECTION Standard>
 DWL_TYPE_TIMELINE
 </SECTION>
