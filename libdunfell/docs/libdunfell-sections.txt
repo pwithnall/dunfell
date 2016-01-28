@@ -64,6 +64,9 @@ DFL_ID_INVALID
 DflThread
 dfl_thread_factory_from_event_sequence
 dfl_thread_new
+dfl_thread_get_id
+dfl_thread_get_new_timestamp
+dfl_thread_get_free_timestamp
 <SUBSECTION Standard>
 DFL_TYPE_THREAD
 </SECTION>
@@ -74,6 +77,37 @@ DFL_TYPE_THREAD
 DflMainContext
 dfl_main_context_factory_from_event_sequence
 dfl_main_context_new
+dfl_main_context_get_id
+dfl_main_context_get_new_timestamp
+dfl_main_context_get_free_timestamp
+dfl_main_context_thread_ownership_iter
+dfl_main_context_dispatch_iter
 <SUBSECTION Standard>
 DFL_TYPE_MAIN_CONTEXT
+</SECTION>
+
+<SECTION>
+<FILE>dfl-time-sequence</FILE>
+<TITLE>DflTimeSequence</TITLE>
+dfl_time_sequence_init
+dfl_time_sequence_clear
+dfl_time_sequence_append
+dfl_time_sequence_get_last_element
+dfl_time_sequence_iter_init
+dfl_time_sequence_iter_next
+</SECTION>
+
+<SECTION>
+<FILE>dfl-source</FILE>
+<TITLE>DflSource</TITLE>
+DflSource
+dfl_source_factory_from_event_sequence
+dfl_source_new
+dfl_source_get_id
+dfl_source_get_new_thread_id
+dfl_source_get_new_timestamp
+dfl_source_get_free_timestamp
+dfl_source_dispatch_iter
+<SUBSECTION Standard>
+DFL_TYPE_SOURCE
 </SECTION>

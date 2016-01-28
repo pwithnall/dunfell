@@ -41,6 +41,20 @@ DflEventSequence *dfl_event_sequence_new (const DflEvent **events,
                                           guint            n_events,
                                           DflTimestamp     initial_timestamp);
 
+/**
+ * DflEventWalker:
+ * @sequence: a #DflEventSequence
+ * @event: (transfer none): the current event
+ * @user_data: user data passed in to dfl_event_sequence_add_walker()
+ *
+ * Callback from dfl_event_sequence_walk() emitted for each event in the
+ * sequence, in order. The @user_data is as passed in to
+ * dfl_event_sequence_add_walker().
+ *
+ * The sequence must not be modified while walking over it.
+ *
+ * Since: UNRELEASED
+ */
 typedef void (*DflEventWalker) (DflEventSequence *sequence,
                                 DflEvent         *event,
                                 gpointer          user_data);

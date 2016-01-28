@@ -392,7 +392,7 @@ MAINTAINERCLEANFILES += \
 	m4/gtk-doc.m4 \
 	$(NULL)
 
-DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc --disable-vala
 
 # pkg-config data
 # Note that the template file is called libdunfell.pc.in, but generates a
