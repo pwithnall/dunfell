@@ -2,7 +2,7 @@ AC_PREREQ(2.65)
 
 # Release version
 m4_define([dfl_version_major],[0])
-m4_define([dfl_version_minor],[1])
+m4_define([dfl_version_minor],[2])
 m4_define([dfl_version_micro],[0])
 
 # API version
