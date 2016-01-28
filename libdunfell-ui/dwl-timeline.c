@@ -271,7 +271,7 @@ add_default_css (GtkStyleContext *context)
     "timeline.main_context_dispatch { background-color: #3465a4; "
                                      "border: 1px solid #2e3436 }\n"
     "timeline.main_context_dispatch_hover { background-color: #729fcf }\n"
-    "timeline.main_context_dispatch_selected { background-color: #73d216 }\n"
+    "timeline.main_context_dispatch_selected { background-color: #729fcf }\n"
     "timeline.source { background-color: #c17d11 }\n"
     "timeline.source_hover { background-color: #e9b96e }\n"
     "timeline.source_selected { background-color: #73d216 }\n"
@@ -916,6 +916,81 @@ dwl_timeline_draw (GtkWidget *widget,
 
       gtk_style_context_remove_class (context, "source_selected");
       gtk_style_context_remove_class (context, "source");
+    }
+  else if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH)
+    {
+      DflMainContext *main_context;
+      DflTimeSequenceIter main_context_iter;
+      DflTimestamp main_context_timestamp;
+      DflMainContextDispatchData *main_context_data;
+
+      /* For each of the sources in this main context dispatch, highlight them
+       * and draw their dispatch lines. */
+      main_context = self->main_contexts->pdata[self->selected_element.index];
+      dfl_main_context_dispatch_iter (main_context, &main_context_iter,
+                                      self->selected_element.timestamp);
+
+      do
+        {
+          dfl_time_sequence_iter_next (&main_context_iter,
+                                       &main_context_timestamp,
+                                       (gpointer *) &main_context_data);
+        }
+      while (main_context_timestamp < self->selected_element.timestamp);
+
+      g_assert_cmpuint (self->selected_element.timestamp, ==,
+                        main_context_timestamp);
+
+      /* TODO: Speed this up. Perhaps move the list of dispatched sources into
+       * DflMainContextDispatchData? */
+      for (i = 0; i < self->sources->len; i++)
+        {
+          DflSource *source = self->sources->pdata[i];
+          gdouble thread_centre, source_x, source_y;
+          guint thread_index;
+          DflTimeSequenceIter source_iter;
+          DflTimestamp source_timestamp;
+          DflSourceDispatchData *source_data;
+
+          context = gtk_widget_get_style_context (GTK_WIDGET (self));
+          widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
+
+          min_timestamp = self->min_timestamp;
+          n_threads = self->threads->len;
+
+          /* TODO: This should not be so slow. */
+          for (thread_index = 0; thread_index < n_threads; thread_index++)
+            {
+              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+                  dfl_source_get_new_thread_id (source))
+                break;
+            }
+          g_assert (thread_index < n_threads);
+
+          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+
+          /* Calculate the centre of the source. */
+          source_x = thread_centre - SOURCE_OFFSET;
+          source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+
+          /* Render the source’s dispatches. Each dispatch is rendered as a
+           * horizontal line from the thread where it occurs, across to line up with
+           * the column containing the source, round the corner, then up to where
+           * the source is rendered (the g_source_new()). */
+
+          /* TODO: Start the timestamp at the render area. */
+          dfl_source_dispatch_iter (source, &source_iter, 0);
+
+          while (dfl_time_sequence_iter_next (&source_iter, &source_timestamp,
+                                              (gpointer *) &source_data))
+            {
+              if (source_data->thread_id != main_context_data->thread_id)
+                continue;
+
+              draw_source_dispatch_line (self, cr, source, source_x, source_y,
+                                         source_timestamp, source_data);
+            }
+        }
     }
 
   return FALSE;
