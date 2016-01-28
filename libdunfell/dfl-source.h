@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -23,8 +23,24 @@
 #include <glib-object.h>
 
 #include "dfl-event-sequence.h"
+#include "dfl-time-sequence.h"
 
 G_BEGIN_DECLS
+
+/**
+ * DflSourceDispatchData:
+ * @thread_id: TODO
+ * @duration: TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef struct
+{
+  DflThreadId thread_id;
+  DflDuration duration;
+} DflSourceDispatchData;
 
 /**
  * DflSource:
@@ -48,6 +64,10 @@ DflTimestamp dfl_source_get_new_timestamp (DflSource *self);
 DflTimestamp dfl_source_get_free_timestamp (DflSource *self);
 
 DflThreadId dfl_source_get_new_thread_id (DflSource *self);
+
+void dfl_source_dispatch_iter (DflSource           *self,
+                               DflTimeSequenceIter *iter,
+                               DflTimestamp         start);
 
 G_END_DECLS
 

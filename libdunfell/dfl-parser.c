@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -91,6 +91,8 @@ const EventData event_type_array[] =
   { "g_main_context_after_dispatch", 1 },
   { "g_source_new", 6 },
   { "g_source_before_free", 3 },
+  { "g_source_before_dispatch", 4 },
+  { "g_source_after_dispatch", 3 },
 };
 
 static const EventData *

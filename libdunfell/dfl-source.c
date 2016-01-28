@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -40,6 +40,8 @@
 #include "dfl-time-sequence.h"
 
 
+static void dfl_source_dispose (GObject *object);
+
 struct _DflSource
 {
   GObject parent;
@@ -53,6 +55,10 @@ struct _DflSource
   DflTimestamp free_timestamp;
 
   DflThreadId new_thread_id;
+
+  /* Sequence of thread IDs and the duration between the start and end of the
+   * dispatch. A duration of ≥ 0 is valid; < 0 is not. */
+  DflTimeSequence/*<DflMainContextDispatchData>*/ dispatch_events;
 };
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
@@ -60,13 +66,27 @@ G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
 static void
 dfl_source_class_init (DflSourceClass *klass)
 {
-  /* Nothing to see here. */
+  GObjectClass *object_class = (GObjectClass *) klass;
+
+  object_class->dispose = dfl_source_dispose;
 }
 
 static void
 dfl_source_init (DflSource *self)
 {
-  /* Nothing to see here. */
+  dfl_time_sequence_init (&self->dispatch_events,
+                          sizeof (DflSourceDispatchData), NULL, 0);
+}
+
+static void
+dfl_source_dispose (GObject *object)
+{
+  DflSource *self = DFL_SOURCE (object);
+
+  dfl_time_sequence_clear (&self->dispatch_events);
+
+  /* Chain up to the parent class */
+  G_OBJECT_CLASS (dfl_source_parent_class)->dispose (object);
 }
 
 /**
@@ -96,6 +116,111 @@ dfl_source_new (DflId        id,
   source->free_timestamp = new_timestamp;
 
   return source;
+}
+
+static void
+source_before_after_dispatch_cb (DflEventSequence *sequence,
+                                 DflEvent         *event,
+                                 gpointer          user_data)
+{
+  DflSource *source = user_data;
+  gboolean is_before;
+  DflTimestamp timestamp;
+  DflThreadId thread_id;
+
+  /* Does this event correspond to the right source? */
+  if (dfl_event_get_parameter_id (event, 0) != source->id)
+    return;
+
+  is_before = (dfl_event_get_event_type (event) ==
+               g_intern_static_string ("g_source_before_dispatch"));
+  timestamp = dfl_event_get_timestamp (event);
+  thread_id = dfl_event_get_thread_id (event);
+
+  if (is_before)
+    {
+      DflSourceDispatchData *last_element;
+      DflTimestamp last_timestamp;
+      DflSourceDispatchData *next_element;
+
+      /* Check that the previous element in the sequence has a valid (non-zero)
+       * duration, otherwise no //after// event was logged and something very
+       * odd is happening.
+       *
+       * @last_element will be %NULL if this is the first //before//. */
+      last_element = dfl_time_sequence_get_last_element (&source->dispatch_events,
+                                                         &last_timestamp);
+
+      if (last_element != NULL && last_element->duration < 0)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw two g_source_dispatch() calls in a row for the "
+                     "same context with no finish in between.");
+
+          /* Fudge it. */
+          last_element->duration = timestamp - last_timestamp;
+        }
+
+      /* Start the next element. */
+      next_element = dfl_time_sequence_append (&source->dispatch_events,
+                                               timestamp);
+      next_element->thread_id = thread_id;
+      next_element->duration = -1;  /* will be set by the paired //after// */
+    }
+  else
+    {
+      DflSourceDispatchData *last_element;
+      DflTimestamp last_timestamp;
+
+      /* Check that the previous element in the sequence has an invalid (zero)
+       * duration, otherwise no //before// event was logged.
+       *
+       * @last_element should only be %NULL if something odd is happening. */
+      last_element = dfl_time_sequence_get_last_element (&source->dispatch_events,
+                                                         &last_timestamp);
+
+      if (last_element == NULL)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw a g_main_context_dispatch() call finish for a "
+                     "context with no g_main_context_dispatch() call starting "
+                     "beforehand.");
+
+          /* Fudge it. */
+          last_element = dfl_time_sequence_append (&source->dispatch_events,
+                                                   timestamp);
+          last_timestamp = timestamp;
+          last_element->thread_id = thread_id;
+          last_element->duration = -1;
+        }
+      else if (last_element->duration >= 0)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw two g_source_dispatch() calls finish in a row "
+                     "for the same context with no g_source_dispatch() "
+                     "start in between.");
+        }
+      else if (last_element->thread_id != thread_id)
+        {
+          /* TODO: Some better error reporting framework than g_warning(). */
+          g_warning ("Saw a g_source_dispatch() call finish for one "
+                     "thread immediately following a "
+                     "g_source_dispatch() call for a different one, "
+                     "both on the same context.");
+
+          /* Fudge it. */
+          last_element->duration = timestamp - last_timestamp;
+
+          last_element = dfl_time_sequence_append (&source->dispatch_events,
+                                                   timestamp);
+          last_timestamp = timestamp;
+          last_element->thread_id = thread_id;
+          last_element->duration = -1;
+        }
+
+      /* Update the element’s duration. */
+      last_element->duration = timestamp - last_timestamp;
+    }
 }
 
 static void
@@ -131,6 +256,14 @@ source_new_cb (DflEventSequence *sequence,
 
   dfl_event_sequence_add_walker (sequence, "g_source_before_free",
                                  source_before_free_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_before_dispatch",
+                                 source_before_after_dispatch_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_after_dispatch",
+                                 source_before_after_dispatch_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
 
@@ -230,4 +363,25 @@ dfl_source_get_new_thread_id (DflSource *self)
   g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
 
   return self->new_thread_id;
+}
+
+/**
+ * dfl_source_dispatch_iter:
+ * @self: a #DflSource
+ * @iter: an uninitialised #DflTimeSequenceIter to use
+ * @start: optional timestamp to start iterating from, or 0
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_source_dispatch_iter (DflSource           *self,
+                          DflTimeSequenceIter *iter,
+                          DflTimestamp         start)
+{
+  g_return_if_fail (DFL_IS_SOURCE (self));
+  g_return_if_fail (iter != NULL);
+
+  dfl_time_sequence_iter_init (iter, &self->dispatch_events, start);
 }
