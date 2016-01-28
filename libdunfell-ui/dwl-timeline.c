@@ -266,6 +266,8 @@ add_default_css (GtkStyleContext *context)
   css =
     "timeline.thread_guide { color: #cccccc }\n"
     "timeline.thread { color: rgb(139, 142, 143) }\n"
+    "timeline.millisecond_marker { color: #d3d7cf }\n"
+    "timeline.ten_millisecond_marker { color: #babdb6 }\n"
     "timeline.main_context_dispatch { background-color: #3465a4; "
                                      "border: 1px solid #2e3436 }\n"
     "timeline.main_context_dispatch_hover { background-color: #729fcf }\n"
@@ -451,7 +453,7 @@ dwl_timeline_draw (GtkWidget *widget,
   GtkStyleContext *context;
   gint widget_width;
   guint i, n_threads;
-  DflTimestamp min_timestamp, max_timestamp;
+  DflTimestamp min_timestamp, max_timestamp, t;
 
   context = gtk_widget_get_style_context (widget);
   widget_width = gtk_widget_get_allocated_width (widget);
@@ -459,6 +461,28 @@ dwl_timeline_draw (GtkWidget *widget,
   n_threads = self->threads->len;
   min_timestamp = self->min_timestamp;
   max_timestamp = self->max_timestamp;
+
+  /* Draw the millisecond and 10-millisecond markers. Only draw the millisecond
+   * markers if there’s enough space to render them. */
+  for (t = 0;
+       t <= (max_timestamp - min_timestamp) / 1000;
+       t += (self->zoom < 0.01) ? 10 : 1)
+    {
+      const gchar *class_name;
+
+      if (t % 10 == 0)
+        class_name = "ten_millisecond_marker";
+      else
+        class_name = "millisecond_marker";
+
+      gtk_style_context_add_class (context, class_name);
+      gtk_render_line (context, cr,
+                       0.0,
+                       timestamp_to_pixels (self, t * 1000),
+                       widget_width,
+                       timestamp_to_pixels (self, t * 1000));
+      gtk_style_context_remove_class (context, class_name);
+    }
 
   /* Draw the threads. */
   for (i = 0; i < n_threads; i++)
