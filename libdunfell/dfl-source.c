@@ -248,8 +248,6 @@ source_new_cb (DflEventSequence *sequence,
   GPtrArray/*<owned DflSource>*/ *sources = user_data;
   DflSource *source = NULL;
 
-//printdln (",", "g_source_new", gettimeofday_us (), tid (), source, usymname (source_funcs->prepare), usymname (source_funcs->check), usymname (source_funcs->dispatch), usymname (source_funcs->finalize), struct_size);
-
   source = dfl_source_new (dfl_event_get_parameter_id (event, 0),
                            dfl_event_get_timestamp (event),
                            dfl_event_get_thread_id (event));
