@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -24,6 +24,7 @@
 #include <dunfell/dfl-event-sequence.h>
 #include <dunfell/dfl-main-context.h>
 #include <dunfell/dfl-parser.h>
+#include <dunfell/dfl-source.h>
 #include <dunfell/dfl-thread.h>
 #include <dunfell/dfl-time-sequence.h>
 #include <dunfell/dfl-types.h>
