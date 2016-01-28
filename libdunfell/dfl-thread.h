@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -36,12 +36,14 @@ G_BEGIN_DECLS
 #define DFL_TYPE_THREAD dfl_thread_get_type ()
 G_DECLARE_FINAL_TYPE (DflThread, dfl_thread, DFL, THREAD, GObject)
 
-DflThread *dfl_thread_new (DflThreadId  id,
-                           DflTimestamp new_timestamp);
+DflThread *dfl_thread_new (DflThreadId   id,
+                           DflTimestamp  new_timestamp,
+                           const gchar  *name);
 
 GPtrArray *dfl_thread_factory_from_event_sequence (DflEventSequence *sequence);
 
 DflThreadId dfl_thread_get_id (DflThread *self);
+const gchar *dfl_thread_get_name (DflThread *self);
 
 DflTimestamp dfl_thread_get_new_timestamp (DflThread *self);
 DflTimestamp dfl_thread_get_free_timestamp (DflThread *self);

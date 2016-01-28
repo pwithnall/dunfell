@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -340,4 +340,45 @@ dfl_event_get_parameter_id (DflEvent *self,
   g_return_val_if_fail (parameter_index < g_strv_length (self->parameters),
                         DFL_ID_INVALID);
   return DFL_ID_INVALID;
+}
+
+/**
+ * dfl_event_get_parameter_utf8:
+ * @self: a #DflEvent
+ * @parameter_index: index of the parameter
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+const gchar *
+dfl_event_get_parameter_utf8 (DflEvent *self,
+                              guint     parameter_index)
+{
+  gsize i;
+
+  g_return_val_if_fail (DFL_IS_EVENT (self), NULL);
+
+  for (i = 0; self->parameters[i] != NULL; i++)
+    {
+      if (i == parameter_index)
+        {
+          if (!g_utf8_validate (self->parameters[i], -1, NULL))
+            {
+              g_warning ("Event parameter %" G_GSIZE_FORMAT " cannot be "
+                         "interpreted as UTF-8.", i);
+              return NULL;
+            }
+
+          return self->parameters[i];
+        }
+    }
+
+  /* Invalid @parameter_index. This check will always be hit if this code is
+   * reached, as the check is actually performed more efficiently in the loop
+   * above. */
+  g_return_val_if_fail (parameter_index < g_strv_length (self->parameters),
+                        NULL);
+  return NULL;
 }

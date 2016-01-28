@@ -93,6 +93,7 @@ const EventData event_type_array[] =
   { "g_source_before_free", 3 },
   { "g_source_before_dispatch", 4 },
   { "g_source_after_dispatch", 3 },
+  { "g_thread_spawned", 3 },
 };
 
 static const EventData *

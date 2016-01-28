@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -40,6 +40,8 @@
 #include "dfl-time-sequence.h"
 
 
+static void dfl_thread_finalize (GObject *object);
+
 struct _DflThread
 {
   GObject parent;
@@ -49,6 +51,8 @@ struct _DflThread
   /* Invariant: @free_timestamp >= @new_timestamp. */
   DflTimestamp new_timestamp;
   DflTimestamp free_timestamp;
+
+  gchar *name;  /* owned; nullable */
 };
 
 G_DEFINE_TYPE (DflThread, dfl_thread, G_TYPE_OBJECT)
@@ -56,7 +60,9 @@ G_DEFINE_TYPE (DflThread, dfl_thread, G_TYPE_OBJECT)
 static void
 dfl_thread_class_init (DflThreadClass *klass)
 {
-  /* Nothing to see here. */
+  GObjectClass *object_class = (GObjectClass *) klass;
+
+  object_class->finalize = dfl_thread_finalize;
 }
 
 static void
@@ -65,19 +71,32 @@ dfl_thread_init (DflThread *self)
   /* Nothing to see here. */
 }
 
+static void
+dfl_thread_finalize (GObject *object)
+{
+  DflThread *self = DFL_THREAD (object);
+
+  g_free (self->name);
+
+  G_OBJECT_CLASS (dfl_thread_parent_class)->finalize (object);
+}
+
 /**
  * dfl_thread_new:
  * @id: TODO
  * @new_timestamp: TODO
+ * @name: (nullable): debugging name for the thread, or %NULL if it doesn’t
+ *    have one
  *
  * TODO
  *
  * Returns: (transfer full): a new #DflThread
- * Since: 0.1.0
+ * Since: UNRELEASED
  */
 DflThread *
-dfl_thread_new (DflThreadId  id,
-                DflTimestamp new_timestamp)
+dfl_thread_new (DflThreadId   id,
+                DflTimestamp  new_timestamp,
+                const gchar  *name)
 {
   DflThread *thread = NULL;
 
@@ -87,6 +106,7 @@ dfl_thread_new (DflThreadId  id,
   thread->id = id;
   thread->new_timestamp = new_timestamp;
   thread->free_timestamp = new_timestamp;
+  thread->name = g_strdup (name);
 
   return thread;
 }
@@ -100,6 +120,7 @@ event_cb (DflEventSequence *sequence,
   DflThread *thread = NULL;
   DflThreadId thread_id;
   guint i;
+  const gchar *name = NULL;
 
   thread_id = dfl_event_get_thread_id (event);
 
@@ -116,7 +137,13 @@ event_cb (DflEventSequence *sequence,
         }
     }
 
-  thread = dfl_thread_new (thread_id, dfl_event_get_timestamp (event));
+  /* We can know the thread’s nickname if it was detected from a
+   * g_thread_spawned event. */
+  if (dfl_event_get_event_type (event) ==
+      g_intern_static_string ("g_thread_spawned"))
+    name = dfl_event_get_parameter_utf8 (event, 2);
+
+  thread = dfl_thread_new (thread_id, dfl_event_get_timestamp (event), name);
   g_ptr_array_add (threads, thread);  /* transfer */
 }
 
@@ -158,6 +185,23 @@ dfl_thread_get_id (DflThread *self)
   g_return_val_if_fail (DFL_IS_THREAD (self), DFL_ID_INVALID);
 
   return self->id;
+}
+
+/**
+ * dfl_thread_get_name:
+ * @self: a #DflThread
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+const gchar *
+dfl_thread_get_name (DflThread *self)
+{
+  g_return_val_if_fail (DFL_IS_THREAD (self), NULL);
+
+  return self->name;
 }
 
 /**

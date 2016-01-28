@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -48,6 +48,8 @@ DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
 
 DflId        dfl_event_get_parameter_id (DflEvent *self,
                                          guint     parameter_index);
+const gchar *dfl_event_get_parameter_utf8 (DflEvent *self,
+                                           guint     parameter_index);
 
 G_END_DECLS
 
