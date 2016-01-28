@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -117,7 +117,7 @@ dfl_main_context_dispose (GObject *object)
  * TODO
  *
  * Returns: (transfer full): a new #DflMainContext
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflMainContext *
 dfl_main_context_new (DflId        id,
@@ -417,7 +417,7 @@ main_context_new_cb (DflEventSequence *sequence,
  *
  * Returns: (transfer full) (element-type DflMainContext): an array of zero or
  *    more #DflMainContexts
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 GPtrArray *
 dfl_main_context_factory_from_event_sequence (DflEventSequence *sequence)
@@ -440,7 +440,7 @@ dfl_main_context_factory_from_event_sequence (DflEventSequence *sequence)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflId
 dfl_main_context_get_id (DflMainContext *self)
@@ -457,7 +457,7 @@ dfl_main_context_get_id (DflMainContext *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_main_context_get_new_timestamp (DflMainContext *self)
@@ -474,7 +474,7 @@ dfl_main_context_get_new_timestamp (DflMainContext *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_main_context_get_free_timestamp (DflMainContext *self)
@@ -492,7 +492,7 @@ dfl_main_context_get_free_timestamp (DflMainContext *self)
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_main_context_thread_ownership_iter (DflMainContext      *self,
@@ -513,7 +513,7 @@ dfl_main_context_thread_ownership_iter (DflMainContext      *self,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_main_context_dispatch_iter (DflMainContext      *self,

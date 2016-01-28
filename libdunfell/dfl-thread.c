@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -73,7 +73,7 @@ dfl_thread_init (DflThread *self)
  * TODO
  *
  * Returns: (transfer full): a new #DflThread
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflThread *
 dfl_thread_new (DflThreadId  id,
@@ -128,7 +128,7 @@ event_cb (DflEventSequence *sequence,
  *
  * Returns: (transfer full) (element-type DflThread): an array of zero or more
  *    #DflThreads
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 GPtrArray *
 dfl_thread_factory_from_event_sequence (DflEventSequence *sequence)
@@ -150,7 +150,7 @@ dfl_thread_factory_from_event_sequence (DflEventSequence *sequence)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflThreadId
 dfl_thread_get_id (DflThread *self)
@@ -167,7 +167,7 @@ dfl_thread_get_id (DflThread *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_thread_get_new_timestamp (DflThread *self)
@@ -184,7 +184,7 @@ dfl_thread_get_new_timestamp (DflThread *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_thread_get_free_timestamp (DflThread *self)

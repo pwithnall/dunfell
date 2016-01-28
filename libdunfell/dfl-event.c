@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -81,7 +81,7 @@ dfl_event_class_init (DflEventClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_EVENT_TYPE,
                                    g_param_spec_string ("event-type",
@@ -97,7 +97,7 @@ dfl_event_class_init (DflEventClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_TIMESTAMP,
                                    g_param_spec_uint64 ("timestamp",
@@ -113,7 +113,7 @@ dfl_event_class_init (DflEventClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_THREAD_ID,
                                    g_param_spec_uint64 ("thread-id",
@@ -129,7 +129,7 @@ dfl_event_class_init (DflEventClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_PARAMETERS,
                                    g_param_spec_boxed ("parameters",
@@ -228,7 +228,7 @@ dfl_event_finalize (GObject *object)
  * TODO
  *
  * Returns: (transfer full): a new #DflEvent
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflEvent *
 dfl_event_new (const gchar         *event_type,
@@ -255,7 +255,7 @@ dfl_event_new (const gchar         *event_type,
  * strings to avoid string comparisons.
  *
  * Returns: the event type
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 const gchar *
 dfl_event_get_event_type (DflEvent *self)
@@ -272,7 +272,7 @@ dfl_event_get_event_type (DflEvent *self)
  * TODO
  *
  * Returns: the event timestamp
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_event_get_timestamp (DflEvent *self)
@@ -289,7 +289,7 @@ dfl_event_get_timestamp (DflEvent *self)
  * TODO
  *
  * Returns: the ID of the thread the event happened in
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflThreadId
 dfl_event_get_thread_id (DflEvent *self)
@@ -307,7 +307,7 @@ dfl_event_get_thread_id (DflEvent *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflId
 dfl_event_get_parameter_id (DflEvent *self,

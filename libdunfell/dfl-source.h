@@ -34,7 +34,7 @@ G_BEGIN_DECLS
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef struct
 {
@@ -47,7 +47,7 @@ typedef struct
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_TYPE_SOURCE dfl_source_get_type ()
 G_DECLARE_FINAL_TYPE (DflSource, dfl_source, DFL, SOURCE, GObject)

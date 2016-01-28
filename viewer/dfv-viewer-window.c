@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -103,7 +103,7 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_FILE,
                                    g_param_spec_object ("file",
@@ -178,7 +178,7 @@ dfv_viewer_window_dispose (GObject *object)
  * TODO
  *
  * Returns: (transfer full): a new #DfvViewerWindow
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DfvViewerWindow *
 dfv_viewer_window_new (GtkApplication *application)
@@ -199,7 +199,7 @@ dfv_viewer_window_new (GtkApplication *application)
  * TODO
  *
  * Returns: (transfer full): a new #DfvViewerWindow
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DfvViewerWindow *
 dfv_viewer_window_new_for_file (GtkApplication *application,
@@ -221,7 +221,7 @@ dfv_viewer_window_new_for_file (GtkApplication *application,
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 const gchar *
 dfv_viewer_window_get_pane_name (DfvViewerWindow *self)
@@ -243,7 +243,7 @@ dfv_viewer_window_get_pane_name (DfvViewerWindow *self)
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfv_viewer_window_open (DfvViewerWindow *self,
@@ -294,7 +294,7 @@ dfv_viewer_window_open (DfvViewerWindow *self,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfv_viewer_window_record (DfvViewerWindow *self)

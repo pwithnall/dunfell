@@ -30,7 +30,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFV_TYPE_VIEWER_WINDOW dfv_viewer_window_get_type ()
 G_DECLARE_FINAL_TYPE (DfvViewerWindow, dfv_viewer_window, DFV, VIEWER_WINDOW,

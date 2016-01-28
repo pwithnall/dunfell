@@ -27,7 +27,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include <glib.h>
@@ -39,7 +39,7 @@ G_BEGIN_DECLS
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef guint64 DflTimestamp;
 
@@ -48,7 +48,7 @@ typedef guint64 DflTimestamp;
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef guint64 DflThreadId;
 
@@ -57,7 +57,7 @@ typedef guint64 DflThreadId;
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef gint64 DflDuration;
 
@@ -66,7 +66,7 @@ typedef gint64 DflDuration;
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef guintptr DflId;
 
@@ -75,7 +75,7 @@ typedef guintptr DflId;
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_ID_INVALID ((guintptr) 0)
 

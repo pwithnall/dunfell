@@ -34,7 +34,7 @@ G_BEGIN_DECLS
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef struct
 {
@@ -49,7 +49,7 @@ typedef struct
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef struct
 {
@@ -62,7 +62,7 @@ typedef struct
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_TYPE_MAIN_CONTEXT dfl_main_context_get_type ()
 G_DECLARE_FINAL_TYPE (DflMainContext, dfl_main_context, DFL, MAIN_CONTEXT, GObject)

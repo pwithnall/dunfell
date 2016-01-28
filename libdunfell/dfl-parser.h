@@ -32,7 +32,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_TYPE_PARSER dfl_parser_get_type ()
 G_DECLARE_FINAL_TYPE (DflParser, dfl_parser, DFL, PARSER, GObject)

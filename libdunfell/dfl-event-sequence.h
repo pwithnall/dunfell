@@ -32,7 +32,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_TYPE_EVENT_SEQUENCE dfl_event_sequence_get_type ()
 G_DECLARE_FINAL_TYPE (DflEventSequence, dfl_event_sequence, DFL, EVENT_SEQUENCE, GObject)
@@ -53,7 +53,7 @@ DflEventSequence *dfl_event_sequence_new (const DflEvent **events,
  *
  * The sequence must not be modified while walking over it.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef void (*DflEventWalker) (DflEventSequence *sequence,
                                 DflEvent         *event,

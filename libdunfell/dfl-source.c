@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -98,7 +98,7 @@ dfl_source_dispose (GObject *object)
  * TODO
  *
  * Returns: (transfer full): a new #DflSource
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflSource *
 dfl_source_new (DflId        id,
@@ -280,7 +280,7 @@ source_new_cb (DflEventSequence *sequence,
  *
  * Returns: (transfer full) (element-type DflSource): an array of zero or more
  *    #DflSources
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 GPtrArray *
 dfl_source_factory_from_event_sequence (DflEventSequence *sequence)
@@ -302,7 +302,7 @@ dfl_source_factory_from_event_sequence (DflEventSequence *sequence)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflId
 dfl_source_get_id (DflSource *self)
@@ -319,7 +319,7 @@ dfl_source_get_id (DflSource *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_source_get_new_timestamp (DflSource *self)
@@ -336,7 +336,7 @@ dfl_source_get_new_timestamp (DflSource *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflTimestamp
 dfl_source_get_free_timestamp (DflSource *self)
@@ -353,7 +353,7 @@ dfl_source_get_free_timestamp (DflSource *self)
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflThreadId
 dfl_source_get_new_thread_id (DflSource *self)
@@ -371,7 +371,7 @@ dfl_source_get_new_thread_id (DflSource *self)
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_source_dispatch_iter (DflSource           *self,

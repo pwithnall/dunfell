@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -157,7 +157,7 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
    *
    * TODO
    *
-   * Since: UNRELEASED
+   * Since: 0.1.0
    */
   g_object_class_install_property (object_class, PROP_ZOOM,
                                    g_param_spec_float ("zoom", "Zoom",
@@ -235,7 +235,7 @@ dwl_timeline_dispose (GObject *object)
  * TODO
  *
  * Returns: (transfer full): a new #DwlTimeline
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DwlTimeline *
 dwl_timeline_new (GPtrArray *threads,
@@ -1290,7 +1290,7 @@ dwl_timeline_button_release_event (GtkWidget      *widget,
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 gfloat
 dwl_timeline_get_zoom (DwlTimeline *self)
@@ -1308,7 +1308,7 @@ dwl_timeline_get_zoom (DwlTimeline *self)
  * TODO
  *
  * Returns: %TRUE if the zoom level changed, %FALSE otherwise
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 gboolean
 dwl_timeline_set_zoom (DwlTimeline *self,

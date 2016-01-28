@@ -32,7 +32,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFL_TYPE_EVENT dfl_event_get_type ()
 G_DECLARE_FINAL_TYPE (DflEvent, dfl_event, DFL, EVENT, GObject)

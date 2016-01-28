@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -71,7 +71,7 @@ G_STATIC_ASSERT (sizeof (DflTimeSequenceReal) == sizeof (DflTimeSequence));
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_time_sequence_init (DflTimeSequence *sequence,
@@ -110,7 +110,7 @@ dfl_time_sequence_index (DflTimeSequence *sequence,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_time_sequence_clear (DflTimeSequence *sequence)
@@ -145,7 +145,7 @@ dfl_time_sequence_clear (DflTimeSequence *sequence)
  * TODO
  *
  * Returns: (transfer none) (nullable): TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 gpointer
 dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
@@ -185,7 +185,7 @@ dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
  * TODO
  *
  * Returns: (transfer none): TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 gpointer
 dfl_time_sequence_append (DflTimeSequence *sequence,
@@ -244,7 +244,7 @@ dfl_time_sequence_iter_is_valid (DflTimeSequenceIter *iter)
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
@@ -269,7 +269,7 @@ dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
  * TODO
  *
  * Returns: TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 gboolean
 dfl_time_sequence_iter_next (DflTimeSequenceIter *iter,

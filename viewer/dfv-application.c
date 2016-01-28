@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -217,7 +217,7 @@ quit_action_cb (GSimpleAction *action,
  * TODO
  *
  * Returns: (transfer full): a new #DfvApplication
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DfvApplication *
 dfv_application_new (void)

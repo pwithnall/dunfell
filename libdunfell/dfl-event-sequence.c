@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -160,7 +160,7 @@ dfl_event_sequence_get_item (GListModel  *list,
  * TODO
  *
  * Returns: (transfer full): a new #DflEventSequence
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflEventSequence *
 dfl_event_sequence_new (const DflEvent **events,
@@ -200,7 +200,7 @@ dfl_event_sequence_new (const DflEvent **events,
  * TODO
  *
  * Returns: the ID of the walker
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 guint
 dfl_event_sequence_add_walker (DflEventSequence *self,
@@ -234,7 +234,7 @@ dfl_event_sequence_add_walker (DflEventSequence *self,
  *
  * Removing the same ID twice is an error.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_event_sequence_remove_walker (DflEventSequence *self,
@@ -262,7 +262,7 @@ dfl_event_sequence_remove_walker (DflEventSequence *self,
  *
  * It is allowed to add and remove walkers from callbacks within this function.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_event_sequence_walk (DflEventSequence *self)

@@ -30,7 +30,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef struct
 {
@@ -53,7 +53,7 @@ gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 typedef struct
 {

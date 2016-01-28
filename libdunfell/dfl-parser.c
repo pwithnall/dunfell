@@ -24,7 +24,7 @@
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 
 #include "config.h"
@@ -115,7 +115,7 @@ event_data_from_event_type (const gchar *event_type)
  * TODO
  *
  * Returns: (transfer full): a new #DflParser
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflParser *
 dfl_parser_new (void)
@@ -132,7 +132,7 @@ dfl_parser_new (void)
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_parser_load_from_data (DflParser     *self,
@@ -161,7 +161,7 @@ dfl_parser_load_from_data (DflParser     *self,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_parser_load_from_file (DflParser    *self,
@@ -197,7 +197,7 @@ dfl_parser_load_from_file (DflParser    *self,
  *
  * TODO
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_parser_load_from_stream (DflParser     *self,
@@ -531,7 +531,7 @@ load_from_stream_thread_cb (GTask         *task,
  *
  * Asynchronous version of dfl_parser_load_from_stream().
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_parser_load_from_stream_async (DflParser            *self,
@@ -561,7 +561,7 @@ dfl_parser_load_from_stream_async (DflParser            *self,
  *
  * Finish function for dfl_parser_load_from_stream_async().
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 void
 dfl_parser_load_from_stream_finish (DflParser     *self,
@@ -583,7 +583,7 @@ dfl_parser_load_from_stream_finish (DflParser     *self,
  * TODO
  *
  * Returns: (transfer none) (nullable): TODO
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 DflEventSequence *
 dfl_parser_get_event_sequence (DflParser *self)

@@ -30,7 +30,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DFV_TYPE_APPLICATION dfv_application_get_type ()
 G_DECLARE_FINAL_TYPE (DfvApplication, dfv_application, DFV, APPLICATION, GtkApplication)

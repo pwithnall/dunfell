@@ -31,7 +31,7 @@ G_BEGIN_DECLS
  *
  * All the fields in this structure are private.
  *
- * Since: UNRELEASED
+ * Since: 0.1.0
  */
 #define DWL_TYPE_TIMELINE dwl_timeline_get_type ()
 G_DECLARE_FINAL_TYPE (DwlTimeline, dwl_timeline, DWL, TIMELINE, GtkWidget)
