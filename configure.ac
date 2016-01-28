@@ -33,7 +33,7 @@ AC_PROG_LN_S
 
 # Requirements
 GLIB_REQS=2.31.0
-GTK_REQS=3.0.0
+GTK_REQS=3.19.1
 
 # Before making a release, the DFL_LT_VERSION string should be modified. The
 # string is of the form c:r:a. Follow these instructions sequentially:
