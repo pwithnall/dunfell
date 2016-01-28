@@ -1,0 +1,12 @@
+Make it work for other event loops?
+Generalise event sequence handling for other kinds of event sequences? GStreamer?
+Add support for rendering GTasks
+Add a details pane for viewing more detailed information about something selected in the timeline
+Make timings more obvious in the timeline
+Keep thread IDs visible all the time in the timeline
+Speed up drawing the timeline
+Add keyboard shortcuts for the timeline
+	Jump to next event
+	Jump to source creation
+	Cycle through source dispatches
+Finish documenting everything
