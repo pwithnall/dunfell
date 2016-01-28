@@ -167,3 +167,7 @@ probe gio.task_before_run_in_thread {
 probe gio.task_after_run_in_thread {
   printdln (",", "g_task_after_run_in_thread", gettimeofday_us (), tid (), task, thread_cancelled);
 }
+
+probe glib.thread_spawned {
+  printdln (",", "g_thread_spawned", gettimeofday_us (), tid (), func, data, name);
+}
