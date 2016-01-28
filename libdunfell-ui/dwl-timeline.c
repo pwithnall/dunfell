@@ -614,6 +614,7 @@ dwl_timeline_draw (GtkWidget *widget,
       PangoLayout *layout = NULL;
       gchar *text = NULL;
       PangoRectangle layout_rect;
+      const gchar *thread_name;
 
       thread_centre = widget_width / n_threads * (2 * i + 1) / 2;
 
@@ -638,10 +639,14 @@ dwl_timeline_draw (GtkWidget *widget,
       /* Thread label. */
       gtk_style_context_add_class (context, "thread_header");
 
-      text = g_strdup_printf ("Thread %" G_GUINT64_FORMAT, dfl_thread_get_id (thread));
+      thread_name = dfl_thread_get_name (thread);
+      text = g_strdup_printf ("Thread %" G_GUINT64_FORMAT "\n%s",
+                              dfl_thread_get_id (thread),
+                              (thread_name != NULL) ? thread_name : "");
       layout = gtk_widget_create_pango_layout (widget, text);
       g_free (text);
 
+      pango_layout_set_alignment (layout, PANGO_ALIGN_CENTER);
       pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
 
       gtk_render_layout (context, cr,
