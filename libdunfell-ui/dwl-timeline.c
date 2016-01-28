@@ -445,6 +445,128 @@ dwl_timeline_size_allocate (GtkWidget     *widget,
                             allocation->height);
 }
 
+static void
+draw_source_dispatch_line (DwlTimeline           *self,
+                           cairo_t               *cr,
+                           DflSource             *source,
+                           gdouble                source_x,
+                           gdouble                source_y,
+                           DflTimestamp           dispatch_timestamp,
+                           DflSourceDispatchData *dispatch)
+{
+  gint timestamp_y;
+  gdouble centre_of_arc_x, centre_of_arc_y;
+  gdouble arc_angle_start, arc_angle_finish;
+  gdouble dispatch_width, dispatch_height;
+  gdouble thread_centre;
+  guint thread_index;
+  GdkRGBA color;
+  GtkStyleContext *context;
+  gint widget_width;
+  guint n_threads;
+  DflTimestamp min_timestamp;
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+  widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
+
+  n_threads = self->threads->len;
+  min_timestamp = self->min_timestamp;
+
+  /* TODO: This should not be so slow. */
+  for (thread_index = 0; thread_index < n_threads; thread_index++)
+    {
+      if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
+          dispatch->thread_id)
+        break;
+    }
+  g_assert (thread_index < n_threads);
+
+  thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+  timestamp_y = timestamp_to_pixels (self, dispatch_timestamp - min_timestamp);
+
+  if (thread_centre < source_x)
+    {
+      centre_of_arc_x = source_x - SOURCE_WIDTH / 2.0;
+      arc_angle_finish = 0.0;
+    }
+  else
+    {
+      centre_of_arc_x = source_x + SOURCE_WIDTH / 2.0;
+      arc_angle_finish = M_PI;
+    }
+
+  if (timestamp_y < source_y)
+    {
+      /* TODO: this shouldn’t ever happen */
+      centre_of_arc_y = timestamp_y + SOURCE_WIDTH / 2.0;
+      arc_angle_start = 3.0 * M_PI / 2.0;
+    }
+  else
+    {
+      centre_of_arc_y = timestamp_y - SOURCE_WIDTH / 2.0;
+      arc_angle_start = M_PI / 2.0;
+    }
+
+  cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_width (cr, SOURCE_DISPATCH_WIDTH);
+
+  gtk_style_context_add_class (context, "source_dispatch_line");
+
+  cairo_new_path (cr);
+  cairo_move_to (cr,
+                 thread_centre + 0.5,
+                 timestamp_y + 0.5);
+  cairo_line_to (cr,
+                 centre_of_arc_x + 0.5,
+                 timestamp_y + 0.5);
+
+  if (arc_angle_start > arc_angle_finish)
+    cairo_arc_negative (cr,
+                        centre_of_arc_x + 0.5,
+                        centre_of_arc_y + 0.5,
+                        SOURCE_WIDTH / 2.0,
+                        arc_angle_start,
+                        arc_angle_finish);
+  else
+    cairo_arc (cr,
+               centre_of_arc_x + 0.5,
+               centre_of_arc_y + 0.5,
+               SOURCE_WIDTH / 2.0,
+               arc_angle_start,
+               arc_angle_finish);
+
+  cairo_line_to (cr,
+                 source_x + 0.5,
+                 source_y + 0.5);
+
+  gtk_style_context_get_color (context,
+                               gtk_widget_get_state_flags (GTK_WIDGET (self)),
+                               &color);
+  gdk_cairo_set_source_rgba (cr, &color);
+  cairo_stroke (cr);
+
+  gtk_style_context_remove_class (context, "source_dispatch_line");
+
+  /* Render the duration of the dispatch. */
+  dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
+  dispatch_height = duration_to_pixels (self, dispatch->duration);
+
+  gtk_style_context_add_class (context, "source_dispatch");
+
+  gtk_render_background (context, cr,
+                         thread_centre - dispatch_width / 2.0,
+                         timestamp_y,
+                         dispatch_width,
+                         dispatch_height);
+  gtk_render_frame (context, cr,
+                    thread_centre - dispatch_width / 2.0,
+                    timestamp_y,
+                    dispatch_width,
+                    dispatch_height);
+
+  gtk_style_context_remove_class (context, "source_dispatch");
+}
+
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
                    cairo_t   *cr)
@@ -727,6 +849,12 @@ dwl_timeline_draw (GtkWidget *widget,
       DflTimestamp timestamp;
       DflSourceDispatchData *data;
 
+      context = gtk_widget_get_style_context (GTK_WIDGET (self));
+      widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
+
+      min_timestamp = self->min_timestamp;
+      n_threads = self->threads->len;
+
       /* TODO: This should not be so slow. */
       for (thread_index = 0; thread_index < n_threads; thread_index++)
         {
@@ -746,109 +874,14 @@ dwl_timeline_draw (GtkWidget *widget,
        * horizontal line from the thread where it occurs, across to line up with
        * the column containing the source, round the corner, then up to where
        * the source is rendered (the g_source_new()). */
-      cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
-      cairo_set_line_width (cr, SOURCE_DISPATCH_WIDTH);
 
       /* TODO: Start the timestamp at the render area. */
       dfl_source_dispatch_iter (source, &iter, 0);
 
       while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
         {
-          gint timestamp_y;
-          gdouble centre_of_arc_x, centre_of_arc_y;
-          gdouble arc_angle_start, arc_angle_finish;
-          gdouble dispatch_width, dispatch_height;
-
-          /* TODO: This should not be so slow. */
-          for (thread_index = 0; thread_index < n_threads; thread_index++)
-            {
-              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-                  data->thread_id)
-                break;
-            }
-          g_assert (thread_index < n_threads);
-
-          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
-          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
-
-          if (thread_centre < source_x)
-            {
-              centre_of_arc_x = source_x - SOURCE_WIDTH / 2.0;
-              arc_angle_finish = 0.0;
-            }
-          else
-            {
-              centre_of_arc_x = source_x + SOURCE_WIDTH / 2.0;
-              arc_angle_finish = M_PI;
-            }
-
-          if (timestamp_y < source_y)
-            {
-              /* TODO: this shouldn’t ever happen */
-              centre_of_arc_y = timestamp_y + SOURCE_WIDTH / 2.0;
-              arc_angle_start = 3.0 * M_PI / 2.0;
-            }
-          else
-            {
-              centre_of_arc_y = timestamp_y - SOURCE_WIDTH / 2.0;
-              arc_angle_start = M_PI / 2.0;
-            }
-
-          gtk_style_context_add_class (context, "source_dispatch_line");
-
-          cairo_new_path (cr);
-          cairo_move_to (cr,
-                         thread_centre + 0.5,
-                         timestamp_y + 0.5);
-          cairo_line_to (cr,
-                         centre_of_arc_x + 0.5,
-                         timestamp_y + 0.5);
-
-          if (arc_angle_start > arc_angle_finish)
-            cairo_arc_negative (cr,
-                                centre_of_arc_x + 0.5,
-                                centre_of_arc_y + 0.5,
-                                SOURCE_WIDTH / 2.0,
-                                arc_angle_start,
-                                arc_angle_finish);
-          else
-            cairo_arc (cr,
-                       centre_of_arc_x + 0.5,
-                       centre_of_arc_y + 0.5,
-                       SOURCE_WIDTH / 2.0,
-                       arc_angle_start,
-                       arc_angle_finish);
-
-          cairo_line_to (cr,
-                         source_x + 0.5,
-                         source_y + 0.5);
-
-          gtk_style_context_get_color (context,
-                                       gtk_widget_get_state_flags (widget),
-                                       &color);
-          gdk_cairo_set_source_rgba (cr, &color);
-          cairo_stroke (cr);
-
-          gtk_style_context_remove_class (context, "source_dispatch_line");
-
-          /* Render the duration of the dispatch. */
-          dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
-          dispatch_height = duration_to_pixels (self, data->duration);
-
-          gtk_style_context_add_class (context, "source_dispatch");
-
-          gtk_render_background (context, cr,
-                                 thread_centre - dispatch_width / 2.0,
-                                 timestamp_y,
-                                 dispatch_width,
-                                 dispatch_height);
-          gtk_render_frame (context, cr,
-                            thread_centre - dispatch_width / 2.0,
-                            timestamp_y,
-                            dispatch_width,
-                            dispatch_height);
-
-          gtk_style_context_remove_class (context, "source_dispatch");
+          draw_source_dispatch_line (self, cr, source, source_x, source_y,
+                                     timestamp, data);
         }
 
       /* Re-render the source circle to make sure it’s on top. */
