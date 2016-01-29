@@ -275,6 +275,7 @@ add_default_css (GtkStyleContext *context)
     "timeline.source { background-color: #c17d11 }\n"
     "timeline.source_hover { background-color: #e9b96e }\n"
     "timeline.source_selected { background-color: #73d216 }\n"
+    "timeline.source_unattached { background-color: #cc0000 }\n"
     "timeline.source_dispatch { background-color: #73d216; "
                               " border: 1px solid #2e3436 }\n"
     "timeline.source_dispatch_line { color: #555753 }\n";
@@ -930,6 +931,8 @@ dwl_timeline_draw (GtkWidget *widget,
       if (self->selected_element.type == ELEMENT_SOURCE &&
           self->selected_element.index == i)
         gtk_style_context_add_class (context, "source_selected");
+      if (dfl_source_get_attach_main_context_id (source) == DFL_ID_INVALID)
+        gtk_style_context_add_class (context, "source_unattached");
 
       cairo_save (cr);
 
@@ -961,6 +964,8 @@ dwl_timeline_draw (GtkWidget *widget,
 
       cairo_restore (cr);
 
+      if (dfl_source_get_attach_main_context_id (source) == DFL_ID_INVALID)
+        gtk_style_context_remove_class (context, "source_unattached");
       if (self->selected_element.type == ELEMENT_SOURCE &&
           self->selected_element.index == i)
         gtk_style_context_remove_class (context, "source_selected");
