@@ -145,6 +145,10 @@ source_before_after_dispatch_cb (DflEventSequence *sequence,
       DflSourceDispatchData *last_element;
       DflTimestamp last_timestamp;
       DflSourceDispatchData *next_element;
+      const gchar *dispatch_name, *callback_name;
+
+      dispatch_name = dfl_event_get_parameter_utf8 (event, 1);
+      callback_name = dfl_event_get_parameter_utf8 (event, 2);
 
       /* Check that the previous element in the sequence has a valid (non-zero)
        * duration, otherwise no //after// event was logged and something very
@@ -169,6 +173,8 @@ source_before_after_dispatch_cb (DflEventSequence *sequence,
                                                timestamp);
       next_element->thread_id = thread_id;
       next_element->duration = -1;  /* will be set by the paired //after// */
+      next_element->dispatch_name = g_strdup (dispatch_name);
+      next_element->callback_name = g_strdup (callback_name);
     }
   else
     {
@@ -195,6 +201,8 @@ source_before_after_dispatch_cb (DflEventSequence *sequence,
           last_timestamp = timestamp;
           last_element->thread_id = thread_id;
           last_element->duration = -1;
+          last_element->dispatch_name = NULL;
+          last_element->callback_name = NULL;
         }
       else if (last_element->duration >= 0)
         {
@@ -219,6 +227,8 @@ source_before_after_dispatch_cb (DflEventSequence *sequence,
           last_timestamp = timestamp;
           last_element->thread_id = thread_id;
           last_element->duration = -1;
+          last_element->dispatch_name = NULL;
+          last_element->callback_name = NULL;
         }
 
       /* Update the element’s duration. */

@@ -31,15 +31,21 @@ G_BEGIN_DECLS
  * DflSourceDispatchData:
  * @thread_id: TODO
  * @duration: TODO
+ * @dispatch_name: (nullable): name of the dispatch function for the #GSource
+ *    from #GSourceFuncs
+ * @callback_name: (nullable): name of the user callback function set with
+ *    g_source_set_callback()
  *
  * TODO
  *
- * Since: 0.1.0
+ * Since: UNRELEASED
  */
 typedef struct
 {
   DflThreadId thread_id;
   DflDuration duration;
+  gchar *dispatch_name;  /* owned */
+  gchar *callback_name;  /* owned */
 } DflSourceDispatchData;
 
 /**
