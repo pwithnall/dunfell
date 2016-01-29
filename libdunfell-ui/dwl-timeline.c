@@ -567,6 +567,52 @@ draw_source_dispatch_line (DwlTimeline           *self,
   gtk_style_context_remove_class (context, "source_dispatch");
 }
 
+static void
+draw_source_selected (DwlTimeline *self,
+                      cairo_t     *cr,
+                      DflSource   *source,
+                      gdouble      source_x,
+                      gdouble      source_y)
+{
+  GdkRGBA color;
+  GtkStyleContext *context;
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+
+  gtk_style_context_add_class (context, "source");
+  gtk_style_context_add_class (context, "source_selected");
+
+  cairo_save (cr);
+
+  cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_width (cr, SOURCE_BORDER_WIDTH);
+  cairo_new_path (cr);
+
+  cairo_arc (cr,
+             source_x,
+             source_y,
+             SOURCE_WIDTH / 2.0,
+             0.0, 2 * M_PI);
+
+  cairo_clip_preserve (cr);
+  gtk_render_background (context, cr,
+                         source_x - SOURCE_WIDTH / 2.0,
+                         source_y - SOURCE_WIDTH / 2.0,
+                         SOURCE_WIDTH,
+                         SOURCE_WIDTH);
+
+  gtk_style_context_get_color (context,
+                               gtk_widget_get_state_flags (GTK_WIDGET (self)),
+                               &color);
+  gdk_cairo_set_source_rgba (cr, &color);
+  cairo_stroke (cr);
+
+  cairo_restore (cr);
+
+  gtk_style_context_remove_class (context, "source_selected");
+  gtk_style_context_remove_class (context, "source");
+}
+
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
                    cairo_t   *cr)
@@ -849,7 +895,6 @@ dwl_timeline_draw (GtkWidget *widget,
       DflSource *source = self->sources->pdata[self->selected_element.index];
       gdouble thread_centre, source_x, source_y;
       guint thread_index;
-      GdkRGBA color;
       DflTimeSequenceIter iter;
       DflTimestamp timestamp;
       DflSourceDispatchData *data;
@@ -890,37 +935,7 @@ dwl_timeline_draw (GtkWidget *widget,
         }
 
       /* Re-render the source circle to make sure it’s on top. */
-      gtk_style_context_add_class (context, "source");
-      gtk_style_context_add_class (context, "source_selected");
-
-      cairo_save (cr);
-
-      cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
-      cairo_set_line_width (cr, SOURCE_BORDER_WIDTH);
-      cairo_new_path (cr);
-
-      cairo_arc (cr,
-                 source_x,
-                 source_y,
-                 SOURCE_WIDTH / 2.0,
-                 0.0, 2 * M_PI);
-
-      cairo_clip_preserve (cr);
-      gtk_render_background (context, cr,
-                             source_x - SOURCE_WIDTH / 2.0,
-                             source_y - SOURCE_WIDTH / 2.0,
-                             SOURCE_WIDTH,
-                             SOURCE_WIDTH);
-
-      gtk_style_context_get_color (context, gtk_widget_get_state_flags (widget),
-                                   &color);
-      gdk_cairo_set_source_rgba (cr, &color);
-      cairo_stroke (cr);
-
-      cairo_restore (cr);
-
-      gtk_style_context_remove_class (context, "source_selected");
-      gtk_style_context_remove_class (context, "source");
+      draw_source_selected (self, cr, source, source_x, source_y);
     }
   else if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH)
     {
