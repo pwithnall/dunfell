@@ -510,7 +510,6 @@ draw_cornered_line (DwlTimeline *self,
 
   if (p1_y < p2_y)
     {
-      /* TODO: this shouldn’t ever happen */
       centre_of_arc_y = p1_y + SOURCE_WIDTH / 2.0;
       arc_angle_start = 3.0 * M_PI / 2.0;
     }
