@@ -321,6 +321,9 @@ update_cache (DwlTimeline *self)
       max_timestamp = MAX (max_timestamp, dfl_thread_get_free_timestamp (thread));
     }
 
+  if (self->threads->len == 0)
+    min_timestamp = 0;
+
   g_assert (max_timestamp >= min_timestamp);
 
   /* Update the cache. */
@@ -682,6 +685,32 @@ dwl_timeline_draw (GtkWidget *widget,
   n_threads = self->threads->len;
   min_timestamp = self->min_timestamp;
   max_timestamp = self->max_timestamp;
+
+  /* If there are no threads, there’s nothing to draw. */
+  if (n_threads == 0)
+    {
+      PangoLayout *layout = NULL;
+      PangoRectangle layout_rect;
+      gint widget_height;
+
+      gtk_style_context_add_class (context, "message");
+
+      widget_height = gtk_widget_get_allocated_height (widget);
+      layout = gtk_widget_create_pango_layout (GTK_WIDGET (self),
+                                               "Log file is empty.");
+
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      gtk_render_layout (context, cr,
+                         (widget_width - layout_rect.width) / 2.0,
+                         (widget_height - layout_rect.height) / 2.0,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, "message");
+
+      return FALSE;
+    }
 
   /* Draw the millisecond and 10-millisecond markers. Only draw the millisecond
    * markers if there’s enough space to render them. */
@@ -1223,6 +1252,10 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
   widget_width = gtk_widget_get_allocated_width (widget);
   n_threads = self->threads->len;
   min_timestamp = self->min_timestamp;
+
+  /* If there are no threads, there’s nothing to do. */
+  if (n_threads == 0)
+    return GDK_EVENT_STOP;
 
   /* Find the nearest thread. */
   thread_width = widget_width / n_threads;
