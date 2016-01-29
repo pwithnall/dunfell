@@ -451,6 +451,80 @@ dwl_timeline_size_allocate (GtkWidget     *widget,
                             allocation->height);
 }
 
+/* Draw a line from point 1 to point 2, first moving horizontally from point 1,
+ * then drawing a curved corner, then moving vertically to point 2. */
+static void
+draw_cornered_line (DwlTimeline *self,
+                    cairo_t     *cr,
+                    gdouble      p1_x,
+                    gdouble      p1_y,
+                    gdouble      p2_x,
+                    gdouble      p2_y)
+{
+  GtkStyleContext *context;
+  GdkRGBA color;
+  gdouble centre_of_arc_x, centre_of_arc_y;
+  gdouble arc_angle_start, arc_angle_finish;
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+
+  if (p1_x < p2_x)
+    {
+      centre_of_arc_x = p2_x - SOURCE_WIDTH / 2.0;
+      arc_angle_finish = 0.0;
+    }
+  else
+    {
+      centre_of_arc_x = p2_x + SOURCE_WIDTH / 2.0;
+      arc_angle_finish = M_PI;
+    }
+
+  if (p1_y < p2_y)
+    {
+      /* TODO: this shouldn’t ever happen */
+      centre_of_arc_y = p1_y + SOURCE_WIDTH / 2.0;
+      arc_angle_start = 3.0 * M_PI / 2.0;
+    }
+  else
+    {
+      centre_of_arc_y = p1_y - SOURCE_WIDTH / 2.0;
+      arc_angle_start = M_PI / 2.0;
+    }
+
+  cairo_new_path (cr);
+  cairo_move_to (cr,
+                 p1_x + 0.5,
+                 p1_y + 0.5);
+  cairo_line_to (cr,
+                 centre_of_arc_x + 0.5,
+                 p1_y + 0.5);
+
+  if (arc_angle_start > arc_angle_finish)
+    cairo_arc_negative (cr,
+                        centre_of_arc_x + 0.5,
+                        centre_of_arc_y + 0.5,
+                        SOURCE_WIDTH / 2.0,
+                        arc_angle_start,
+                        arc_angle_finish);
+  else
+    cairo_arc (cr,
+               centre_of_arc_x + 0.5,
+               centre_of_arc_y + 0.5,
+               SOURCE_WIDTH / 2.0,
+               arc_angle_start,
+               arc_angle_finish);
+
+  cairo_line_to (cr,
+                 p2_x + 0.5,
+                 p2_y + 0.5);
+
+  gtk_style_context_get_color (context,
+                               gtk_widget_get_state_flags (GTK_WIDGET (self)),
+                               &color);
+  gdk_cairo_set_source_rgba (cr, &color);
+  cairo_stroke (cr);
+}
+
 static void
 draw_source_dispatch_line (DwlTimeline           *self,
                            cairo_t               *cr,
@@ -461,12 +535,9 @@ draw_source_dispatch_line (DwlTimeline           *self,
                            DflSourceDispatchData *dispatch)
 {
   gint timestamp_y;
-  gdouble centre_of_arc_x, centre_of_arc_y;
-  gdouble arc_angle_start, arc_angle_finish;
   gdouble dispatch_width, dispatch_height;
   gdouble thread_centre;
   guint thread_index;
-  GdkRGBA color;
   GtkStyleContext *context;
   gint widget_width;
   guint n_threads;
@@ -490,67 +561,11 @@ draw_source_dispatch_line (DwlTimeline           *self,
   thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
   timestamp_y = timestamp_to_pixels (self, dispatch_timestamp - min_timestamp);
 
-  if (thread_centre < source_x)
-    {
-      centre_of_arc_x = source_x - SOURCE_WIDTH / 2.0;
-      arc_angle_finish = 0.0;
-    }
-  else
-    {
-      centre_of_arc_x = source_x + SOURCE_WIDTH / 2.0;
-      arc_angle_finish = M_PI;
-    }
-
-  if (timestamp_y < source_y)
-    {
-      /* TODO: this shouldn’t ever happen */
-      centre_of_arc_y = timestamp_y + SOURCE_WIDTH / 2.0;
-      arc_angle_start = 3.0 * M_PI / 2.0;
-    }
-  else
-    {
-      centre_of_arc_y = timestamp_y - SOURCE_WIDTH / 2.0;
-      arc_angle_start = M_PI / 2.0;
-    }
-
   cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_width (cr, SOURCE_DISPATCH_WIDTH);
 
   gtk_style_context_add_class (context, "source_dispatch_line");
-
-  cairo_new_path (cr);
-  cairo_move_to (cr,
-                 thread_centre + 0.5,
-                 timestamp_y + 0.5);
-  cairo_line_to (cr,
-                 centre_of_arc_x + 0.5,
-                 timestamp_y + 0.5);
-
-  if (arc_angle_start > arc_angle_finish)
-    cairo_arc_negative (cr,
-                        centre_of_arc_x + 0.5,
-                        centre_of_arc_y + 0.5,
-                        SOURCE_WIDTH / 2.0,
-                        arc_angle_start,
-                        arc_angle_finish);
-  else
-    cairo_arc (cr,
-               centre_of_arc_x + 0.5,
-               centre_of_arc_y + 0.5,
-               SOURCE_WIDTH / 2.0,
-               arc_angle_start,
-               arc_angle_finish);
-
-  cairo_line_to (cr,
-                 source_x + 0.5,
-                 source_y + 0.5);
-
-  gtk_style_context_get_color (context,
-                               gtk_widget_get_state_flags (GTK_WIDGET (self)),
-                               &color);
-  gdk_cairo_set_source_rgba (cr, &color);
-  cairo_stroke (cr);
-
+  draw_cornered_line (self, cr, thread_centre, timestamp_y, source_x, source_y);
   gtk_style_context_remove_class (context, "source_dispatch_line");
 
   /* Render the duration of the dispatch. */
