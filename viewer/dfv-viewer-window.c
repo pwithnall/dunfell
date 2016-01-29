@@ -51,7 +51,8 @@ static void dfv_viewer_window_set_property (GObject      *object,
                                             const GValue *value,
                                             GParamSpec   *pspec);
 static void dfv_viewer_window_dispose      (GObject      *object);
-static void dfv_viewer_window_clear_file   (DfvViewerWindow *self);
+static void dfv_viewer_window_clear_file   (DfvViewerWindow *self,
+                                            const GError    *error);
 static void dfv_viewer_window_set_file     (DfvViewerWindow *self,
                                             GFile           *file);
 static void open_button_clicked            (GtkButton *button,
@@ -69,6 +70,7 @@ struct _DfvViewerWindow
   GtkStack *main_stack;
   GtkWidget *timeline_scrolled_window;
   GtkWidget *timeline;  /* NULL iff not loaded */
+  GtkWidget *home_page_box;
 };
 
 G_DEFINE_TYPE (DfvViewerWindow, dfv_viewer_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -91,6 +93,8 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
                                         DfvViewerWindow, main_stack);
   gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
                                         timeline_scrolled_window);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        home_page_box);
   gtk_widget_class_bind_template_callback (widget_class, open_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, record_button_clicked);
 
@@ -164,7 +168,7 @@ dfv_viewer_window_dispose (GObject *object)
 {
   DfvViewerWindow *self = DFV_VIEWER_WINDOW (object);
 
-  dfv_viewer_window_clear_file (self);
+  dfv_viewer_window_clear_file (self, NULL);
   g_assert (self->open_cancellable == NULL);
   g_assert (self->file == NULL);
 
@@ -346,9 +350,50 @@ static void set_file_cb_name (GObject      *source_object,
                               gpointer      user_data);
 
 static void
-dfv_viewer_window_clear_file (DfvViewerWindow *self)
+info_bar_response_cb (GtkInfoBar *info_bar,
+                      gint        response_id,
+                      gpointer    user_data)
+{
+  DfvViewerWindow *self = DFV_VIEWER_WINDOW (user_data);
+
+  /* Remove the info bar. */
+  g_assert (response_id == GTK_RESPONSE_CLOSE);
+
+  gtk_container_remove (GTK_CONTAINER (self->home_page_box),
+                        GTK_WIDGET (info_bar));
+}
+
+/* If @error is non-%NULL, an error infobar will be shown to indicate what went
+ * wrong. */
+static void
+dfv_viewer_window_clear_file (DfvViewerWindow *self,
+                              const GError    *error)
 {
   g_return_if_fail (DFV_IS_VIEWER_WINDOW (self));
+
+  if (error != NULL)
+    {
+      GtkInfoBar *info_bar = NULL;
+      GtkWidget *content_area, *error_label;
+
+      info_bar = GTK_INFO_BAR (gtk_info_bar_new ());
+      gtk_info_bar_set_show_close_button (info_bar, TRUE);
+      gtk_info_bar_set_message_type (info_bar, GTK_MESSAGE_ERROR);
+
+      error_label = gtk_label_new (error->message);
+      gtk_label_set_ellipsize (GTK_LABEL (error_label), PANGO_ELLIPSIZE_END);
+
+      content_area = gtk_info_bar_get_content_area (info_bar);
+      gtk_container_add (GTK_CONTAINER (content_area), error_label);
+
+      gtk_box_pack_start (GTK_BOX (self->home_page_box), GTK_WIDGET (info_bar),
+                          FALSE, FALSE, 0);
+
+      g_signal_connect (info_bar, "response", (GCallback) info_bar_response_cb,
+                        self);
+
+      gtk_widget_show_all (GTK_WIDGET (info_bar));
+    }
 
   if (self->file == NULL)
     return;
@@ -418,13 +463,12 @@ set_file_cb1 (GObject      *source_object,
     {
       gchar *parse_name = NULL;
 
-      /* FIXME: This should probably display an info bar or something. */
       parse_name = g_file_get_parse_name (file);
-      g_warning ("Error loading file ‘%s’: %s", parse_name, error->message);
+      g_prefix_error (&error, "Error loading file ‘%s’: ", parse_name);
       g_free (parse_name);
-      g_error_free (error);
 
-      dfv_viewer_window_clear_file (self);
+      dfv_viewer_window_clear_file (self, error);
+      g_error_free (error);
 
       return;
     }
@@ -451,9 +495,21 @@ set_file_cb2 (GObject      *source_object,
   GPtrArray/*<owned DflMainContext>*/ *main_contexts = NULL;
   GPtrArray/*<owned DflThread>*/ *threads = NULL;
   GPtrArray/*<owned DflSource>*/ *sources = NULL;
+  GError *child_error = NULL;
 
   self = DFV_VIEWER_WINDOW (user_data);
   parser = DFL_PARSER (source_object);
+
+  /* Error? */
+  dfl_parser_load_from_stream_finish (parser, result, &child_error);
+
+  if (child_error != NULL)
+    {
+      dfv_viewer_window_clear_file (self, child_error);
+      g_error_free (child_error);
+
+      return;
+    }
 
   sequence = dfl_parser_get_event_sequence (parser);
 
@@ -466,7 +522,7 @@ set_file_cb2 (GObject      *source_object,
   /* Done. One last check for cancellation, then. Clear up the loading state. */
   if (g_cancellable_is_cancelled (self->open_cancellable))
     {
-      dfv_viewer_window_clear_file (self);
+      dfv_viewer_window_clear_file (self, NULL);
       return;
     }
 
