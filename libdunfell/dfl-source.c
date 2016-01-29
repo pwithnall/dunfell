@@ -64,7 +64,9 @@ struct _DflSource
 
   DflId attach_context;
   DflTimestamp attach_timestamp;
+  DflThreadId attach_thread_id;
   DflTimestamp destroy_timestamp;
+  DflThreadId destroy_thread_id;
 };
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
@@ -290,6 +292,7 @@ source_attach_cb (DflEventSequence *sequence,
   timestamp = dfl_event_get_timestamp (event);
   source->attach_timestamp = timestamp;
   source->attach_context = dfl_event_get_parameter_id (event, 1);
+  source->attach_thread_id = dfl_event_get_thread_id (event);
 }
 
 static void
@@ -307,6 +310,7 @@ source_destroy_cb (DflEventSequence *sequence,
 
   timestamp = dfl_event_get_timestamp (event);
   source->destroy_timestamp = timestamp;
+  source->destroy_thread_id = dfl_event_get_thread_id (event);
 }
 
 static void
@@ -479,6 +483,23 @@ dfl_source_get_attach_timestamp (DflSource *self)
 }
 
 /**
+ * dfl_source_get_attach_thread_id:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflThreadId
+dfl_source_get_attach_thread_id (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
+
+  return self->attach_thread_id;
+}
+
+/**
  * dfl_source_get_attach_main_context_id:
  * @self: a #DflSource
  *
@@ -510,6 +531,23 @@ dfl_source_get_destroy_timestamp (DflSource *self)
   g_return_val_if_fail (DFL_IS_SOURCE (self), 0);
 
   return self->destroy_timestamp;
+}
+
+/**
+ * dfl_source_get_destroy_thread_id:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflThreadId
+dfl_source_get_destroy_thread_id (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
+
+  return self->destroy_thread_id;
 }
 
 /**

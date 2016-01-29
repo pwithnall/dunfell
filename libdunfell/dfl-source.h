@@ -71,7 +71,9 @@ DflTimestamp dfl_source_get_new_timestamp (DflSource *self);
 DflTimestamp dfl_source_get_free_timestamp (DflSource *self);
 
 DflTimestamp dfl_source_get_attach_timestamp (DflSource *self);
+DflThreadId  dfl_source_get_attach_thread_id (DflSource *self);
 DflTimestamp dfl_source_get_destroy_timestamp (DflSource *self);
+DflThreadId  dfl_source_get_destroy_thread_id (DflSource *self);
 
 DflId dfl_source_get_attach_main_context_id (DflSource *self);
 
