@@ -299,6 +299,7 @@ add_default_css (GtkStyleContext *context)
 #define SOURCE_OFFSET 20 /* pixels */
 #define SOURCE_WIDTH 10 /* pixels */
 #define SOURCE_DISPATCH_WIDTH 2 /* pixels */
+#define SOURCE_NAME_OFFSET 30 /* pixels */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -579,6 +580,7 @@ draw_source_selected (DwlTimeline *self,
 
   context = gtk_widget_get_style_context (GTK_WIDGET (self));
 
+  /* Draw the source’s circle. */
   gtk_style_context_add_class (context, "source");
   gtk_style_context_add_class (context, "source_selected");
 
@@ -611,6 +613,28 @@ draw_source_selected (DwlTimeline *self,
 
   gtk_style_context_remove_class (context, "source_selected");
   gtk_style_context_remove_class (context, "source");
+
+  /* Plonk a label next to it for its name. */
+  if (dfl_source_get_name (source) != NULL)
+    {
+      PangoLayout *layout = NULL;
+      PangoRectangle layout_rect;
+
+      gtk_style_context_add_class (context, "source_name");
+
+      layout = gtk_widget_create_pango_layout (GTK_WIDGET (self),
+                                               dfl_source_get_name (source));
+
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      gtk_render_layout (context, cr,
+                         source_x + SOURCE_NAME_OFFSET,
+                         source_y - layout_rect.height / 2.0,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, "source_name");
+    }
 }
 
 static gboolean
