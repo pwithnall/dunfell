@@ -451,6 +451,34 @@ dwl_timeline_size_allocate (GtkWidget     *widget,
                             allocation->height);
 }
 
+static guint
+thread_id_to_index (DwlTimeline *self,
+                    DflThreadId  thread_id)
+{
+  guint thread_index, n_threads;
+
+  n_threads = self->threads->len;
+
+  /* TODO: This should not be so slow. */
+  for (thread_index = 0; thread_index < n_threads; thread_index++)
+    {
+      if (dfl_thread_get_id (self->threads->pdata[thread_index]) == thread_id)
+        break;
+    }
+  g_assert (thread_index < n_threads);
+
+  return thread_index;
+}
+
+/* Get the X coordinate of the centre of the given thread. */
+static gint
+thread_index_to_centre (DwlTimeline *self,
+                        guint        thread_index)
+{
+  return gtk_widget_get_allocated_width (GTK_WIDGET (self)) /
+         self->threads->len * (2 * thread_index + 1) / 2;
+}
+
 /* Draw a line from point 1 to point 2, first moving horizontally from point 1,
  * then drawing a curved corner, then moving vertically to point 2. */
 static void
@@ -539,26 +567,12 @@ draw_source_dispatch_line (DwlTimeline           *self,
   gdouble thread_centre;
   guint thread_index;
   GtkStyleContext *context;
-  gint widget_width;
-  guint n_threads;
   DflTimestamp min_timestamp;
 
   context = gtk_widget_get_style_context (GTK_WIDGET (self));
-  widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
-
-  n_threads = self->threads->len;
   min_timestamp = self->min_timestamp;
-
-  /* TODO: This should not be so slow. */
-  for (thread_index = 0; thread_index < n_threads; thread_index++)
-    {
-      if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-          dispatch->thread_id)
-        break;
-    }
-  g_assert (thread_index < n_threads);
-
-  thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+  thread_index = thread_id_to_index (self, dispatch->thread_id);
+  thread_centre = thread_index_to_centre (self, thread_index);
   timestamp_y = timestamp_to_pixels (self, dispatch_timestamp - min_timestamp);
 
   cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
@@ -760,7 +774,7 @@ dwl_timeline_draw (GtkWidget *widget,
       PangoRectangle layout_rect;
       const gchar *thread_name;
 
-      thread_centre = widget_width / n_threads * (2 * i + 1) / 2;
+      thread_centre = thread_index_to_centre (self, i);
 
       /* Guide line for the entire length of the thread. */
       gtk_style_context_add_class (context, "thread_guide");
@@ -831,16 +845,8 @@ dwl_timeline_draw (GtkWidget *widget,
           gint timestamp_y;
           guint thread_index;
 
-          /* TODO: This should not be so slow. */
-          for (thread_index = 0; thread_index < n_threads; thread_index++)
-            {
-              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-                  data->thread_id)
-                break;
-            }
-          g_assert (thread_index < n_threads);
-
-          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          thread_index = thread_id_to_index (self, data->thread_id);
+          thread_centre = thread_index_to_centre (self, thread_index);
           timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
 
           cairo_line_to (cr,
@@ -870,16 +876,8 @@ dwl_timeline_draw (GtkWidget *widget,
           gint timestamp_y;
           guint thread_index;
 
-          /* TODO: This should not be so slow. */
-          for (thread_index = 0; thread_index < n_threads; thread_index++)
-            {
-              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-                  data->thread_id)
-                break;
-            }
-          g_assert (thread_index < n_threads);
-
-          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          thread_index = thread_id_to_index (self, data->thread_id);
+          thread_centre = thread_index_to_centre (self, thread_index);
           timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
 
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
@@ -926,16 +924,9 @@ dwl_timeline_draw (GtkWidget *widget,
       guint thread_index;
       GdkRGBA color;
 
-      /* TODO: This should not be so slow. */
-      for (thread_index = 0; thread_index < n_threads; thread_index++)
-        {
-          if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-              dfl_source_get_new_thread_id (source))
-            break;
-        }
-      g_assert (thread_index < n_threads);
-
-      thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+      thread_index = thread_id_to_index (self,
+                                         dfl_source_get_new_thread_id (source));
+      thread_centre = thread_index_to_centre (self, thread_index);
 
       /* Source circle. */
       gtk_style_context_add_class (context, "source");
@@ -1007,16 +998,9 @@ dwl_timeline_draw (GtkWidget *widget,
       min_timestamp = self->min_timestamp;
       n_threads = self->threads->len;
 
-      /* TODO: This should not be so slow. */
-      for (thread_index = 0; thread_index < n_threads; thread_index++)
-        {
-          if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-              dfl_source_get_new_thread_id (source))
-            break;
-        }
-      g_assert (thread_index < n_threads);
-
-      thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+      thread_index = thread_id_to_index (self,
+                                         dfl_source_get_new_thread_id (source));
+      thread_centre = thread_index_to_centre (self, thread_index);
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
@@ -1080,17 +1064,9 @@ dwl_timeline_draw (GtkWidget *widget,
 
           min_timestamp = self->min_timestamp;
           n_threads = self->threads->len;
-
-          /* TODO: This should not be so slow. */
-          for (thread_index = 0; thread_index < n_threads; thread_index++)
-            {
-              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-                  dfl_source_get_new_thread_id (source))
-                break;
-            }
-          g_assert (thread_index < n_threads);
-
-          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          thread_index = thread_id_to_index (self,
+                                             dfl_source_get_new_thread_id (source));
+          thread_centre = thread_index_to_centre (self, thread_index);
 
           /* Calculate the centre of the source. */
           source_x = thread_centre - SOURCE_OFFSET;
@@ -1280,8 +1256,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
   /* Find the nearest thread. */
   thread_width = widget_width / n_threads;
   nearest_thread_index = event->x / thread_width;
-  nearest_thread_centre = widget_width / n_threads *
-                          (2 * nearest_thread_index + 1) / 2;
+  nearest_thread_centre = thread_index_to_centre (self, nearest_thread_index);
 
   if (ABS (nearest_thread_centre - event->x) > SOURCE_OFFSET + SOURCE_WIDTH / 2.0)
     {
@@ -1297,19 +1272,13 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
       gdouble thread_centre, source_x, source_y;
       guint thread_index;
 
-      /* TODO: This should not be so slow. */
-      for (thread_index = 0; thread_index < n_threads; thread_index++)
-        {
-          if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-              dfl_source_get_new_thread_id (source))
-            break;
-        }
-      g_assert (thread_index < n_threads);
+      thread_index = thread_id_to_index (self,
+                                         dfl_source_get_new_thread_id (source));
 
       if (thread_index != nearest_thread_index)
         continue;
 
-      thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+      thread_centre = thread_index_to_centre (self, thread_index);
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
@@ -1347,16 +1316,8 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
           gint timestamp_y;
           guint thread_index;
 
-          /* TODO: This should not be so slow. */
-          for (thread_index = 0; thread_index < n_threads; thread_index++)
-            {
-              if (dfl_thread_get_id (self->threads->pdata[thread_index]) ==
-                  data->thread_id)
-                break;
-            }
-          g_assert (thread_index < n_threads);
-
-          thread_centre = widget_width / n_threads * (2 * thread_index + 1) / 2;
+          thread_index = thread_id_to_index (self, data->thread_id);
+          thread_centre = thread_index_to_centre (self, thread_index);
           timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
 
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
