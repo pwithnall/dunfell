@@ -302,6 +302,7 @@ add_default_css (GtkStyleContext *context)
 #define SOURCE_DISPATCH_WIDTH 2 /* pixels */
 #define SOURCE_NAME_OFFSET 30 /* pixels */
 #define SOURCE_DISPATCH_DETAILS_OFFSET 10 /* pixels */
+#define SOURCE_ATTACH_DESTROY_WIDTH 1 /* pixel */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -627,6 +628,63 @@ draw_source_dispatch_line (DwlTimeline           *self,
       g_object_unref (layout);
 
       gtk_style_context_remove_class (context, "source_dispatch_details");
+    }
+}
+
+static void
+draw_source_attach_destroy_lines (DwlTimeline *self,
+                                  cairo_t     *cr,
+                                  DflSource   *source,
+                                  gdouble      source_x,
+                                  gdouble      source_y)
+{
+  gdouble thread_centre;
+  guint thread_index;
+  GtkStyleContext *context;
+  DflTimestamp min_timestamp;
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+  min_timestamp = self->min_timestamp;
+
+  cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_width (cr, SOURCE_ATTACH_DESTROY_WIDTH);
+
+  /* Draw the attach line. */
+  if (dfl_source_get_attach_timestamp (source) != 0)
+    {
+      gint attach_timestamp_y;
+
+      thread_index = thread_id_to_index (self,
+                                         dfl_source_get_attach_thread_id (source));
+      thread_centre = thread_index_to_centre (self, thread_index);
+
+      attach_timestamp_y = timestamp_to_pixels (self,
+                                                dfl_source_get_attach_timestamp (source) - min_timestamp);
+
+      gtk_style_context_add_class (context, "source_attach_line");
+      draw_cornered_line (self, cr,
+                          thread_centre, attach_timestamp_y,
+                          source_x, source_y);
+      gtk_style_context_remove_class (context, "source_attach_line");
+    }
+
+  /* Draw the attach line. */
+  if (dfl_source_get_destroy_timestamp (source) != 0)
+    {
+      gint destroy_timestamp_y;
+
+      thread_index = thread_id_to_index (self,
+                                         dfl_source_get_destroy_thread_id (source));
+      thread_centre = thread_index_to_centre (self, thread_index);
+
+      destroy_timestamp_y = timestamp_to_pixels (self,
+                                                 dfl_source_get_destroy_timestamp (source) - min_timestamp);
+
+      gtk_style_context_add_class (context, "source_destroy_line");
+      draw_cornered_line (self, cr,
+                          thread_centre, destroy_timestamp_y,
+                          source_x, source_y);
+      gtk_style_context_remove_class (context, "source_destroy_line");
     }
 }
 
@@ -1019,6 +1077,9 @@ dwl_timeline_draw (GtkWidget *widget,
           draw_source_dispatch_line (self, cr, source, source_x, source_y,
                                      timestamp, data);
         }
+
+      /* Render the source’s attach and destroy lines. */
+      draw_source_attach_destroy_lines (self, cr, source, source_x, source_y);
 
       /* Re-render the source circle to make sure it’s on top. */
       draw_source_selected (self, cr, source, source_x, source_y);
