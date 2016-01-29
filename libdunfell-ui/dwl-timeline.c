@@ -300,6 +300,7 @@ add_default_css (GtkStyleContext *context)
 #define SOURCE_WIDTH 10 /* pixels */
 #define SOURCE_DISPATCH_WIDTH 2 /* pixels */
 #define SOURCE_NAME_OFFSET 30 /* pixels */
+#define SOURCE_DISPATCH_DETAILS_OFFSET 10 /* pixels */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -566,6 +567,34 @@ draw_source_dispatch_line (DwlTimeline           *self,
                     dispatch_height);
 
   gtk_style_context_remove_class (context, "source_dispatch");
+
+  /* Label the dispatch with the relevant callback function, but only if the
+   * zoom level is high enough to accommodate it.. */
+  if (self->zoom > 0.3 &&
+      (dispatch->dispatch_name != NULL || dispatch->callback_name != NULL))
+    {
+      PangoLayout *layout = NULL;
+      PangoRectangle layout_rect;
+      gchar *text = NULL;
+
+      gtk_style_context_add_class (context, "source_dispatch_details");
+
+      text = g_strdup_printf ("%s\n%s", dispatch->dispatch_name,
+                              dispatch->callback_name);
+      layout = gtk_widget_create_pango_layout (GTK_WIDGET (self), text);
+      g_free (text);
+
+      pango_layout_set_alignment (layout, PANGO_ALIGN_LEFT);
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      gtk_render_layout (context, cr,
+                         thread_centre + SOURCE_DISPATCH_DETAILS_OFFSET,
+                         timestamp_y - layout_rect.height / 2.0,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, "source_dispatch_details");
+    }
 }
 
 static void
