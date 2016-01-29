@@ -971,6 +971,7 @@ dwl_timeline_draw (GtkWidget *widget,
           DflTimeSequenceIter source_iter;
           DflTimestamp source_timestamp;
           DflSourceDispatchData *source_data;
+          gboolean dispatch_drawn;
 
           context = gtk_widget_get_style_context (GTK_WIDGET (self));
           widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
@@ -1000,16 +1001,24 @@ dwl_timeline_draw (GtkWidget *widget,
 
           /* TODO: Start the timestamp at the render area. */
           dfl_source_dispatch_iter (source, &source_iter, 0);
+          dispatch_drawn = FALSE;
 
           while (dfl_time_sequence_iter_next (&source_iter, &source_timestamp,
                                               (gpointer *) &source_data))
             {
-              if (source_data->thread_id != main_context_data->thread_id)
+              if (source_data->thread_id != main_context_data->thread_id ||
+                  source_timestamp < main_context_timestamp ||
+                  source_timestamp > main_context_timestamp +
+                  main_context_data->duration)
                 continue;
 
               draw_source_dispatch_line (self, cr, source, source_x, source_y,
                                          source_timestamp, source_data);
+              dispatch_drawn = TRUE;
             }
+
+          if (dispatch_drawn)
+            draw_source_selected (self, cr, source, source_x, source_y);
         }
     }
 
