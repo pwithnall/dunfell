@@ -59,6 +59,8 @@ struct _DflSource
   /* Sequence of thread IDs and the duration between the start and end of the
    * dispatch. A duration of ≥ 0 is valid; < 0 is not. */
   DflTimeSequence/*<DflMainContextDispatchData>*/ dispatch_events;
+
+  gchar *name;  /* owned; nullable */
 };
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
@@ -84,6 +86,7 @@ dfl_source_dispose (GObject *object)
   DflSource *self = DFL_SOURCE (object);
 
   dfl_time_sequence_clear (&self->dispatch_events);
+  g_clear_pointer (&self->name, g_free);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dfl_source_parent_class)->dispose (object);
@@ -241,6 +244,23 @@ source_before_free_cb (DflEventSequence *sequence,
 }
 
 static void
+source_set_name_cb (DflEventSequence *sequence,
+                    DflEvent         *event,
+                    gpointer          user_data)
+{
+  DflSource *source = user_data;
+  const gchar *name;
+
+  /* Does this event correspond to the right source? */
+  if (dfl_event_get_parameter_id (event, 0) != source->id ||
+      source->name != NULL)
+    return;
+
+  name = dfl_event_get_parameter_utf8 (event, 1);
+  source->name = g_strdup (name);
+}
+
+static void
 source_new_cb (DflEventSequence *sequence,
                DflEvent         *event,
                gpointer          user_data)
@@ -252,6 +272,10 @@ source_new_cb (DflEventSequence *sequence,
                            dfl_event_get_timestamp (event),
                            dfl_event_get_thread_id (event));
 
+  dfl_event_sequence_add_walker (sequence, "g_source_set_name",
+                                 source_set_name_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_source_before_free",
                                  source_before_free_cb,
                                  g_object_ref (source),
@@ -310,6 +334,23 @@ dfl_source_get_id (DflSource *self)
   g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
 
   return self->id;
+}
+
+/**
+ * dfl_source_get_name:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+const gchar *
+dfl_source_get_name (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), NULL);
+
+  return self->name;
 }
 
 /**

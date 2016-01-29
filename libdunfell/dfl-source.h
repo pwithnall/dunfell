@@ -59,6 +59,7 @@ DflSource *dfl_source_new (DflId        id,
 GPtrArray *dfl_source_factory_from_event_sequence (DflEventSequence *sequence);
 
 DflId dfl_source_get_id (DflSource *self);
+const gchar *dfl_source_get_name (DflSource *self);
 
 DflTimestamp dfl_source_get_new_timestamp (DflSource *self);
 DflTimestamp dfl_source_get_free_timestamp (DflSource *self);
