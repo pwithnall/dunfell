@@ -70,6 +70,11 @@ const gchar *dfl_source_get_name (DflSource *self);
 DflTimestamp dfl_source_get_new_timestamp (DflSource *self);
 DflTimestamp dfl_source_get_free_timestamp (DflSource *self);
 
+DflTimestamp dfl_source_get_attach_timestamp (DflSource *self);
+DflTimestamp dfl_source_get_destroy_timestamp (DflSource *self);
+
+DflId dfl_source_get_attach_main_context_id (DflSource *self);
+
 DflThreadId dfl_source_get_new_thread_id (DflSource *self);
 
 void dfl_source_dispatch_iter (DflSource           *self,

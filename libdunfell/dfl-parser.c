@@ -94,6 +94,8 @@ const EventData event_type_array[] =
   { "g_source_before_dispatch", 4 },
   { "g_source_after_dispatch", 3 },
   { "g_source_set_name", 2 },
+  { "g_source_attach", 3 },
+  { "g_source_destroy", 2 },
   { "g_thread_spawned", 3 },
 };
 

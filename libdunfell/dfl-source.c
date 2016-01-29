@@ -61,6 +61,10 @@ struct _DflSource
   DflTimeSequence/*<DflMainContextDispatchData>*/ dispatch_events;
 
   gchar *name;  /* owned; nullable */
+
+  DflId attach_context;
+  DflTimestamp attach_timestamp;
+  DflTimestamp destroy_timestamp;
 };
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
@@ -271,6 +275,41 @@ source_set_name_cb (DflEventSequence *sequence,
 }
 
 static void
+source_attach_cb (DflEventSequence *sequence,
+                  DflEvent         *event,
+                  gpointer          user_data)
+{
+  DflSource *source = user_data;
+  DflTimestamp timestamp;
+
+  /* Does this event correspond to the right source? */
+  if (dfl_event_get_parameter_id (event, 0) != source->id ||
+      source->attach_timestamp != 0)
+    return;
+
+  timestamp = dfl_event_get_timestamp (event);
+  source->attach_timestamp = timestamp;
+  source->attach_context = dfl_event_get_parameter_id (event, 1);
+}
+
+static void
+source_destroy_cb (DflEventSequence *sequence,
+                   DflEvent         *event,
+                   gpointer          user_data)
+{
+  DflSource *source = user_data;
+  DflTimestamp timestamp;
+
+  /* Does this event correspond to the right source? */
+  if (dfl_event_get_parameter_id (event, 0) != source->id ||
+      source->destroy_timestamp != 0)
+    return;
+
+  timestamp = dfl_event_get_timestamp (event);
+  source->destroy_timestamp = timestamp;
+}
+
+static void
 source_new_cb (DflEventSequence *sequence,
                DflEvent         *event,
                gpointer          user_data)
@@ -296,6 +335,14 @@ source_new_cb (DflEventSequence *sequence,
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_source_after_dispatch",
                                  source_before_after_dispatch_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_attach",
+                                 source_attach_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_destroy",
+                                 source_destroy_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
 
@@ -412,6 +459,57 @@ dfl_source_get_new_thread_id (DflSource *self)
   g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
 
   return self->new_thread_id;
+}
+
+/**
+ * dfl_source_get_attach_timestamp:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflTimestamp
+dfl_source_get_attach_timestamp (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), 0);
+
+  return self->attach_timestamp;
+}
+
+/**
+ * dfl_source_get_attach_main_context_id:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflId
+dfl_source_get_attach_main_context_id (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), DFL_ID_INVALID);
+
+  return self->attach_context;
+}
+
+/**
+ * dfl_source_get_destroy_timestamp:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+DflTimestamp
+dfl_source_get_destroy_timestamp (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), 0);
+
+  return self->destroy_timestamp;
 }
 
 /**
