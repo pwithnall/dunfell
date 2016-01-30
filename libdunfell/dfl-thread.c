@@ -163,7 +163,7 @@ dfl_thread_factory_from_event_sequence (DflEventSequence *sequence)
   GPtrArray/*<owned DflThread>*/ *threads = NULL;
 
   threads = g_ptr_array_new_with_free_func (g_object_unref);
-  dfl_event_sequence_add_walker (sequence, NULL, event_cb,
+  dfl_event_sequence_add_walker (sequence, NULL, DFL_ID_INVALID, event_cb,
                                  g_ptr_array_ref (threads),
                                  (GDestroyNotify) g_ptr_array_unref);
 

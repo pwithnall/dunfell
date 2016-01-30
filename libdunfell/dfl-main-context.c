@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -148,8 +148,7 @@ main_context_acquire_release_cb (DflEventSequence *sequence,
   DflThreadId thread_id;
 
   /* Does this event correspond to the right main context? */
-  if (dfl_event_get_parameter_id (event, 0) != main_context->id)
-    return;
+  g_assert (dfl_event_get_parameter_id (event, 0) == main_context->id);
 
   is_acquire = (dfl_event_get_event_type (event) == g_intern_static_string ("g_main_context_acquire"));
   timestamp = dfl_event_get_timestamp (event);
@@ -249,8 +248,7 @@ main_context_free_cb (DflEventSequence *sequence,
   DflTimestamp timestamp;
 
   /* Does this event correspond to the right main context? */
-  if (dfl_event_get_parameter_id (event, 0) != main_context->id)
-    return;
+  g_assert (dfl_event_get_parameter_id (event, 0) == main_context->id);
 
   timestamp = dfl_event_get_timestamp (event);
 
@@ -275,8 +273,7 @@ main_context_before_after_dispatch_cb (DflEventSequence *sequence,
   DflThreadId thread_id;
 
   /* Does this event correspond to the right main context? */
-  if (dfl_event_get_parameter_id (event, 0) != main_context->id)
-    return;
+  g_assert (dfl_event_get_parameter_id (event, 0) == main_context->id);
 
   is_before = (dfl_event_get_event_type (event) ==
                g_intern_static_string ("g_main_context_before_dispatch"));
@@ -376,35 +373,42 @@ main_context_new_cb (DflEventSequence *sequence,
 {
   GPtrArray/*<owned DflMainContext>*/ *main_contexts = user_data;
   DflMainContext *main_context = NULL;
+  DflId main_context_id;
 
-  main_context = dfl_main_context_new (dfl_event_get_parameter_id (event, 0),
+  main_context_id = dfl_event_get_parameter_id (event, 0);
+  main_context = dfl_main_context_new (main_context_id,
                                        dfl_event_get_timestamp (event));
 
+  dfl_event_sequence_start_walker_group (sequence);
+
   dfl_event_sequence_add_walker (sequence, "g_main_context_acquire",
+                                 main_context_id,
                                  main_context_acquire_release_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_main_context_release",
+                                 main_context_id,
                                  main_context_acquire_release_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_main_context_free",
+                                 main_context_id,
                                  main_context_free_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
-
   dfl_event_sequence_add_walker (sequence, "g_main_context_before_dispatch",
+                                 main_context_id,
                                  main_context_before_after_dispatch_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_main_context_after_dispatch",
+                                 main_context_id,
                                  main_context_before_after_dispatch_cb,
                                  g_object_ref (main_context),
                                  (GDestroyNotify) g_object_unref);
 
-  /* TODO: When do these get removed? */
-
-  /* TODO: Other walkers for different members. */
+  dfl_event_sequence_end_walker_group (sequence, "g_main_context_free",
+                                       main_context_id);
 
   g_ptr_array_add (main_contexts, main_context);  /* transfer */
 }
@@ -425,7 +429,7 @@ dfl_main_context_factory_from_event_sequence (DflEventSequence *sequence)
   GPtrArray/*<owned DflMainContext>*/ *main_contexts = NULL;
 
   main_contexts = g_ptr_array_new_with_free_func (g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_main_context_new",
+  dfl_event_sequence_add_walker (sequence, "g_main_context_new", DFL_ID_INVALID,
                                  main_context_new_cb,
                                  g_ptr_array_ref (main_contexts),
                                  (GDestroyNotify) g_ptr_array_unref);

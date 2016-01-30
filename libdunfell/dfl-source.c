@@ -138,8 +138,7 @@ source_before_after_dispatch_cb (DflEventSequence *sequence,
   DflThreadId thread_id;
 
   /* Does this event correspond to the right source? */
-  if (dfl_event_get_parameter_id (event, 0) != source->id)
-    return;
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
 
   is_before = (dfl_event_get_event_type (event) ==
                g_intern_static_string ("g_source_before_dispatch"));
@@ -251,8 +250,9 @@ source_before_free_cb (DflEventSequence *sequence,
   DflTimestamp timestamp;
 
   /* Does this event correspond to the right source? */
-  if (dfl_event_get_parameter_id (event, 0) != source->id ||
-      source->free_timestamp != 0)
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
+
+  if (source->free_timestamp != 0)
     return;
 
   timestamp = dfl_event_get_timestamp (event);
@@ -268,8 +268,9 @@ source_set_name_cb (DflEventSequence *sequence,
   const gchar *name;
 
   /* Does this event correspond to the right source? */
-  if (dfl_event_get_parameter_id (event, 0) != source->id ||
-      source->name != NULL)
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
+
+  if (source->name != NULL)
     return;
 
   name = dfl_event_get_parameter_utf8 (event, 1);
@@ -285,8 +286,9 @@ source_attach_cb (DflEventSequence *sequence,
   DflTimestamp timestamp;
 
   /* Does this event correspond to the right source? */
-  if (dfl_event_get_parameter_id (event, 0) != source->id ||
-      source->attach_timestamp != 0)
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
+
+  if (source->attach_timestamp != 0)
     return;
 
   timestamp = dfl_event_get_timestamp (event);
@@ -304,8 +306,9 @@ source_destroy_cb (DflEventSequence *sequence,
   DflTimestamp timestamp;
 
   /* Does this event correspond to the right source? */
-  if (dfl_event_get_parameter_id (event, 0) != source->id ||
-      source->destroy_timestamp != 0)
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
+
+  if (source->destroy_timestamp != 0)
     return;
 
   timestamp = dfl_event_get_timestamp (event);
@@ -320,39 +323,44 @@ source_new_cb (DflEventSequence *sequence,
 {
   GPtrArray/*<owned DflSource>*/ *sources = user_data;
   DflSource *source = NULL;
+  DflId source_id;
 
-  source = dfl_source_new (dfl_event_get_parameter_id (event, 0),
+  source_id = dfl_event_get_parameter_id (event, 0);
+  source = dfl_source_new (source_id,
                            dfl_event_get_timestamp (event),
                            dfl_event_get_thread_id (event));
 
-  dfl_event_sequence_add_walker (sequence, "g_source_set_name",
+  dfl_event_sequence_start_walker_group (sequence);
+
+  dfl_event_sequence_add_walker (sequence, "g_source_set_name", source_id,
                                  source_set_name_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_source_before_free",
+  dfl_event_sequence_add_walker (sequence, "g_source_before_free", source_id,
                                  source_before_free_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_source_before_dispatch",
+                                 source_id,
                                  source_before_after_dispatch_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_source_after_dispatch",
+  dfl_event_sequence_add_walker (sequence, "g_source_after_dispatch", source_id,
                                  source_before_after_dispatch_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_source_attach",
+  dfl_event_sequence_add_walker (sequence, "g_source_attach", source_id,
                                  source_attach_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_source_destroy",
+  dfl_event_sequence_add_walker (sequence, "g_source_destroy", source_id,
                                  source_destroy_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
 
-  /* TODO: When do these get removed? */
-
-  /* TODO: Other walkers for different members. */
+  /* Remove the walkers once the source is destroyed. */
+  dfl_event_sequence_end_walker_group (sequence, "g_source_before_free",
+                                       source_id);
 
   g_ptr_array_add (sources, source);  /* transfer */
 }
@@ -373,7 +381,8 @@ dfl_source_factory_from_event_sequence (DflEventSequence *sequence)
   GPtrArray/*<owned DflSource>*/ *sources = NULL;
 
   sources = g_ptr_array_new_with_free_func (g_object_unref);
-  dfl_event_sequence_add_walker (sequence, "g_source_new", source_new_cb,
+  dfl_event_sequence_add_walker (sequence, "g_source_new", DFL_ID_INVALID,
+                                 source_new_cb,
                                  g_ptr_array_ref (sources),
                                  (GDestroyNotify) g_ptr_array_unref);
 

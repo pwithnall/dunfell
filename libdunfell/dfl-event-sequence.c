@@ -48,6 +48,7 @@ static gpointer dfl_event_sequence_get_item (GListModel  *list,
 typedef struct
 {
   const gchar *event_type;  /* nullable, unowned, interned */
+  DflId id;  /* could be %DFL_ID_INVALID */
   DflEventWalker walker;
   gpointer user_data;  /* nullable */
   GDestroyNotify destroy_user_data;  /* nullable */
@@ -62,6 +63,8 @@ struct _DflEventSequence
   guint64 initial_timestamp;
 
   GArray/*<DflEventWalkerClosure>*/ *walkers;  /* owned */
+
+  GArray/*<guint>*/ *walker_group;  /* owned; nullable */
 };
 
 G_DEFINE_TYPE_WITH_CODE (DflEventSequence, dfl_event_sequence, G_TYPE_OBJECT,
@@ -93,6 +96,7 @@ walkers_clear_cb (gpointer user_data)
     closure->destroy_user_data (closure->user_data);
 
   closure->event_type = NULL;
+  closure->id = DFL_ID_INVALID;
   closure->walker = NULL;
   closure->user_data = NULL;
   closure->destroy_user_data = NULL;
@@ -111,6 +115,10 @@ dfl_event_sequence_dispose (GObject *object)
 {
   DflEventSequence *self = DFL_EVENT_SEQUENCE (object);
   guint i;
+
+  /* The programmer must have closed any walker groups before disposing the
+   * event sequence. */
+  g_assert (self->walker_group == NULL);
 
   for (i = 0; i < self->n_events; i++)
     g_object_unref (self->events[i]);
@@ -189,10 +197,71 @@ dfl_event_sequence_new (const DflEvent **events,
 }
 
 /**
+ * dfl_event_sequence_start_walker_group:
+ * @self: a #DflEventSequence
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_event_sequence_start_walker_group (DflEventSequence *self)
+{
+  g_return_if_fail (DFL_IS_EVENT_SEQUENCE (self));
+  g_return_if_fail (self->walker_group == NULL);
+
+  self->walker_group = g_array_new (FALSE, FALSE, sizeof (guint));
+}
+
+static void
+remove_walkers_cb (DflEventSequence *sequence,
+                   DflEvent         *event,
+                   gpointer          user_data)
+{
+  GArray/*<guint>*/ *walkers = user_data;  /* owned */
+  gsize i, n_walkers;
+
+  for (i = 0, n_walkers = walkers->len; i < n_walkers; i++)
+    {
+      guint walker_id = g_array_index (walkers, guint, i);
+      dfl_event_sequence_remove_walker (sequence, walker_id);
+    }
+}
+
+/**
+ * dfl_event_sequence_end_walker_group:
+ * @self: a #DflEventSequence
+ * @event_type: TODO
+ * @id: TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_event_sequence_end_walker_group (DflEventSequence *self,
+                                     const gchar      *event_type,
+                                     DflId             id)
+{
+  g_return_if_fail (DFL_IS_EVENT_SEQUENCE (self));
+  g_return_if_fail (event_type != NULL);
+  g_return_if_fail (self->walker_group != NULL);
+
+  /* Remove the walkers once the next @event_type is seen which matches @id. */
+  dfl_event_sequence_add_walker (self, event_type, id,
+                                 remove_walkers_cb,
+                                 g_array_ref (self->walker_group),
+                                 (GDestroyNotify) g_array_unref);
+
+  g_clear_pointer (&self->walker_group, g_array_unref);
+}
+
+/**
  * dfl_event_sequence_add_walker:
  * @self: a #DflEventSequence
  * @event_type: (nullable): event type to match, or %NULL to match all event
  *    types
+ * @id: event ID to match, or %DFL_ID_INVALID to match all event IDs
  * @walker: the event walker to add
  * @user_data: user data to pass to @walker
  * @destroy_user_data: (nullable): destroy handler for @user_data
@@ -200,11 +269,12 @@ dfl_event_sequence_new (const DflEvent **events,
  * TODO
  *
  * Returns: the ID of the walker
- * Since: 0.1.0
+ * Since: UNRELEASED
  */
 guint
 dfl_event_sequence_add_walker (DflEventSequence *self,
                                const gchar      *event_type,
+                               DflId             id,
                                DflEventWalker    walker,
                                gpointer          user_data,
                                GDestroyNotify    destroy_user_data)
@@ -216,11 +286,15 @@ dfl_event_sequence_add_walker (DflEventSequence *self,
   g_return_val_if_fail (walker != NULL, 0);
 
   closure.event_type = g_intern_string (event_type);
+  closure.id = id;
   closure.walker = walker;
   closure.user_data = user_data;
   closure.destroy_user_data = destroy_user_data;
 
   g_array_append_val (self->walkers, closure);
+
+  if (self->walker_group != NULL)
+    g_array_append_val (self->walker_group, self->walkers->len);
 
   return self->walkers->len;
 }
@@ -289,8 +363,11 @@ dfl_event_sequence_walk (DflEventSequence *self)
           if (closure->walker == NULL)
             continue;
 
-          if (closure->event_type == NULL ||
-              closure->event_type == dfl_event_get_event_type (event))
+          /* FIXME: Having the ID hard-coded in index 0 is a bit icky. */
+          if ((closure->event_type == NULL ||
+               closure->event_type == dfl_event_get_event_type (event)) &&
+              (closure->id == DFL_ID_INVALID ||
+               closure->id == dfl_event_get_parameter_id (event, 0)))
             {
               closure->walker (self, event, closure->user_data);
             }

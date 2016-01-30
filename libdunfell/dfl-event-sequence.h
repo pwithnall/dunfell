@@ -1,6 +1,6 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -59,8 +59,14 @@ typedef void (*DflEventWalker) (DflEventSequence *sequence,
                                 DflEvent         *event,
                                 gpointer          user_data);
 
+void  dfl_event_sequence_start_walker_group (DflEventSequence *self);
+void  dfl_event_sequence_end_walker_group   (DflEventSequence *self,
+                                             const gchar      *event_type,
+                                             DflId             id);
+
 guint dfl_event_sequence_add_walker    (DflEventSequence *self,
                                         const gchar      *event_type,
+                                        DflId             id,
                                         DflEventWalker    walker,
                                         gpointer          user_data,
                                         GDestroyNotify    destroy_user_data);
