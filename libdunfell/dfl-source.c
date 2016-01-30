@@ -41,6 +41,7 @@
 
 
 static void dfl_source_dispose (GObject *object);
+static void dfl_source_dispatch_data_clear (DflSourceDispatchData *data);
 
 struct _DflSource
 {
@@ -83,7 +84,8 @@ static void
 dfl_source_init (DflSource *self)
 {
   dfl_time_sequence_init (&self->dispatch_events,
-                          sizeof (DflSourceDispatchData), NULL, 0);
+                          sizeof (DflSourceDispatchData),
+                          (GDestroyNotify) dfl_source_dispatch_data_clear, 0);
 }
 
 static void
@@ -96,6 +98,13 @@ dfl_source_dispose (GObject *object)
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dfl_source_parent_class)->dispose (object);
+}
+
+static void
+dfl_source_dispatch_data_clear (DflSourceDispatchData *data)
+{
+  g_free (data->dispatch_name);
+  g_free (data->callback_name);
 }
 
 /**
