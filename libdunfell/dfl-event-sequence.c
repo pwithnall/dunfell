@@ -22,7 +22,46 @@
  * @stability: Unstable
  * @include: libdunfell/dfl-event-sequence.h
  *
- * TODO
+ * An //event sequence// is a list of #DflEvents, in ascending time order. It
+ * uses a moderately compact representation which is optimised for in-order
+ * iteration over the sequence (‘walking’ over it from start to finish). It
+ * supports matching events to dispatch callbacks ([‘walkers’](#walkers)) for
+ * analysing the event sequence.
+ *
+ * # Walkers # {#walkers}
+ *
+ * A //walker// is a callback function which is executed for each event out of
+ * the #DflEventSequence which matches a set of conditions. Walkers can match on
+ * event type or event type and ID. Walking over the event sequence using
+ * dfl_event_sequence_walk() will call all installed walkers which match each
+ * event, in the order the events are presented in the sequence. There are no
+ * guarantees about which order the walkers which match a particular event are
+ * called in.
+ *
+ * Walkers can be installed on the #DflEventSequence using
+ * dfl_event_sequence_add_walker(), which may be called at any time before or
+ * during a walk over the event sequence (i.e. it may be called from with a
+ * walker callback, and will be able to make its first match on the next event
+ * in the sequence).
+ *
+ * Walkers can be removed using dfl_event_sequence_remove_walker(), which may
+ * also be called at any time, although walkers must be removed at most once.
+ * Any walkers remaining in the #DflEventSequence when it is destroyed are
+ * freed.
+ *
+ * # Walker Groups # {#walker-groups}
+ *
+ * In order to simplify adding groups of walkers to a #DflEventSequence to match
+ * events for a particular object instance (for example), #DflEventSequence
+ * supports //walker groups//. These are groups of calls to
+ * dfl_event_sequence_add_walker() which are tracked together, and are removed
+ * as a group when a //removal event// is matched. Set the removal event by
+ * calling dfl_event_sequence_end_walker_group() after the set of
+ * dfl_event_sequence_add_walker() calls.
+ *
+ * Calls to dfl_event_sequence_start_walker_group() and
+ * dfl_event_sequence_end_walker_group() must be strictly paired, and no walker
+ * groups may be open when the #DflEventSequence is disposed.
  *
  * Since: 0.1.0
  */
@@ -200,7 +239,11 @@ dfl_event_sequence_new (const DflEvent **events,
  * dfl_event_sequence_start_walker_group:
  * @self: a #DflEventSequence
  *
- * TODO
+ * Start a new walker group. For more information, see
+ * [Walker Groups](#walker-groups).
+ *
+ * It is an error to call this if a walker group has already been started and
+ * has not yet been ended with a call to dfl_event_sequence_end_walker_group().
  *
  * Since: UNRELEASED
  */
@@ -231,10 +274,16 @@ remove_walkers_cb (DflEventSequence *sequence,
 /**
  * dfl_event_sequence_end_walker_group:
  * @self: a #DflEventSequence
- * @event_type: TODO
- * @id: TODO
+ * @event_type: event type to trigger removal of the walker group
+ * @id: event ID to trigger removal of the walker group, or %DFL_ID_INVALID to
+ *    match any event ID
  *
- * TODO
+ * End the current walker group, and add a trigger to remove the walkers in the
+ * group from the #DflEventSequence when an event matching @event_type and @id
+ * is seen. @event_type must be specified; @id is optional. Matching is the same
+ * as with dfl_event_sequence_add_walker().
+ *
+ * It is an error to call this if a walker group is not currently started.
  *
  * Since: UNRELEASED
  */
@@ -266,7 +315,19 @@ dfl_event_sequence_end_walker_group (DflEventSequence *self,
  * @user_data: user data to pass to @walker
  * @destroy_user_data: (nullable): destroy handler for @user_data
  *
- * TODO
+ * Add a walker to the event sequence, to be called in the next (or current)
+ * call to dfl_event_sequence_walk(). For more information on walkers, see
+ * [the summary](#walkers).
+ *
+ * The @event_type and @id are optional. If @id is specified, @event_type must
+ * be specified. Only events which match both properties (if specified) are
+ * returned to the @walker callback.
+ *
+ * The @user_data is held at least until the walker is removed from the
+ * #DflEventSequence, but may be held longer. @destroy_user_data is called when
+ * the @user_data is no longer needed.
+ *
+ * Returned walker IDs are guaranteed to never be zero, which is not a valid ID.
  *
  * Returns: the ID of the walker
  * Since: UNRELEASED
@@ -283,6 +344,7 @@ dfl_event_sequence_add_walker (DflEventSequence *self,
 
   g_return_val_if_fail (DFL_IS_EVENT_SEQUENCE (self), 0);
   g_return_val_if_fail (event_type == NULL || *event_type != '\0', 0);
+  g_return_val_if_fail (event_type != NULL || id == DFL_ID_INVALID, 0);
   g_return_val_if_fail (walker != NULL, 0);
 
   closure.event_type = g_intern_string (event_type);
@@ -296,6 +358,7 @@ dfl_event_sequence_add_walker (DflEventSequence *self,
   if (self->walker_group != NULL)
     g_array_append_val (self->walker_group, self->walkers->len);
 
+  g_assert (self->walkers->len != 0);
   return self->walkers->len;
 }
 
@@ -304,9 +367,11 @@ dfl_event_sequence_add_walker (DflEventSequence *self,
  * @self: a #DflEventSequence
  * @walker_id: ID of the walker to remove
  *
- * TODO
+ * Remove a walker from the #DflEventSequence which was previously added using
+ * dfl_event_sequence_add_walker().
  *
- * Removing the same ID twice is an error.
+ * Removing the same ID twice, either using this function or as part of a walker
+ * group, is an error.
  *
  * Since: 0.1.0
  */
