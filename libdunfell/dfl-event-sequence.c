@@ -243,12 +243,12 @@ dfl_event_sequence_remove_walker (DflEventSequence *self,
   DflEventSequenceWalkerClosure *closure;
 
   g_return_if_fail (DFL_IS_EVENT_SEQUENCE (self));
-  g_return_if_fail (walker_id != 0 && walker_id >= self->walkers->len);
+  g_return_if_fail (walker_id != 0 && walker_id <= self->walkers->len);
 
   /* Clear the given element of the walkers array, but don’t remove it so we
    * don’t muck up the IDs of other walkers. */
   closure = &g_array_index (self->walkers, DflEventSequenceWalkerClosure,
-                            walker_id);
+                            walker_id - 1);
 
   g_return_if_fail (closure->walker != NULL);
   walkers_clear_cb (closure);
