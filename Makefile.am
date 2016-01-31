@@ -261,7 +261,7 @@ EXTRA_DIST += \
 # Introspection
 -include $(INTROSPECTION_MAKEFILE)
 INTROSPECTION_GIRS =
-INTROSPECTION_SCANNER_ARGS = --warn-all
+INTROSPECTION_SCANNER_ARGS =
 INTROSPECTION_COMPILER_ARGS =
 AM_DISTCHECK_CONFIGURE_FLAGS += --enable-introspection
 EXTRA_DIST += m4/introspection.m4
@@ -282,8 +282,7 @@ libdunfell_Dunfell_@DFL_API_VERSION@_gir_SCANNERFLAGS = \
 	--identifier-prefix=Dfl \
 	--symbol-prefix=dfl \
 	--c-include="libdunfell/dunfell.h" \
-	--warn-all \
-	--warn-error \
+	$(WARN_SCANNERFLAGS) \
 	$(NULL)
 
 INTROSPECTION_GIRS += libdunfell/Dunfell-@DFL_API_VERSION@.gir
@@ -304,8 +303,7 @@ libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_SCANNERFLAGS = \
 	--identifier-prefix=Dwl \
 	--symbol-prefix=dwl \
 	--c-include="libdunfell-ui/dunfell-ui.h" \
-	--warn-all \
-	--warn-error \
+	$(WARN_SCANNERFLAGS) \
 	$(NULL)
 
 INTROSPECTION_GIRS += libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
