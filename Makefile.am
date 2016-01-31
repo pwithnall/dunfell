@@ -74,7 +74,6 @@ libdunfell_libdunfell_@DFL_API_VERSION@_la_CFLAGS = \
 libdunfell_libdunfell_@DFL_API_VERSION@_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(CODE_COVERAGE_LDFLAGS) \
-	$(WARN_LDFLAGS) \
 	$(AM_LIBADD) \
 	$(NULL)
 
@@ -82,6 +81,7 @@ libdunfell_libdunfell_@DFL_API_VERSION@_la_LDFLAGS = \
 	-version-info $(DFL_LT_VERSION) \
 	-export-symbols-regex "^dfl_" \
 	-no-undefined \
+	$(WARN_LDFLAGS) \
 	$(AM_LDFLAGS) \
 	$(NULL)
 
@@ -150,7 +150,6 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LIBADD = \
 	$(GLIB_LIBS) \
 	$(GTK_LIBS) \
 	$(CODE_COVERAGE_LDFLAGS) \
-	$(WARN_LDFLAGS) \
 	$(AM_LIBADD) \
 	$(NULL)
 
@@ -158,6 +157,7 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LDFLAGS = \
 	-version-info $(DWL_LT_VERSION) \
 	-export-symbols-regex "^dwl_" \
 	-no-undefined \
+	$(WARN_LDFLAGS) \
 	$(AM_LDFLAGS) \
 	$(NULL)
 
@@ -225,11 +225,11 @@ viewer_dunfell_viewer_LDADD = \
 	$(GLIB_LIBS) \
 	$(GTK_LIBS) \
 	$(CODE_COVERAGE_LDFLAGS) \
-	$(WARN_LDFLAGS) \
 	$(AM_LDADD) \
 	$(NULL)
 viewer_dunfell_viewer_LDFLAGS = \
 	-no-undefined \
+	$(WARN_LDFLAGS) \
 	$(AM_LDFLAGS) \
 	$(NULL)
 
