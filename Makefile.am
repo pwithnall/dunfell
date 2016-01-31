@@ -2,7 +2,7 @@ SUBDIRS = . libdunfell/tests libdunfell-ui/tests libdunfell/docs libdunfell-ui/d
 
 ACLOCAL_AMFLAGS = -I m4
 
-DISTCHECK_CONFIGURE_FLAGS =
+AM_DISTCHECK_CONFIGURE_FLAGS =
 CLEANFILES =
 MAINTAINERCLEANFILES =
 EXTRA_DIST =
@@ -263,7 +263,7 @@ EXTRA_DIST += \
 INTROSPECTION_GIRS =
 INTROSPECTION_SCANNER_ARGS = --warn-all
 INTROSPECTION_COMPILER_ARGS =
-DISTCHECK_CONFIGURE_FLAGS += --enable-introspection
+AM_DISTCHECK_CONFIGURE_FLAGS += --enable-introspection
 EXTRA_DIST += m4/introspection.m4
 
 if HAVE_INTROSPECTION
@@ -392,7 +392,7 @@ MAINTAINERCLEANFILES += \
 	m4/gtk-doc.m4 \
 	$(NULL)
 
-DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc --disable-vala
+AM_DISTCHECK_CONFIGURE_FLAGS += --enable-gtk-doc --disable-vala
 
 # pkg-config data
 # Note that the template file is called libdunfell.pc.in, but generates a
