@@ -16,3 +16,6 @@ Potentially switch to user-space probing with no static probes (https://sourcewa
 Add a command line stats tool
 Add parsing and analysis performance tests (see contexts.log)
 Include the recorded process’ command line in the recorded log: https://sourceware.org/systemtap/tapsets/API-cmdline-str.html
+Add an LD_PRELOAD-based dunfell-record for the times when SystemTap doesn’t want to behave
+Fuzz-test the parser
+Add a desktop file for dunfell-viewer
