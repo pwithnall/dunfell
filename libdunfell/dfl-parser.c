@@ -229,6 +229,7 @@ dfl_parser_load_from_stream (DflParser     *self,
   data_stream = g_data_input_stream_new (stream);
   n_comment_lines = 0;
   file_version = 0;
+  initial_timestamp = 0;
   highest_timestamps = g_hash_table_new_full (g_int64_hash, g_int64_equal,
                                               g_free, g_free);
   events = g_ptr_array_new_with_free_func ((GDestroyNotify) g_object_unref);
