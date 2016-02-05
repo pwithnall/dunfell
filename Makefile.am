@@ -288,7 +288,7 @@ libdunfell_Dunfell_@DFL_API_VERSION@_gir_SCANNERFLAGS = \
 INTROSPECTION_GIRS += libdunfell/Dunfell-@DFL_API_VERSION@.gir
 
 libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir: libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la libdunfell/Dunfell-@DFL_API_VERSION@.gir
-libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_INCLUDES = GObject-2.0 Gio-2.0 Gtk-3.0 Dunfell-@DFL_API_VERSION@
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_INCLUDES = GObject-2.0 Gio-2.0 Gtk-3.0
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_CFLAGS = \
 	$(GLIB_CFLAGS) \
 	$(GTK_CFLAGS) \
@@ -303,10 +303,13 @@ libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_SCANNERFLAGS = \
 	--identifier-prefix=Dwl \
 	--symbol-prefix=dwl \
 	--c-include="libdunfell-ui/dunfell-ui.h" \
+	--include-uninstalled=$(builddir)/libdunfell/Dunfell-@DFL_API_VERSION@.gir \
 	$(WARN_SCANNERFLAGS) \
 	$(NULL)
 
 INTROSPECTION_GIRS += libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
+
+INTROSPECTION_COMPILER_ARGS += --includedir $(builddir)/libdunfell
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(INTROSPECTION_GIRS)
@@ -340,6 +343,7 @@ VAPIGEN_VAPIS += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.vapi
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_DEPS = gio-2.0 gtk+-3.0
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_METADATADIRS = $(srcdir)/libdunfell-ui
+libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_GIRDIRS = $(builddir)/libdunfell
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_vapi_FILES = libdunfell-ui/DunfellUi-@DWL_API_VERSION@.gir
 
 libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.deps:
