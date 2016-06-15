@@ -297,10 +297,13 @@ dfl_event_sequence_end_walker_group (DflEventSequence *self,
   g_return_if_fail (self->walker_group != NULL);
 
   /* Remove the walkers once the next @event_type is seen which matches @id. */
-  dfl_event_sequence_add_walker (self, event_type, id,
-                                 remove_walkers_cb,
-                                 g_array_ref (self->walker_group),
-                                 (GDestroyNotify) g_array_unref);
+  if (self->walker_group->len > 0)
+    {
+      dfl_event_sequence_add_walker (self, event_type, id,
+                                     remove_walkers_cb,
+                                     g_array_ref (self->walker_group),
+                                     (GDestroyNotify) g_array_unref);
+    }
 
   g_clear_pointer (&self->walker_group, g_array_unref);
 }
