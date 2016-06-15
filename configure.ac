@@ -83,6 +83,14 @@ AC_SUBST([AM_LDFLAGS])
 
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
+# Internationalisation
+AM_GNU_GETTEXT_VERSION([0.19])
+AM_GNU_GETTEXT([external])
+
+GETTEXT_PACKAGE=AC_PACKAGE_TARNAME
+AC_SUBST([GETTEXT_PACKAGE])
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext package name])
+
 # installed-tests
 AC_ARG_ENABLE([always_build_tests],
               AS_HELP_STRING([--enable-always-build-tests],
