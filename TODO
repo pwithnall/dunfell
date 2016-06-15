@@ -1,20 +1,20 @@
-Make it work for other event loops?
-Generalise event sequence handling for other kinds of event sequences? GStreamer?
 Add support for rendering GTasks
 Add a details pane for viewing more detailed information about something selected in the timeline
 Make timings more obvious in the timeline
 Keep thread IDs visible all the time in the timeline
-Speed up drawing the timeline
 Add keyboard shortcuts for the timeline
 	Jump to next event
 	Jump to source creation
 	Cycle through source dispatches
-Finish documenting everything
 Add a search function to look for a particular GSource, GTask or dispatch
-Verify buffered-input-stream correctness and add unit tests
-Potentially switch to user-space probing with no static probes (https://sourceware.org/systemtap/SystemTap_Beginners_Guide/userspace-probing.html)
 Add a command line stats tool
+Speed up drawing the timeline
+Verify buffered-input-stream correctness and add unit tests
 Add parsing and analysis performance tests (see contexts.log)
+Finish documenting everything
 Include the recorded process’ command line in the recorded log: https://sourceware.org/systemtap/tapsets/API-cmdline-str.html — but this doesn't work with stapusr
-Add an LD_PRELOAD-based dunfell-record for the times when SystemTap doesn’t want to behave
 Fuzz-test the parser
+Add an LD_PRELOAD-based dunfell-record for the times when SystemTap doesn’t want to behave
+Potentially switch to user-space probing with no static probes (https://sourceware.org/systemtap/SystemTap_Beginners_Guide/userspace-probing.html)
+Make it work for other event loops?
+Generalise event sequence handling for other kinds of event sequences? GStreamer?
