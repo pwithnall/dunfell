@@ -245,6 +245,17 @@ EXTRA_DIST += \
 	$(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps) \
 	$(NULL)
 
+desktopdir = $(datadir)/applications
+desktop_DATA = viewer/dunfell-viewer.desktop
+
+%.desktop: %.desktop.in
+	$(AM_V_GEN)$(MSGFMT) --desktop --template $< -o $@-t \
+		-d $(top_srcdir)/po && \
+	mv $@-t $@
+
+EXTRA_DIST += $(desktop_DATA:%=%.in)
+CLEANFILES += $(desktop_DATA)
+
 # Macros
 EXTRA_DIST += \
 	m4/ax_append_compile_flags.m4 \
