@@ -38,7 +38,8 @@ G_DECLARE_FINAL_TYPE (DwlTimeline, dwl_timeline, DWL, TIMELINE, GtkWidget)
 
 DwlTimeline *dwl_timeline_new (GPtrArray/*<owned DflThread>*/      *threads,
                                GPtrArray/*<owned DflMainContext>*/ *main_contexts,
-                               GPtrArray/*<owned DflSource>*/      *sources);
+                               GPtrArray/*<owned DflSource>*/      *sources,
+                               GPtrArray/*<owned DflTask>*/        *tasks);
 
 gfloat   dwl_timeline_get_zoom (DwlTimeline *self);
 gboolean dwl_timeline_set_zoom (DwlTimeline *self,

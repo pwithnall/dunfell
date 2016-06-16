@@ -38,6 +38,7 @@
 
 #include "dfl-main-context.h"
 #include "dfl-source.h"
+#include "dfl-task.h"
 #include "dfl-thread.h"
 #include "dfl-time-sequence.h"
 #include "dfl-types.h"
@@ -85,6 +86,7 @@ typedef enum
   ELEMENT_NONE,
   ELEMENT_SOURCE,
   ELEMENT_CONTEXT_DISPATCH,
+  ELEMENT_TASK,
 } DwlTimelineElement;
 
 struct _DwlTimeline
@@ -96,6 +98,7 @@ struct _DwlTimeline
   GPtrArray/*<owned DflMainContext>*/ *main_contexts;  /* owned */
   GPtrArray/*<owned DflThread>*/ *threads;  /* owned */
   GPtrArray/*<owned DflSource>*/ *sources;  /* owned */
+  GPtrArray/*<owned DflTask>*/ *tasks;  /* owned */
 
   gfloat zoom;
 
@@ -221,6 +224,7 @@ dwl_timeline_dispose (GObject *object)
   g_clear_pointer (&self->sources, g_ptr_array_unref);
   g_clear_pointer (&self->main_contexts, g_ptr_array_unref);
   g_clear_pointer (&self->threads, g_ptr_array_unref);
+  g_clear_pointer (&self->tasks, g_ptr_array_unref);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dwl_timeline_parent_class)->dispose (object);
@@ -231,6 +235,7 @@ dwl_timeline_dispose (GObject *object)
  * @threads: (element-type DflThread): TODO
  * @main_contexts: (element-type DflMainContext): TODO
  * @sources: (element-type DflSource): TODO
+ * @tasks: (element-type DflTask): TODO
  *
  * TODO
  *
@@ -240,7 +245,8 @@ dwl_timeline_dispose (GObject *object)
 DwlTimeline *
 dwl_timeline_new (GPtrArray *threads,
                   GPtrArray *main_contexts,
-                  GPtrArray *sources)
+                  GPtrArray *sources,
+                  GPtrArray *tasks)
 {
   DwlTimeline *timeline = NULL;
 
@@ -250,6 +256,7 @@ dwl_timeline_new (GPtrArray *threads,
   timeline->threads = g_ptr_array_ref (threads);
   timeline->main_contexts = g_ptr_array_ref (main_contexts);
   timeline->sources = g_ptr_array_ref (sources);
+  timeline->tasks = g_ptr_array_ref (tasks);
 
   update_cache (timeline);
 
@@ -278,7 +285,12 @@ add_default_css (GtkStyleContext *context)
     "timeline.source_unattached { background-color: #cc0000 }\n"
     "timeline.source_dispatch { background-color: #73d216; "
                               " border: 1px solid #2e3436 }\n"
-    "timeline.source_dispatch_line { color: #555753 }\n";
+    "timeline.source_dispatch_line { color: #555753 }\n"
+    "timeline.task_new { background-color: #edd400 }\n"
+    "timeline.task_new_hover { background-color: #fce94f }\n"
+    "timeline.task_new_selected { background-color: #73d216 }\n"
+    "timeline.task_return_line { color: #555753 }\n"
+    "timeline.task_propagate_line { color: #555753 }\n";
 
   provider = gtk_css_provider_new ();
   gtk_css_provider_load_from_data (provider, css, -1, &error);
@@ -303,6 +315,11 @@ add_default_css (GtkStyleContext *context)
 #define SOURCE_NAME_OFFSET 30 /* pixels */
 #define SOURCE_DISPATCH_DETAILS_OFFSET 10 /* pixels */
 #define SOURCE_ATTACH_DESTROY_WIDTH 1 /* pixel */
+#define TASK_BORDER_WIDTH 2 /* pixels */
+#define TASK_OFFSET 20 /* pixels */
+#define TASK_WIDTH 12 /* pixels */
+#define TASK_SOURCE_TAG_OFFSET 30 /* pixels */
+#define TASK_CALLBACK_OFFSET 30 /* pixels */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -756,6 +773,199 @@ draw_source_selected (DwlTimeline *self,
     }
 }
 
+static void
+draw_task_circle (DwlTimeline *self,
+                  cairo_t     *cr,
+                  DflTask     *task,
+                  gboolean     hovering,
+                  gboolean     selected)
+{
+  gdouble thread_centre, task_x, task_y;
+  guint thread_index;
+  GdkRGBA color;
+  GtkStyleContext *context;
+  DflTimestamp min_timestamp;
+
+  /* New task circle. */
+  min_timestamp = self->min_timestamp;
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+
+  thread_index = thread_id_to_index (self,
+                                     dfl_task_get_new_thread_id (task));
+  thread_centre = thread_index_to_centre (self, thread_index);
+
+  gtk_style_context_add_class (context, "task_new");
+
+  if (hovering)
+    gtk_style_context_add_class (context, "task_new_hover");
+  if (selected)
+    gtk_style_context_add_class (context, "task_new_selected");
+
+  cairo_save (cr);
+
+  cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_width (cr, TASK_BORDER_WIDTH);
+  cairo_new_path (cr);
+
+  task_x = thread_centre + TASK_OFFSET;
+  task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+
+  cairo_arc (cr,
+             task_x,
+             task_y,
+             TASK_WIDTH / 2.0,
+             0.0, 2 * M_PI);
+
+  cairo_clip_preserve (cr);
+  gtk_render_background (context, cr,
+                         task_x - TASK_WIDTH / 2.0,
+                         task_y - TASK_WIDTH / 2.0,
+                         TASK_WIDTH,
+                         TASK_WIDTH);
+
+  gtk_style_context_get_color (context,
+                               gtk_widget_get_state_flags (GTK_WIDGET (self)),
+                               &color);
+  gdk_cairo_set_source_rgba (cr, &color);
+  cairo_stroke (cr);
+
+  cairo_restore (cr);
+
+  if (selected)
+    gtk_style_context_remove_class (context, "task_new_selected");
+  if (hovering)
+    gtk_style_context_remove_class (context, "task_new_hover");
+
+  gtk_style_context_remove_class (context, "task_new");
+
+  /* Plonk labels next to it for its source tag and callback. */
+  if (selected && dfl_task_get_source_tag_name (task) != NULL)
+    {
+      PangoLayout *layout = NULL;
+      PangoRectangle layout_rect;
+
+      gtk_style_context_add_class (context, "task_source_tag");
+
+      layout = gtk_widget_create_pango_layout (GTK_WIDGET (self),
+                                               dfl_task_get_source_tag_name (task));
+
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      gtk_render_layout (context, cr,
+                         task_x + TASK_SOURCE_TAG_OFFSET,
+                         task_y - layout_rect.height / 2.0,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, "task_source_tag");
+    }
+
+  if (selected && dfl_task_get_callback_name (task) != NULL)
+    {
+      PangoLayout *layout = NULL;
+      PangoRectangle layout_rect;
+      gdouble task_return_x, task_return_y;
+      gdouble return_thread_centre;
+      guint return_thread_index;
+
+      gtk_style_context_add_class (context, "task_callback");
+
+      layout = gtk_widget_create_pango_layout (GTK_WIDGET (self),
+                                               dfl_task_get_callback_name (task));
+
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      /* Work out the label position. If the task has returned, put the label
+       * next to the return timestamp. If it hasn't, put it by the
+       * g_task_new(). */
+      if (dfl_task_get_return_thread_id (task) != 0)
+        {
+          return_thread_index = thread_id_to_index (self,
+                                                    dfl_task_get_return_thread_id (task));
+          return_thread_centre = thread_index_to_centre (self,
+                                                         return_thread_index);
+
+          task_return_x = return_thread_centre + TASK_OFFSET;
+          task_return_y = timestamp_to_pixels (self, dfl_task_get_return_timestamp (task) - min_timestamp);
+        }
+      else
+        {
+          task_return_x = task_x;
+          task_return_y = task_y + layout_rect.height;
+        }
+
+      gtk_render_layout (context, cr,
+                         task_return_x + TASK_CALLBACK_OFFSET,
+                         task_return_y - layout_rect.height / 2.0,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, "task_callback");
+    }
+}
+
+static void
+draw_task_return_propagate_lines (DwlTimeline *self,
+                                  cairo_t     *cr,
+                                  DflTask     *task)
+{
+  gdouble thread_centre;
+  guint thread_index;
+  GtkStyleContext *context;
+  DflTimestamp min_timestamp;
+  gdouble task_x, task_y;
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+  min_timestamp = self->min_timestamp;
+
+  cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
+  cairo_set_line_width (cr, SOURCE_ATTACH_DESTROY_WIDTH);
+
+  thread_index = thread_id_to_index (self,
+                                     dfl_task_get_new_thread_id (task));
+  thread_centre = thread_index_to_centre (self, thread_index);
+  task_x = thread_centre + TASK_OFFSET;
+  task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+
+  /* Draw the return line. */
+  if (dfl_task_get_return_timestamp (task) != 0)
+    {
+      gint return_timestamp_y;
+
+      thread_index = thread_id_to_index (self,
+                                         dfl_task_get_return_thread_id (task));
+      thread_centre = thread_index_to_centre (self, thread_index);
+
+      return_timestamp_y = timestamp_to_pixels (self,
+                                                dfl_task_get_return_timestamp (task) - min_timestamp);
+
+      gtk_style_context_add_class (context, "task_return_line");
+      draw_cornered_line (self, cr,
+                          thread_centre, return_timestamp_y,
+                          task_x, task_y);
+      gtk_style_context_remove_class (context, "task_return_line");
+    }
+
+  /* Draw the propagate line. */
+  if (dfl_task_get_propagate_timestamp (task) != 0)
+    {
+      gint propagate_timestamp_y;
+
+      thread_index = thread_id_to_index (self,
+                                         dfl_task_get_propagate_thread_id (task));
+      thread_centre = thread_index_to_centre (self, thread_index);
+
+      propagate_timestamp_y = timestamp_to_pixels (self,
+                                                   dfl_task_get_propagate_timestamp (task) - min_timestamp);
+
+      gtk_style_context_add_class (context, "task_propagate_line");
+      draw_cornered_line (self, cr,
+                          thread_centre, propagate_timestamp_y,
+                          task_x, task_y);
+      gtk_style_context_remove_class (context, "task_propagate_line");
+    }
+}
+
 static gboolean
 dwl_timeline_draw (GtkWidget *widget,
                    cairo_t   *cr)
@@ -1039,6 +1249,14 @@ dwl_timeline_draw (GtkWidget *widget,
       gtk_style_context_remove_class (context, "source");
     }
 
+  /* Draw the GTasks. */
+  for (i = 0; i < self->tasks->len; i++)
+    draw_task_circle (self, cr, self->tasks->pdata[i],
+                      self->hover_element.type == ELEMENT_TASK &&
+                      self->hover_element.index == i,
+                      self->selected_element.type == ELEMENT_TASK &&
+                      self->selected_element.index == i);
+
   /* Draw the dispatch lines for the selected source. */
   if (self->selected_element.type == ELEMENT_SOURCE)
     {
@@ -1158,6 +1376,19 @@ dwl_timeline_draw (GtkWidget *widget,
           if (dispatch_drawn)
             draw_source_selected (self, cr, source, source_x, source_y);
         }
+    }
+  else if (self->selected_element.type == ELEMENT_TASK)
+    {
+      DflTask *task = self->tasks->pdata[self->selected_element.index];
+
+      /* Render the task’s return and propagate lines. */
+      draw_task_return_propagate_lines (self, cr, task);
+
+      /* Re-render the task new circle to make sure it’s on top. */
+      draw_task_circle (self, cr, task,
+                        self->hover_element.type == ELEMENT_TASK &&
+                        self->hover_element.index == self->selected_element.index,
+                        TRUE);
     }
 
   return FALSE;
@@ -1398,6 +1629,35 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
               new_hover_timestamp = timestamp;
               goto done;
             }
+        }
+    }
+
+  /* Search for tasks. */
+  for (i = 0; i < self->tasks->len; i++)
+    {
+      DflTask *task = self->tasks->pdata[i];
+      gdouble task_x, task_y;
+      guint thread_index;
+
+      thread_index = thread_id_to_index (self,
+                                         dfl_task_get_new_thread_id (task));
+
+      if (thread_index != nearest_thread_index)
+        continue;
+
+      /* Calculate the centre of the task circles. */
+      task_x = thread_index_to_centre (self, thread_index) + TASK_OFFSET;
+      task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+
+      /* See if the event was within the new circle for this task. */
+      if (event->x >= task_x - TASK_WIDTH / 2.0 &&
+          event->x <= task_x + TASK_WIDTH / 2.0 &&
+          event->y >= task_y - TASK_WIDTH / 2.0 &&
+          event->y <= task_y + TASK_WIDTH / 2.0)
+        {
+          new_hover_type = ELEMENT_TASK;
+          new_hover_index = i;
+          goto done;
         }
     }
 
