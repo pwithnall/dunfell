@@ -1,4 +1,4 @@
-Add support for rendering GTasks
+Link the DflTask and DflSource which handles its idle callback and render a link between them
 Add a details pane for viewing more detailed information about something selected in the timeline
 Make timings more obvious in the timeline
 Keep thread IDs visible all the time in the timeline
@@ -8,6 +8,7 @@ Add keyboard shortcuts for the timeline
 	Cycle through source dispatches
 Add a search function to look for a particular GSource, GTask or dispatch
 Add a command line stats tool
+Can/Should we record subprocesses?
 Speed up drawing the timeline
 Verify buffered-input-stream correctness and add unit tests
 Add parsing and analysis performance tests (see contexts.log)
