@@ -97,6 +97,12 @@ const EventData event_type_array[] =
   { "g_source_attach", 3 },
   { "g_source_destroy", 2 },
   { "g_thread_spawned", 3 },
+  { "g_task_new", 5 },
+  { "g_task_set_source_tag", 2 },
+  { "g_task_before_return", 4 },
+  { "g_task_propagate", 2 },
+  { "g_task_before_run_in_thread", 2 },
+  { "g_task_after_run_in_thread", 2 },
 };
 
 static const EventData *
