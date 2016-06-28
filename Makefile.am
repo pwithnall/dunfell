@@ -258,19 +258,6 @@ desktop_DATA = viewer/dunfell-viewer.desktop
 EXTRA_DIST += $(desktop_DATA:%=%.in)
 CLEANFILES += $(desktop_DATA)
 
-# Macros
-EXTRA_DIST += \
-	m4/ax_append_compile_flags.m4 \
-	m4/ax_append_flag.m4 \
-	m4/ax_check_compile_flag.m4 \
-	m4/ax_check_enable_debug.m4 \
-	m4/ax_code_coverage.m4 \
-	m4/ax_compiler_flags.m4 \
-	m4/ax_pkg_check_modules.m4 \
-	m4/ax_require_defined.m4 \
-	m4/ax_valgrind_check.m4 \
-	$(NULL)
-
 # Introspection
 -include $(INTROSPECTION_MAKEFILE)
 INTROSPECTION_GIRS =
