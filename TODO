@@ -19,3 +19,25 @@ Add an LD_PRELOAD-based dunfell-record for the times when SystemTap doesn’t wa
 Potentially switch to user-space probing with no static probes (https://sourceware.org/systemtap/SystemTap_Beginners_Guide/userspace-probing.html)
 Make it work for other event loops?
 Generalise event sequence handling for other kinds of event sequences? GStreamer?
+
+
+rotate the viewer 90 degrees
+frame clock events?
+use format from sys prof?
+collapse columns for when threads join
+add stap probes to GTK+ (gtk_container_idle_sizer)
+take a look at Chromium trace view
+group related GSources
+use monotonic clock in stap file
+look at thread scheduling to avoid/highlight gaps in timeline
+look at perf probes for grabbing backtraces
+check whether systemtap can attach part-way through a process' lifetime; would be useful for gnome-shell (telling a random user on the internet to debug a particular perf bug; or bugs which only appear after a few days)
+maybe look at GooCanvas?
+cursor which shows what's alive at some point in time
+look at thread pools; how big is the queue; how many threads are there and when do they get spawned/joined; expose some of the internal state of the pool
+ensure thread pool threads are named obviously
+collapse periods of time where the process is context switched out?
+https://www.chromium.org/_/rsrc/1441252029512/developers/how-tos/trace-event-profiling-tool/trace-event-reading/Screen%20Shot%202015-09-02%20at%208.46.48%20PM.png
+write overview documentation of how it all fits together and what the policy is on tracing/visualising other things, like Clutter frame clock
+auto-generate dunfell-record.stp?
+work out how systemtap works and whether we could do probe points from JS
