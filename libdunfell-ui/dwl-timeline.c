@@ -1,6 +1,7 @@
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
  * Copyright © Philip Withnall 2015, 2016 <philip@tecnocode.co.uk>
+ * Copyright © Collabora Ltd. 2016
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -100,7 +101,7 @@ struct _DwlTimeline
   GPtrArray/*<owned DflSource>*/ *sources;  /* owned */
   GPtrArray/*<owned DflTask>*/ *tasks;  /* owned */
 
-  gfloat zoom;
+  gfloat zoom;  /* pixels per unit time */
 
   /* Cached dimensions. */
   DflTimestamp min_timestamp;
@@ -352,19 +353,19 @@ update_cache (DwlTimeline *self)
 }
 
 static gint
-timestamp_to_pixels (DwlTimeline  *self,
-                     DflTimestamp  timestamp)
+timestamp_to_y (DwlTimeline  *self,
+                DflTimestamp  timestamp)
 {
   g_return_val_if_fail (timestamp <= G_MAXINT / self->zoom, G_MAXINT);
   return HEADER_HEIGHT + timestamp * self->zoom;
 }
 
 static DflTimestamp
-pixels_to_timestamp (DwlTimeline  *self,
-                     gint          pixels)
+y_to_timestamp (DwlTimeline *self,
+                gint         y)
 {
-  g_return_val_if_fail (pixels > HEADER_HEIGHT, 0);
-  return (pixels - HEADER_HEIGHT) / self->zoom;
+  g_return_val_if_fail (y > HEADER_HEIGHT, 0);
+  return (y - HEADER_HEIGHT) / self->zoom;
 }
 
 static gint
@@ -590,7 +591,7 @@ draw_source_dispatch_line (DwlTimeline           *self,
   min_timestamp = self->min_timestamp;
   thread_index = thread_id_to_index (self, dispatch->thread_id);
   thread_centre = thread_index_to_centre (self, thread_index);
-  timestamp_y = timestamp_to_pixels (self, dispatch_timestamp - min_timestamp);
+  timestamp_y = timestamp_to_y (self, dispatch_timestamp - min_timestamp);
 
   cairo_set_line_cap (cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_width (cr, SOURCE_DISPATCH_WIDTH);
@@ -674,8 +675,8 @@ draw_source_attach_destroy_lines (DwlTimeline *self,
                                          dfl_source_get_attach_thread_id (source));
       thread_centre = thread_index_to_centre (self, thread_index);
 
-      attach_timestamp_y = timestamp_to_pixels (self,
-                                                dfl_source_get_attach_timestamp (source) - min_timestamp);
+      attach_timestamp_y = timestamp_to_y (self,
+                                           dfl_source_get_attach_timestamp (source) - min_timestamp);
 
       gtk_style_context_add_class (context, "source_attach_line");
       draw_cornered_line (self, cr,
@@ -693,8 +694,8 @@ draw_source_attach_destroy_lines (DwlTimeline *self,
                                          dfl_source_get_destroy_thread_id (source));
       thread_centre = thread_index_to_centre (self, thread_index);
 
-      destroy_timestamp_y = timestamp_to_pixels (self,
-                                                 dfl_source_get_destroy_timestamp (source) - min_timestamp);
+      destroy_timestamp_y = timestamp_to_y (self,
+                                            dfl_source_get_destroy_timestamp (source) - min_timestamp);
 
       gtk_style_context_add_class (context, "source_destroy_line");
       draw_cornered_line (self, cr,
@@ -808,7 +809,7 @@ draw_task_circle (DwlTimeline *self,
   cairo_new_path (cr);
 
   task_x = thread_centre + TASK_OFFSET;
-  task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+  task_y = timestamp_to_y (self, dfl_task_get_new_timestamp (task) - min_timestamp);
 
   cairo_arc (cr,
              task_x,
@@ -886,7 +887,7 @@ draw_task_circle (DwlTimeline *self,
                                                          return_thread_index);
 
           task_return_x = return_thread_centre + TASK_OFFSET;
-          task_return_y = timestamp_to_pixels (self, dfl_task_get_return_timestamp (task) - min_timestamp);
+          task_return_y = timestamp_to_y (self, dfl_task_get_return_timestamp (task) - min_timestamp);
         }
       else
         {
@@ -925,7 +926,7 @@ draw_task_return_propagate_lines (DwlTimeline *self,
                                      dfl_task_get_new_thread_id (task));
   thread_centre = thread_index_to_centre (self, thread_index);
   task_x = thread_centre + TASK_OFFSET;
-  task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+  task_y = timestamp_to_y (self, dfl_task_get_new_timestamp (task) - min_timestamp);
 
   /* Draw the return line. */
   if (dfl_task_get_return_timestamp (task) != 0)
@@ -936,8 +937,8 @@ draw_task_return_propagate_lines (DwlTimeline *self,
                                          dfl_task_get_return_thread_id (task));
       thread_centre = thread_index_to_centre (self, thread_index);
 
-      return_timestamp_y = timestamp_to_pixels (self,
-                                                dfl_task_get_return_timestamp (task) - min_timestamp);
+      return_timestamp_y = timestamp_to_y (self,
+                                           dfl_task_get_return_timestamp (task) - min_timestamp);
 
       gtk_style_context_add_class (context, "task_return_line");
       draw_cornered_line (self, cr,
@@ -955,8 +956,8 @@ draw_task_return_propagate_lines (DwlTimeline *self,
                                          dfl_task_get_propagate_thread_id (task));
       thread_centre = thread_index_to_centre (self, thread_index);
 
-      propagate_timestamp_y = timestamp_to_pixels (self,
-                                                   dfl_task_get_propagate_timestamp (task) - min_timestamp);
+      propagate_timestamp_y = timestamp_to_y (self,
+                                              dfl_task_get_propagate_timestamp (task) - min_timestamp);
 
       gtk_style_context_add_class (context, "task_propagate_line");
       draw_cornered_line (self, cr,
@@ -1025,9 +1026,9 @@ dwl_timeline_draw (GtkWidget *widget,
       gtk_style_context_add_class (context, class_name);
       gtk_render_line (context, cr,
                        0.0,
-                       timestamp_to_pixels (self, t * 1000),
+                       timestamp_to_y (self, t * 1000),
                        widget_width,
-                       timestamp_to_pixels (self, t * 1000));
+                       timestamp_to_y (self, t * 1000));
       gtk_style_context_remove_class (context, class_name);
     }
 
@@ -1047,18 +1048,18 @@ dwl_timeline_draw (GtkWidget *widget,
       gtk_style_context_add_class (context, "thread_guide");
       gtk_render_line (context, cr,
                        thread_centre,
-                       timestamp_to_pixels (self, 0),
+                       timestamp_to_y (self, 0),
                        thread_centre,
-                       timestamp_to_pixels (self, max_timestamp - min_timestamp));
+                       timestamp_to_y (self, max_timestamp - min_timestamp));
       gtk_style_context_remove_class (context, "thread_guide");
 
       /* Line for the actual live length of the thread, plus its label. */
       gtk_style_context_add_class (context, "thread");
       gtk_render_line (context, cr,
                        thread_centre,
-                       timestamp_to_pixels (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
+                       timestamp_to_y (self, dfl_thread_get_new_timestamp (thread) - min_timestamp),
                        thread_centre,
-                       timestamp_to_pixels (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
+                       timestamp_to_y (self, dfl_thread_get_free_timestamp (thread) - min_timestamp));
       gtk_style_context_remove_class (context, "thread");
 
       /* Thread label. */
@@ -1114,7 +1115,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
           thread_index = thread_id_to_index (self, data->thread_id);
           thread_centre = thread_index_to_centre (self, thread_index);
-          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
+          timestamp_y = timestamp_to_y (self, timestamp - min_timestamp);
 
           cairo_line_to (cr,
                          thread_centre + 0.5,
@@ -1145,7 +1146,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
           thread_index = thread_id_to_index (self, data->thread_id);
           thread_centre = thread_index_to_centre (self, thread_index);
-          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
+          timestamp_y = timestamp_to_y (self, timestamp - min_timestamp);
 
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
           dispatch_height = duration_to_pixels (self, data->duration);
@@ -1215,7 +1216,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
-      source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+      source_y = timestamp_to_y (self, new_timestamp - min_timestamp);
 
       cairo_arc (cr,
                  source_x,
@@ -1279,7 +1280,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
-      source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+      source_y = timestamp_to_y (self, dfl_source_get_new_timestamp (source) - min_timestamp);
 
       /* Render the source’s dispatches. Each dispatch is rendered as a
        * horizontal line from the thread where it occurs, across to line up with
@@ -1348,7 +1349,7 @@ dwl_timeline_draw (GtkWidget *widget,
 
           /* Calculate the centre of the source. */
           source_x = thread_centre - SOURCE_OFFSET;
-          source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+          source_y = timestamp_to_y (self, dfl_source_get_new_timestamp (source) - min_timestamp);
 
           /* Render the source’s dispatches. Each dispatch is rendered as a
            * horizontal line from the thread where it occurs, across to line up with
@@ -1419,8 +1420,7 @@ dwl_timeline_get_preferred_height (GtkWidget *widget,
   gint height;
 
   /* What’s the maximum height of any of the threads? */
-  height = timestamp_to_pixels (self,
-                                self->max_timestamp - self->min_timestamp);
+  height = timestamp_to_y (self, self->max_timestamp - self->min_timestamp);
 
   if (height > 0)
     height += FOOTER_HEIGHT;
@@ -1481,7 +1481,7 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
       use_focus_timestamp = pixel_is_timestamp (self, event->y);
 
       if (use_focus_timestamp)
-        old_focus_timestamp = pixels_to_timestamp (self, event->y);
+        old_focus_timestamp = y_to_timestamp (self, event->y);
       old_zoom = dwl_timeline_get_zoom (self);
 
       /* Set the updated zoom and schedule a redraw. */
@@ -1503,7 +1503,7 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
           scrollable = GTK_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self)));
           vadjustment = gtk_scrollable_get_vadjustment (scrollable);
 
-          new_position = timestamp_to_pixels (self, old_focus_timestamp);
+          new_position = timestamp_to_y (self, old_focus_timestamp);
           old_position = event->y;
 
           gtk_adjustment_set_value (vadjustment,
@@ -1573,7 +1573,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
 
       /* Calculate the centre of the source. */
       source_x = thread_centre - SOURCE_OFFSET;
-      source_y = timestamp_to_pixels (self, dfl_source_get_new_timestamp (source) - min_timestamp);
+      source_y = timestamp_to_y (self, dfl_source_get_new_timestamp (source) - min_timestamp);
 
       /* See if the event was within this source. */
       if (event->x >= source_x - SOURCE_WIDTH / 2.0 &&
@@ -1609,7 +1609,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
 
           thread_index = thread_id_to_index (self, data->thread_id);
           thread_centre = thread_index_to_centre (self, thread_index);
-          timestamp_y = timestamp_to_pixels (self, timestamp - min_timestamp);
+          timestamp_y = timestamp_to_y (self, timestamp - min_timestamp);
 
           dispatch_width = MAIN_CONTEXT_DISPATCH_WIDTH;
           dispatch_height = duration_to_pixels (self, data->duration);
@@ -1647,7 +1647,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
 
       /* Calculate the centre of the task circles. */
       task_x = thread_index_to_centre (self, thread_index) + TASK_OFFSET;
-      task_y = timestamp_to_pixels (self, dfl_task_get_new_timestamp (task) - min_timestamp);
+      task_y = timestamp_to_y (self, dfl_task_get_new_timestamp (task) - min_timestamp);
 
       /* See if the event was within the new circle for this task. */
       if (event->x >= task_x - TASK_WIDTH / 2.0 &&
