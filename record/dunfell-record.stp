@@ -85,19 +85,19 @@ probe glib.main_context_after_dispatch {
 }
 
 probe glib.main_after_prepare {
-  printdln (",", "g_source_after_prepare", gettimeofday_us (), tid (), source, usymname (prepare), source_timeout);
+  printdln (",", "g_source_after_prepare", gettimeofday_us (), tid (), source, glib_usymname (prepare), source_timeout);
 }
 
 probe glib.main_after_check {
-  printdln (",", "g_source_after_check", gettimeofday_us (), tid (), source, usymname (check), result);
+  printdln (",", "g_source_after_check", gettimeofday_us (), tid (), source, glib_usymname (check), result);
 }
 
 probe glib.main_before_dispatch {
-  printdln (",", "g_source_before_dispatch", gettimeofday_us (), tid (), source_ptr, usymname (dispatch), usymname (callback), user_data);
+  printdln (",", "g_source_before_dispatch", gettimeofday_us (), tid (), source_ptr, glib_usymname (dispatch), glib_usymname (callback), user_data);
 }
 
 probe glib.main_after_dispatch {
-  printdln (",", "g_source_after_dispatch", gettimeofday_us (), tid (), source_ptr, usymname (dispatch), need_destroy);
+  printdln (",", "g_source_after_dispatch", gettimeofday_us (), tid (), source_ptr, glib_usymname (dispatch), need_destroy);
 }
 
 probe glib.main_context_wakeup {
@@ -109,15 +109,15 @@ probe glib.main_context_wakeup_acknowledge {
 }
 
 probe glib.source_new {
-  printdln (",", "g_source_new", gettimeofday_us (), tid (), source, usymname (prepare), usymname (check), usymname (dispatch), usymname (finalize), struct_size);
+  printdln (",", "g_source_new", gettimeofday_us (), tid (), source, glib_usymname (prepare), glib_usymname (check), glib_usymname (dispatch), glib_usymname (finalize), struct_size);
 }
 
 probe glib.source_set_callback {
-  printdln (",", "g_source_set_callback", gettimeofday_us (), tid (), source, usymname (func), data, usymname (notify));
+  printdln (",", "g_source_set_callback", gettimeofday_us (), tid (), source, glib_usymname (func), data, glib_usymname (notify));
 }
 
 probe glib.source_set_callback_indirect {
-  printdln (",", "g_source_set_callback_indirect", gettimeofday_us (), tid (), source, callback_data, usymname (ref), usymname (unref), usymname (get));
+  printdln (",", "g_source_set_callback_indirect", gettimeofday_us (), tid (), source, callback_data, glib_usymname (ref), glib_usymname (unref), glib_usymname (get));
 }
 
 probe glib.source_set_ready_time {
@@ -133,15 +133,15 @@ probe glib.source_set_name {
 }
 
 probe glib.source_before_free {
-  printdln (",", "g_source_before_free", gettimeofday_us (), tid (), source, context, usymname (finalize));
+  printdln (",", "g_source_before_free", gettimeofday_us (), tid (), source, context, glib_usymname (finalize));
 }
 
 probe gio.task_new {
-  printdln (",", "g_task_new", gettimeofday_us (), tid (), task, source_object, cancellable, usymname (callback), callback_data);
+  printdln (",", "g_task_new", gettimeofday_us (), tid (), task, source_object, cancellable, glib_usymname (callback), callback_data);
 }
 
 probe gio.task_set_task_data {
-  printdln (",", "g_task_set_task_data", gettimeofday_us (), tid (), task, task_data, usymname (task_data_destroy));
+  printdln (",", "g_task_set_task_data", gettimeofday_us (), tid (), task, task_data, glib_usymname (task_data_destroy));
 }
 
 probe gio.task_set_priority {
@@ -149,11 +149,11 @@ probe gio.task_set_priority {
 }
 
 probe gio.task_set_source_tag {
-  printdln (",", "g_task_set_source_tag", gettimeofday_us (), tid (), task, usymname (source_tag));
+  printdln (",", "g_task_set_source_tag", gettimeofday_us (), tid (), task, glib_usymname (source_tag));
 }
 
 probe gio.task_before_return {
-  printdln (",", "g_task_before_return", gettimeofday_us (), tid (), task, source_object, usymname (callback), callback_data);
+  printdln (",", "g_task_before_return", gettimeofday_us (), tid (), task, source_object, glib_usymname (callback), callback_data);
 }
 
 probe gio.task_propagate {
@@ -161,7 +161,7 @@ probe gio.task_propagate {
 }
 
 probe gio.task_before_run_in_thread {
-  printdln (",", "g_task_before_run_in_thread", gettimeofday_us (), tid (), task, usymname (task_func));
+  printdln (",", "g_task_before_run_in_thread", gettimeofday_us (), tid (), task, glib_usymname (task_func));
 }
 
 probe gio.task_after_run_in_thread {
@@ -170,4 +170,11 @@ probe gio.task_after_run_in_thread {
 
 probe glib.thread_spawned {
   printdln (",", "g_thread_spawned", gettimeofday_us (), tid (), func, data, name);
+}
+
+function glib_usymname:string (addr: long) {
+  /* FIXME: usymname() currently is not defined for --dyninst, so define a
+   * basic form of it here until it's implemented upstream.
+   * https://sourceware.org/bugzilla/show_bug.cgi?id=14703 */
+  return sprintf ("%x", addr);
 }

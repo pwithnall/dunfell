@@ -43,13 +43,6 @@ if [ "$#" == 0 ]; then
 	exec man dunfell-record
 fi
 
-# Check that stap-server is running to do the compilation.
-if ! systemctl is-active stap-server.service &> /dev/null; then
-	echo "$0: Error: stap-server.service must be running in order to record logs. Please run:" >&2
-	echo "   sudo systemctl start stap-server.service" >&2
-	exit 1
-fi
-
 # Log to a temporary file if none is specified.
 if [ "$log_file" == "" ]; then
 	log_file=$(mktemp "dunfell-$(basename $1)-XXXXXX.log")
@@ -57,4 +50,4 @@ fi
 
 # Run the stap script.
 echo "$0: Logging to ‘$log_file’ for command ‘$*’." >&2
-exec stap --unprivileged --ldd -o "$log_file" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
+exec stap --unprivileged --dyninst --ldd -o "$log_file" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
