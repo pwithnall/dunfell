@@ -16,7 +16,6 @@ Finish documenting everything
 Include the recorded process’ command line in the recorded log: https://sourceware.org/systemtap/tapsets/API-cmdline-str.html — but this doesn't work with stapusr
 Fuzz-test the parser
 Add an LD_PRELOAD-based dunfell-record for the times when SystemTap doesn’t want to behave
-Potentially switch to user-space probing with no static probes (https://sourceware.org/systemtap/SystemTap_Beginners_Guide/userspace-probing.html)
 Make it work for other event loops?
 Generalise event sequence handling for other kinds of event sequences? GStreamer?
 
