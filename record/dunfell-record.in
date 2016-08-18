@@ -1,6 +1,7 @@
 #!/bin/sh
 #
 # Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+# Copyright © Collabora Ltd. 2016
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as published by the
@@ -15,27 +16,43 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Check for help options.
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-	exec man dunfell-record
-elif [ "$#" == 0 ]; then
+set -e
+
+log_file=""
+
+# Parse options.
+while getopts 'ho:-:' param ; do
+	case "$param$OPTARG" in
+		h|-help)
+			exec man dunfell-record
+			;;
+		o*|-out*)
+			log_file="$OPTARG"
+			;;
+		*)
+			echo "$0: Unrecognised option ‘$param$OPTARG’." >&2
+			exec man dunfell-record
+			;;
+	esac
+done
+
+shift $(( $OPTIND - 1 ))
+
+if [ "$#" == 0 ]; then
 	echo "$0: Must provide a command to record." >&2
 	exec man dunfell-record
 fi
-
-# Drop any leading ‘--’ option.
-if [ "$1" == "--" ]; then
-	shift 1
-fi
-
-# TODO: Make this configurable.
-log_file="/tmp/dunfell.log"
 
 # Check that stap-server is running to do the compilation.
 if ! systemctl is-active stap-server.service &> /dev/null; then
 	echo "$0: Error: stap-server.service must be running in order to record logs. Please run:" >&2
 	echo "   sudo systemctl start stap-server.service" >&2
 	exit 1
+fi
+
+# Log to a temporary file if none is specified.
+if [ "$log_file" == "" ]; then
+	log_file=$(mktemp "dunfell-$(basename $1)-XXXXXX.log")
 fi
 
 # Run the stap script.
