@@ -22,7 +22,7 @@ Generalise event sequence handling for other kinds of event sequences? GStreamer
 
 
 rotate the viewer 90 degrees
-frame clock events?
+frame clock events? or highlight source dispatches which take more than 1/60s?
 use format from sys prof?
 collapse columns for when threads join
 add stap probes to GTK+ (gtk_container_idle_sizer)
