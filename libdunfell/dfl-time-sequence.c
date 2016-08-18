@@ -99,9 +99,76 @@ dfl_time_sequence_index (DflTimeSequence *sequence,
   DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
   gpointer element;
 
+  g_assert (index < self->n_elements_valid);
+
   element = ((guint8 *) self->elements +
              index * (sizeof (DflTimeSequenceElement) + self->element_size));
   return (DflTimeSequenceElement *) element;
+}
+
+/* Find the element with the largest timestamp ≤ @timestamp and return its
+ * index in @index. If there are multiple elements with the same timestamp,
+ * return the first of them. Return %FALSE if no element with a timestamp ≤
+ * @timestamp was found; return %TRUE otherwise. If %FALSE is returned, @index
+ * is guaranteed to be set to 0. */
+static gboolean
+dfl_time_sequence_find_timestamp (DflTimeSequence *sequence,
+                                  DflTimestamp     timestamp,
+                                  gsize           *index)
+{
+  DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
+  gsize left_index, right_index, middle;
+  DflTimeSequenceElement *element;
+
+  /* Trivial cases. */
+  if (self->n_elements_valid == 0)
+    {
+      *index = 0;
+      return FALSE;
+    }
+
+  if (timestamp == 0)
+    {
+      *index = 0;
+      return TRUE;
+    }
+
+  /* Binary search. */
+  left_index = 0;
+  right_index = self->n_elements_valid - 1;
+
+  do
+    {
+      middle = (left_index + right_index) / 2;  /* truncate */
+      element = dfl_time_sequence_index (sequence, middle);
+
+      if (element->timestamp > timestamp && middle > 0)
+        right_index = middle - 1;
+      else if (element->timestamp < timestamp && middle < G_MAXSIZE)
+        left_index = middle + 1;
+      else
+        break;
+    }
+  while (left_index < right_index);
+
+  /* Work backwards until we find the first of the matching elements. (Multiple
+   * elements can have the same timestamp.) */
+  while (element->timestamp >= timestamp && middle > 0)
+    {
+      middle--;
+      element = dfl_time_sequence_index (sequence, middle);
+    }
+
+  if (element->timestamp <= timestamp)
+    {
+      *index = middle;
+      return TRUE;
+    }
+  else
+    {
+      *index = 0;
+      return FALSE;
+    }
 }
 
 /**
@@ -257,7 +324,7 @@ dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
   g_return_if_fail (sequence != NULL);
 
   self->sequence = sequence;
-  self->index = 0;  /* TODO: handle @start */
+  dfl_time_sequence_find_timestamp (sequence, start, &self->index);
 }
 
 /**
