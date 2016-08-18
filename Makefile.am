@@ -179,14 +179,14 @@ check-dwl-headers:
 
 # dunfell-record program
 dfldatadir = $(datadir)/libdunfell-@DFL_API_VERSION@
-dist_dfldata_DATA = agent/dunfell-record.stp
+dist_dfldata_DATA = record/dunfell-record.stp
 
-EXTRA_DIST += agent/dunfell-record.in
-bin_SCRIPTS += agent/dunfell-record
-CLEANFILES += agent/dunfell-record
+EXTRA_DIST += record/dunfell-record.in
+bin_SCRIPTS += record/dunfell-record
+CLEANFILES += record/dunfell-record
 
-agent/dunfell-record: $(srcdir)/agent/dunfell-record.in
-	$(AM_V_GEN)$(MKDIR_P) agent && \
+record/dunfell-record: $(srcdir)/record/dunfell-record.in
+	$(AM_V_GEN)$(MKDIR_P) record && \
 	sed -e "s,[@]datadir[@],$(datadir),g;s,[@]DFL_API_VERSION[@],@DFL_API_VERSION@,g" $< > $@ && chmod +x $@ || rm $@
 
 # Viewer application
