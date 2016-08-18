@@ -23,6 +23,11 @@ elif [ "$#" == 0 ]; then
 	exec man dunfell-record
 fi
 
+# Drop any leading ‘--’ option.
+if [ "$1" == "--" ]; then
+	shift 1
+fi
+
 # TODO: Make this configurable.
 log_file="/tmp/dunfell.log"
 
