@@ -368,6 +368,13 @@ y_to_timestamp (DwlTimeline *self,
   return (y - HEADER_HEIGHT) / self->zoom;
 }
 
+static DflDuration
+pixels_to_duration (DwlTimeline *self,
+                    gint         pixels)
+{
+  return pixels / self->zoom;
+}
+
 static gint
 duration_to_pixels (DwlTimeline *self,
                     DflDuration  duration)
@@ -973,27 +980,72 @@ dwl_timeline_draw (GtkWidget *widget,
 {
   DwlTimeline *self = DWL_TIMELINE (widget);
   GtkStyleContext *context;
-  gint widget_width;
+  gint widget_width, widget_height;
   guint i, n_threads;
   DflTimestamp min_timestamp, max_timestamp, t;
+  DflTimestamp min_visible_timestamp, max_visible_timestamp;
 
   context = gtk_widget_get_style_context (widget);
   widget_width = gtk_widget_get_allocated_width (widget);
+  widget_height = gtk_widget_get_allocated_height (widget);
 
   n_threads = self->threads->len;
   min_timestamp = self->min_timestamp;
   max_timestamp = self->max_timestamp;
+
+  /* Work out our clipping. Once we implement GtkScrollable, this can be
+   * removed. */
+  min_visible_timestamp = min_timestamp;
+  max_visible_timestamp = max_timestamp;
+
+  if (GTK_IS_SCROLLABLE (gtk_widget_get_parent (widget)))
+    {
+      GtkScrollable *scrollable;
+      GtkAdjustment *vadjustment;
+      gdouble value, lower, upper;
+      gint parent_widget_height;
+      DflTimestamp visible_time, value_timestamp;
+
+      scrollable = GTK_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self)));
+      vadjustment = gtk_scrollable_get_vadjustment (scrollable);
+      parent_widget_height = gtk_widget_get_allocated_height (GTK_WIDGET (scrollable));
+      lower = gtk_adjustment_get_lower (vadjustment);
+      upper = gtk_adjustment_get_upper (vadjustment);
+      value = gtk_adjustment_get_value (vadjustment);
+
+      /* Multiply by two to give some buffer either side of the visible area. */
+      visible_time = (DflTimestamp) pixels_to_duration (self, parent_widget_height) * 2;
+      value_timestamp = min_timestamp +
+                        (max_timestamp - min_timestamp) /
+                        (upper - lower) *
+                        value;
+
+      if (min_timestamp <= G_MAXUINT64 - visible_time &&
+          min_timestamp + visible_time <= value_timestamp)
+        min_visible_timestamp = value_timestamp - visible_time;
+      else
+        min_visible_timestamp = min_timestamp;
+
+      if (max_timestamp >= visible_time &&
+          max_timestamp - visible_time >= value_timestamp)
+        max_visible_timestamp = value_timestamp + visible_time;
+      else
+        max_visible_timestamp = max_timestamp;
+    }
+
+  g_assert (min_timestamp <= max_timestamp);
+  g_assert (min_visible_timestamp <= max_visible_timestamp);
+  g_assert (min_timestamp <= min_visible_timestamp);
+  g_assert (max_visible_timestamp <= max_timestamp);
 
   /* If there are no threads, there’s nothing to draw. */
   if (n_threads == 0)
     {
       PangoLayout *layout = NULL;
       PangoRectangle layout_rect;
-      gint widget_height;
 
       gtk_style_context_add_class (context, "message");
 
-      widget_height = gtk_widget_get_allocated_height (widget);
       layout = gtk_widget_create_pango_layout (GTK_WIDGET (self),
                                                "Log file is empty.");
 
@@ -1012,23 +1064,26 @@ dwl_timeline_draw (GtkWidget *widget,
 
   /* Draw the millisecond and 10-millisecond markers. Only draw the millisecond
    * markers if there’s enough space to render them. */
-  for (t = 0;
-       t <= (max_timestamp - min_timestamp) / 1000;
-       t += (self->zoom < 0.01) ? 10 : 1)
+  for (t = min_timestamp + ((min_visible_timestamp - min_timestamp) / 10000) * 10000;
+       t <= max_visible_timestamp;
+       t += (self->zoom < 0.01) ? 10000 : 1000)
     {
       const gchar *class_name;
+      gdouble marker_y;
 
-      if (t % 10 == 0)
+      if ((t - min_timestamp) % 10000 == 0)
         class_name = "ten_millisecond_marker";
       else
         class_name = "millisecond_marker";
 
+      marker_y = timestamp_to_y (self, t - min_timestamp);
+
       gtk_style_context_add_class (context, class_name);
       gtk_render_line (context, cr,
                        0.0,
-                       timestamp_to_y (self, t * 1000),
+                       marker_y,
                        widget_width,
-                       timestamp_to_y (self, t * 1000));
+                       marker_y);
       gtk_style_context_remove_class (context, class_name);
     }
 
@@ -1104,10 +1159,11 @@ dwl_timeline_draw (GtkWidget *widget,
       cairo_set_line_width (cr, MAIN_CONTEXT_ACQUIRED_WIDTH);
       cairo_new_path (cr);
 
-      /* TODO: Set the start timestamp according to the clip area */
-      dfl_main_context_thread_ownership_iter (main_context, &iter, 0);
+      dfl_main_context_thread_ownership_iter (main_context, &iter,
+                                              min_visible_timestamp);
 
-      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
+      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data) &&
+             timestamp <= max_visible_timestamp)
         {
           gdouble thread_centre;
           gint timestamp_y;
@@ -1117,7 +1173,7 @@ dwl_timeline_draw (GtkWidget *widget,
           thread_centre = thread_index_to_centre (self, thread_index);
           timestamp_y = timestamp_to_y (self, timestamp - min_timestamp);
 
-          cairo_line_to (cr,
+          cairo_move_to (cr,
                          thread_centre + 0.5,
                          timestamp_y + 0.5);
           cairo_line_to (cr,
@@ -1135,10 +1191,11 @@ dwl_timeline_draw (GtkWidget *widget,
       /* Iterate through the dispatch events. */
       gtk_style_context_add_class (context, "main_context_dispatch");
 
-      /* TODO: Set the start timestamp according to the clip area */
-      dfl_main_context_dispatch_iter (main_context, &iter, 0);
+      dfl_main_context_dispatch_iter (main_context, &iter,
+                                      min_visible_timestamp);
 
-      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
+      while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data) &&
+             timestamp <= max_visible_timestamp)
         {
           gdouble thread_centre, dispatch_width, dispatch_height;
           gint timestamp_y;
@@ -1191,6 +1248,13 @@ dwl_timeline_draw (GtkWidget *widget,
       gdouble thread_centre, source_x, source_y;
       guint thread_index;
       GdkRGBA color;
+      DflTimestamp new_timestamp;
+
+      new_timestamp = dfl_source_get_new_timestamp (source);
+
+      if (new_timestamp < min_visible_timestamp ||
+          new_timestamp > max_visible_timestamp)
+        continue;
 
       thread_index = thread_id_to_index (self,
                                          dfl_source_get_new_thread_id (source));
@@ -1252,11 +1316,23 @@ dwl_timeline_draw (GtkWidget *widget,
 
   /* Draw the GTasks. */
   for (i = 0; i < self->tasks->len; i++)
-    draw_task_circle (self, cr, self->tasks->pdata[i],
-                      self->hover_element.type == ELEMENT_TASK &&
-                      self->hover_element.index == i,
-                      self->selected_element.type == ELEMENT_TASK &&
-                      self->selected_element.index == i);
+    {
+      DflTimestamp new_timestamp, return_timestamp;
+      DflTask *task = self->tasks->pdata[i];
+
+      new_timestamp = dfl_task_get_new_timestamp (task);
+      return_timestamp = dfl_task_get_return_timestamp (task);
+
+      if (return_timestamp < min_visible_timestamp ||
+          new_timestamp > max_visible_timestamp)
+        continue;
+
+      draw_task_circle (self, cr, task,
+                        self->hover_element.type == ELEMENT_TASK &&
+                        self->hover_element.index == i,
+                        self->selected_element.type == ELEMENT_TASK &&
+                        self->selected_element.index == i);
+    }
 
   /* Draw the dispatch lines for the selected source. */
   if (self->selected_element.type == ELEMENT_SOURCE)
@@ -1286,8 +1362,6 @@ dwl_timeline_draw (GtkWidget *widget,
        * horizontal line from the thread where it occurs, across to line up with
        * the column containing the source, round the corner, then up to where
        * the source is rendered (the g_source_new()). */
-
-      /* TODO: Start the timestamp at the render area. */
       dfl_source_dispatch_iter (source, &iter, 0);
 
       while (dfl_time_sequence_iter_next (&iter, &timestamp, (gpointer *) &data))
@@ -1356,8 +1430,8 @@ dwl_timeline_draw (GtkWidget *widget,
            * the column containing the source, round the corner, then up to where
            * the source is rendered (the g_source_new()). */
 
-          /* TODO: Start the timestamp at the render area. */
-          dfl_source_dispatch_iter (source, &source_iter, 0);
+          dfl_source_dispatch_iter (source, &source_iter,
+                                    main_context_timestamp);
           dispatch_drawn = FALSE;
 
           while (dfl_time_sequence_iter_next (&source_iter, &source_timestamp,

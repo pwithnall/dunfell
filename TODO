@@ -9,7 +9,6 @@ Add keyboard shortcuts for the timeline
 Add a search function to look for a particular GSource, GTask or dispatch
 Add a command line stats tool
 Can/Should we record subprocesses?
-Speed up drawing the timeline
 Verify buffered-input-stream correctness and add unit tests
 Add parsing and analysis performance tests (see contexts.log)
 Finish documenting everything
