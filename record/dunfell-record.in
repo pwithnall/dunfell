@@ -50,4 +50,4 @@ fi
 
 # Run the stap script.
 echo "$0: Logging to ‘$log_file’ for command ‘$*’." >&2
-exec stap --unprivileged --dyninst --ldd -o "$log_file" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
+exec stap --unprivileged --dyninst --download-debuginfo=yes --ldd -o "$log_file" -c "$*" $STAP_OPTIONS @datadir@/libdunfell-@DFL_API_VERSION@/dunfell-record.stp
