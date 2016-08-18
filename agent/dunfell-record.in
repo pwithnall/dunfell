@@ -18,6 +18,9 @@
 # Check for help options.
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
 	exec man dunfell-record
+elif [ "$#" == 0 ]; then
+	echo "$0: Must provide a command to record." >&2
+	exec man dunfell-record
 fi
 
 # TODO: Make this configurable.
