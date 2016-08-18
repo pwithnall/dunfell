@@ -29,12 +29,31 @@ Install systemtap-client and systemtap-server. If you are using a custom
 version of GLib, you must add its tapset files to the stap-serverd include
 path:
    sudo mkdir -p /etc/stap-server/conf.d
-   sudo echo "INCLUDE+=/opt/gnome3/build/share/systemtap/tapset" > \
-      /etc/stap-server/conf.d/main.conf
+   echo "INCLUDE+=/opt/gnome3/build/share/systemtap/tapset" | \
+      sudo tee /etc/stap-server/conf.d/main.conf
    sudo systemctl enable stap-server.service
    sudo systemctl start stap-server.service
 
-TODO
+You may also need to add your user to the stapusr group in order to be
+allowed to submit scripts to the SystemTap server:
+   sudo usermod -a -G stapusr $USER
+
+Running Dunfell recorder
+------------------------
+
+Dunfell has two parts: a recorder, which is used to trace what happens in
+your process; and a viewer, which is used afterwards to visualise the
+trace. There is no way to visualise a process while it is running. To use
+the recorder, your processʼ files must be readable by the SystemTap server
+(stap-server.service). Typically, this means that they must be in some
+shared path like /opt, rather than /home.
+
+To run the recorder on my-favourite-process with some arguments:
+   dunfell-record -- my-favourite-process --arguments --to --it
+The result will be written to /tmp/dunfell.log.
+
+To view the result:
+   dunfell-viewer /tmp/dunfell.log
 
 Dependencies
 ============
