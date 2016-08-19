@@ -32,7 +32,7 @@ PKG_PROG_PKG_CONFIG
 AC_PROG_LN_S
 
 # Requirements
-GLIB_REQS=2.31.0
+GLIB_REQS=2.44.0
 GTK_REQS=3.19.1
 
 # Before making a release, the DFL_LT_VERSION string should be modified. The

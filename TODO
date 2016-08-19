@@ -1,6 +1,5 @@
 Link the DflTask and DflSource which handles its idle callback and render a link between them
 Add a details pane for viewing more detailed information about something selected in the timeline
-Make timings more obvious in the timeline
 Keep thread IDs visible all the time in the timeline
 Add keyboard shortcuts for the timeline
 	Jump to next event

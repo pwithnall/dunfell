@@ -275,7 +275,9 @@ add_default_css (GtkStyleContext *context)
     "timeline.thread_guide { color: #cccccc }\n"
     "timeline.thread { color: rgb(139, 142, 143) }\n"
     "timeline.millisecond_marker { color: #d3d7cf }\n"
+    "timeline.millisecond_marker_label { color: #babdb6 }\n"
     "timeline.ten_millisecond_marker { color: #babdb6 }\n"
+    "timeline.ten_millisecond_marker_label { color: #888a85 }\n"
     "timeline.main_context_dispatch { background-color: #3465a4; "
                                      "border: 1px solid #2e3436 }\n"
     "timeline.main_context_dispatch_hover { background-color: #729fcf }\n"
@@ -321,6 +323,8 @@ add_default_css (GtkStyleContext *context)
 #define TASK_WIDTH 12 /* pixels */
 #define TASK_SOURCE_TAG_OFFSET 30 /* pixels */
 #define TASK_CALLBACK_OFFSET 30 /* pixels */
+#define LEFT_GUTTER_WIDTH 70 /* pixels */
+#define LEFT_GUTTER_RIGHT_PADDING 5 /* pixels */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -501,8 +505,13 @@ static gint
 thread_index_to_centre (DwlTimeline *self,
                         guint        thread_index)
 {
-  return gtk_widget_get_allocated_width (GTK_WIDGET (self)) /
-         self->threads->len * (2 * thread_index + 1) / 2;
+  gint widget_width;
+
+  widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
+
+  return (widget_width - LEFT_GUTTER_WIDTH) /
+         self->threads->len * (2 * thread_index + 1) / 2 +
+         LEFT_GUTTER_WIDTH;
 }
 
 /* Draw a line from point 1 to point 2, first moving horizontally from point 1,
@@ -1068,23 +1077,52 @@ dwl_timeline_draw (GtkWidget *widget,
        t <= max_visible_timestamp;
        t += (self->zoom < 0.01) ? 10000 : 1000)
     {
-      const gchar *class_name;
+      const gchar *line_class_name, *label_class_name;
       gdouble marker_y;
+      PangoLayout *layout = NULL;
+      g_autofree gchar *text = NULL;
+      PangoRectangle layout_rect;
 
+      /* Line. */
       if ((t - min_timestamp) % 10000 == 0)
-        class_name = "ten_millisecond_marker";
+        {
+          line_class_name = "ten_millisecond_marker";
+          label_class_name = "ten_millisecond_marker_label";
+        }
       else
-        class_name = "millisecond_marker";
+        {
+          line_class_name = "millisecond_marker";
+          label_class_name = "millisecond_marker_label";
+        }
 
       marker_y = timestamp_to_y (self, t - min_timestamp);
 
-      gtk_style_context_add_class (context, class_name);
+      /* Line. */
+      gtk_style_context_add_class (context, line_class_name);
       gtk_render_line (context, cr,
-                       0.0,
+                       LEFT_GUTTER_WIDTH,
                        marker_y,
                        widget_width,
                        marker_y);
-      gtk_style_context_remove_class (context, class_name);
+      gtk_style_context_remove_class (context, line_class_name);
+
+      /* Label. */
+      gtk_style_context_add_class (context, label_class_name);
+
+      text = g_strdup_printf ("%" G_GINT64_FORMAT " ms",
+                              (t - min_timestamp) / 1000);
+      layout = gtk_widget_create_pango_layout (widget, text);
+
+      pango_layout_set_alignment (layout, PANGO_ALIGN_RIGHT);
+      pango_layout_get_pixel_extents (layout, NULL, &layout_rect);
+
+      gtk_render_layout (context, cr,
+                         LEFT_GUTTER_WIDTH - LEFT_GUTTER_RIGHT_PADDING - layout_rect.width,
+                         marker_y - layout_rect.height / 2,
+                         layout);
+      g_object_unref (layout);
+
+      gtk_style_context_remove_class (context, label_class_name);
     }
 
   /* Draw the threads. */
@@ -1469,9 +1507,11 @@ dwl_timeline_get_preferred_width (GtkWidget *widget,
   n_threads = self->threads->len;
 
   if (minimum_width != NULL)
-    *minimum_width = MAX (1, n_threads * THREAD_MIN_WIDTH);
+    *minimum_width = MAX (1,
+                          LEFT_GUTTER_WIDTH + n_threads * THREAD_MIN_WIDTH);
   if (natural_width != NULL)
-    *natural_width = MAX (1, n_threads * THREAD_NATURAL_WIDTH);
+    *natural_width = MAX (1,
+                          LEFT_GUTTER_WIDTH + n_threads * THREAD_NATURAL_WIDTH);
 }
 
 static void
