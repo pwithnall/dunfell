@@ -278,6 +278,10 @@ add_default_css (GtkStyleContext *context)
     "timeline.millisecond_marker_label { color: #babdb6 }\n"
     "timeline.ten_millisecond_marker { color: #babdb6 }\n"
     "timeline.ten_millisecond_marker_label { color: #888a85 }\n"
+    "timeline.hundred_millisecond_marker { color: #888a85 }\n"
+    "timeline.hundred_millisecond_marker_label { color: #555753 }\n"
+    "timeline.thousand_millisecond_marker { color: #555753 }\n"
+    "timeline.thousand_millisecond_marker_label { color: #2e3436 }\n"
     "timeline.main_context_dispatch { background-color: #3465a4; "
                                      "border: 1px solid #2e3436 }\n"
     "timeline.main_context_dispatch_hover { background-color: #729fcf }\n"
@@ -1071,11 +1075,11 @@ dwl_timeline_draw (GtkWidget *widget,
       return FALSE;
     }
 
-  /* Draw the millisecond and 10-millisecond markers. Only draw the millisecond
+  /* Draw the 1ms, 10ms and 100ms markers. Only draw the higher frequency
    * markers if there’s enough space to render them. */
-  for (t = min_timestamp + ((min_visible_timestamp - min_timestamp) / 10000) * 10000;
+  for (t = min_timestamp + ((min_visible_timestamp - min_timestamp) / 1000000) * 1000000;
        t <= max_visible_timestamp;
-       t += (self->zoom < 0.01) ? 10000 : 1000)
+       t += (self->zoom <= 0.0011) ? 100000 : ((self->zoom <= 0.01) ? 10000 : 1000))
     {
       const gchar *line_class_name, *label_class_name;
       gdouble marker_y;
@@ -1084,7 +1088,17 @@ dwl_timeline_draw (GtkWidget *widget,
       PangoRectangle layout_rect;
 
       /* Line. */
-      if ((t - min_timestamp) % 10000 == 0)
+      if ((t - min_timestamp) % 1000000 == 0)
+        {
+          line_class_name = "thousand_millisecond_marker";
+          label_class_name = "thousand_millisecond_marker_label";
+        }
+      else if ((t - min_timestamp) % 100000 == 0)
+        {
+          line_class_name = "hundred_millisecond_marker";
+          label_class_name = "hundred_millisecond_marker_label";
+        }
+      else if ((t - min_timestamp) % 10000 == 0)
         {
           line_class_name = "ten_millisecond_marker";
           label_class_name = "ten_millisecond_marker_label";
