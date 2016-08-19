@@ -1344,12 +1344,6 @@ dwl_timeline_draw (GtkWidget *widget,
       DflTimestamp timestamp;
       DflSourceDispatchData *data;
 
-      context = gtk_widget_get_style_context (GTK_WIDGET (self));
-      widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
-
-      min_timestamp = self->min_timestamp;
-      n_threads = self->threads->len;
-
       thread_index = thread_id_to_index (self,
                                          dfl_source_get_new_thread_id (source));
       thread_centre = thread_index_to_centre (self, thread_index);
@@ -1412,11 +1406,6 @@ dwl_timeline_draw (GtkWidget *widget,
           DflSourceDispatchData *source_data;
           gboolean dispatch_drawn;
 
-          context = gtk_widget_get_style_context (GTK_WIDGET (self));
-          widget_width = gtk_widget_get_allocated_width (GTK_WIDGET (self));
-
-          min_timestamp = self->min_timestamp;
-          n_threads = self->threads->len;
           thread_index = thread_id_to_index (self,
                                              dfl_source_get_new_thread_id (source));
           thread_centre = thread_index_to_centre (self, thread_index);
