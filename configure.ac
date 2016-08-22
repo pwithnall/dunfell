@@ -76,6 +76,10 @@ VAPIGEN_CHECK()
 
 AC_PATH_PROG([GLIB_COMPILE_RESOURCES],[glib-compile-resources])
 
+AC_PATH_PROG([GLIB_MKENUMS],[glib-mkenums])
+AS_IF([test -z "$GLIB_MKENUMS"],
+  [AC_MSG_ERROR([glib-mkenums not found])])
+
 AC_SUBST([AM_CPPFLAGS])
 AC_SUBST([AM_CFLAGS])
 AC_SUBST([AM_CXXFLAGS])

@@ -1,6 +1,7 @@
+/*** BEGIN file-header ***/
 /* vim:set et sw=2 cin cino=t0,f0,(0,{s,>2s,n-s,^-s,e2s: */
 /*
- * Copyright © Philip Withnall 2015 <philip@tecnocode.co.uk>
+ * Copyright © Collabora Ltd. 2016
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License as published by the
@@ -16,12 +17,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DWL_H
-#define DWL_H
+#ifndef DWL_ENUMS_H
+#define DWL_ENUMS_H
 
-/* Core files */
-#include <libdunfell-ui/dwl-enums.h>
-#include <libdunfell-ui/dwl-timeline.h>
-#include <libdunfell-ui/dwl-version.h>
+#include <glib-object.h>
 
-#endif /* !DWL_H */
+G_BEGIN_DECLS
+/*** END file-header ***/
+
+/*** BEGIN file-production ***/
+
+/* enumerations from "@filename@" */
+/*** END file-production ***/
+
+/*** BEGIN value-header ***/
+GType @enum_name@_get_type (void) G_GNUC_CONST;
+#define @ENUMPREFIX@_TYPE_@ENUMSHORT@ (@enum_name@_get_type ())
+/*** END value-header ***/
+
+/*** BEGIN file-tail ***/
+G_END_DECLS
+
+#endif
+/*** END file-tail ***/

@@ -104,7 +104,10 @@ lib_LTLIBRARIES += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
 dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@
 dwl_headers = \
 	libdunfell-ui/dwl-timeline.h \
-	libdunfell-ui/dwl-version.h \
+	$(NULL)
+nodist_dwl_headers = \
+	$(top_builddir)/libdunfell-ui/dwl-enums.h \
+	$(top_builddir)/libdunfell-ui/dwl-version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
@@ -114,9 +117,15 @@ nobase_dwlinclude_HEADERS = \
 	$(dwl_main_header) \
 	$(dwl_headers) \
 	$(NULL)
+nodist_dwlinclude_HEADERS = \
+	$(nodist_dwl_headers) \
+	$(NULL)
 
 dwl_sources = \
 	libdunfell-ui/dwl-timeline.c \
+	$(NULL)
+nodist_dwl_sources = \
+	$(top_builddir)/libdunfell-ui/dwl-enums.c \
 	$(NULL)
 
 dwl_main_header = libdunfell-ui/dunfell-ui.h
@@ -125,6 +134,9 @@ dwl_public_headers = $(nobase_dwlinclude_HEADERS)
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
 	$(dwl_private_headers) \
 	$(dwl_sources) \
+	$(NULL)
+nodist_libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
+	$(nodist_dwl_sources) \
 	$(NULL)
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS = \
@@ -157,6 +169,33 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LDFLAGS = \
 	-no-undefined \
 	$(WARN_LDFLAGS) \
 	$(AM_LDFLAGS) \
+	$(NULL)
+
+dwl_enum_header_file = libdunfell-ui/dwl-enums.h
+dwl_enum_source_file = libdunfell-ui/dwl-enums.c
+dwl_enum_prerequisites = $(dwl_public_headers)
+
+$(dwl_enum_header_file): $(dwl_enum_header_file:%=%.template) $(dwl_enum_prerequisites)
+	$(AM_V_GEN)$(GLIB_MKENUMS) --template $< \
+		$(patsubst %,$(srcdir)/%,$(dwl_enum_prerequisites)) \
+		> $@.tmp && mv $@.tmp $@
+
+$(dwl_enum_source_file): $(dwl_enum_source_file:%=%.template) $(dwl_enum_prerequisites)
+	$(AM_V_GEN)$(GLIB_MKENUMS) --template $< \
+		$(patsubst %,$(srcdir)/%,$(dwl_enum_prerequisites)) \
+		> $@.tmp && mv $@.tmp $@
+
+EXTRA_DIST += \
+	$(dwl_enum_header_file:%=%.template) \
+	$(dwl_enum_source_file:%=%.template) \
+	$(NULL)
+BUILT_SOURCES += \
+	$(dwl_enum_header_file) \
+	$(dwl_enum_source_file) \
+	$(NULL)
+CLEANFILES += \
+	$(dwl_enum_header_file) \
+	$(dwl_enum_source_file) \
 	$(NULL)
 
 # Check if dunfell-ui.h includes all the public headers
@@ -286,7 +325,7 @@ libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_CFLAGS = \
 	$(libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS) \
 	$(NULL)
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_LIBS = libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
-libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_FILES = $(dwl_sources) $(dwl_headers)
+libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_FILES = $(dwl_sources) $(nodist_dwl_sources) $(dwl_headers) $(nodist_dwl_headers)
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_NAMESPACE = DunfellUi
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_EXPORT_PACKAGES = libdunfell-ui-@DWL_API_VERSION@
 libdunfell_ui_DunfellUi_@DWL_API_VERSION@_gir_SCANNERFLAGS = \
