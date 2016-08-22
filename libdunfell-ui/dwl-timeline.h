@@ -27,6 +27,19 @@
 G_BEGIN_DECLS
 
 /**
+ * DwlSelectionMovementStep:
+ * @TODO
+ *
+ * Since: UNRELEASED
+ */
+typedef enum
+{
+  DWL_SELECTION_MOVEMENT_SIBLING,
+  DWL_SELECTION_MOVEMENT_PARENT,
+  DWL_SELECTION_MOVEMENT_CHILD,
+} DwlSelectionMovementStep;
+
+/**
  * DwlTimeline:
  *
  * All the fields in this structure are private.

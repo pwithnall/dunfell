@@ -43,6 +43,7 @@
 #include "libdunfell/dfl-thread.h"
 #include "libdunfell/dfl-time-sequence.h"
 #include "libdunfell/dfl-types.h"
+#include "libdunfell-ui/dwl-enums.h"
 #include "libdunfell-ui/dwl-timeline.h"
 
 
@@ -75,6 +76,9 @@ static gboolean dwl_timeline_motion_notify_event (GtkWidget      *widget,
                                                   GdkEventMotion *event);
 static gboolean dwl_timeline_button_release_event (GtkWidget      *widget,
                                                    GdkEventButton *event);
+static gboolean dwl_timeline_move_selected (DwlTimeline              *timeline,
+                                            DwlSelectionMovementStep  step,
+                                            gint                      distance);
 
 static void add_default_css (GtkStyleContext *context);
 static void update_cache    (DwlTimeline     *self);
@@ -135,6 +139,7 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
+  GtkBindingSet *binding_set;
 
   object_class->get_property = dwl_timeline_get_property;
   object_class->set_property = dwl_timeline_set_property;
@@ -169,6 +174,49 @@ dwl_timeline_class_init (DwlTimelineClass *klass)
                                                        ZOOM_MIN, ZOOM_MAX, 1.0,
                                                        G_PARAM_READWRITE |
                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DwlTimeline::move-selected:
+   * @box: the #DwlTimeline on which the signal is emitted
+   * @step: the granularity of the move, as a #DwlSelectionMovementStep
+   * @count: the number of @step units to move
+   *
+   * The ::move-selected signal is a
+   * [keybinding signal][GtkBindingSignal]
+   * which gets emitted when the user initiates movement of the selection
+   * cursor in the timeline, which indicates the currently selected element.
+   *
+   * Applications should not connect to it, but may emit it with
+   * g_signal_emit_by_name() if they need to control the timeline
+   * programmatically.
+   *
+   * The default bindings are:
+   * - N moves to the next element
+   * - P moves to the previous element
+   *
+   * Returns: %TRUE to stop other handlers from being invoked for the event;
+   *    %FALSE to propagate the event further.
+   * Since: UNRELEASED
+   */
+  g_signal_new ("move-selected", G_TYPE_FROM_CLASS (klass),
+                G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION,
+                0, NULL, NULL, NULL,
+                G_TYPE_BOOLEAN, 2,
+                DWL_TYPE_SELECTION_MOVEMENT_STEP, G_TYPE_INT);
+
+  /* Key bindings. */
+  binding_set = gtk_binding_set_by_class (klass);
+
+  gtk_binding_entry_add_signal (binding_set, GDK_KEY_n, 0,
+                                "move-selected", 2,
+                                DWL_TYPE_SELECTION_MOVEMENT_STEP,
+                                DWL_SELECTION_MOVEMENT_SIBLING,
+                                G_TYPE_INT, 1);
+  gtk_binding_entry_add_signal (binding_set, GDK_KEY_p, 0,
+                                "move-selected", 2,
+                                DWL_TYPE_SELECTION_MOVEMENT_STEP,
+                                DWL_SELECTION_MOVEMENT_SIBLING,
+                                G_TYPE_INT, -1);
 }
 
 static void
@@ -180,6 +228,9 @@ dwl_timeline_init (DwlTimeline *self)
 
   gtk_widget_set_can_focus (GTK_WIDGET (self), TRUE);
   gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
+
+  g_signal_connect (self, "move-selected",
+                    (GCallback) dwl_timeline_move_selected, NULL);
 }
 
 static void
@@ -1819,6 +1870,16 @@ dwl_timeline_button_release_event (GtkWidget      *widget,
     }
 
   return GDK_EVENT_STOP;
+}
+
+static gboolean
+dwl_timeline_move_selected (DwlTimeline              *timeline,
+                            DwlSelectionMovementStep  step,
+                            gint                      distance)
+{
+  g_debug ("%s: step: %u, distance: %d", G_STRFUNC, step, distance);
+
+  return TRUE;
 }
 
 /**
