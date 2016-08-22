@@ -16,7 +16,7 @@ BUILT_SOURCES =
 # libdunfell library
 lib_LTLIBRARIES += libdunfell/libdunfell-@DFL_API_VERSION@.la
 
-dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@/dunfell
+dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@
 dfl_headers = \
 	libdunfell/dfl-event.h \
 	libdunfell/dfl-event-sequence.h \
@@ -33,7 +33,7 @@ dfl_headers = \
 # The following headers are private, and shouldn't be installed:
 dfl_private_headers = \
 	$(NULL)
-dflinclude_HEADERS = \
+nobase_dflinclude_HEADERS = \
 	$(dfl_main_header) \
 	$(dfl_headers) \
 	$(NULL)
@@ -50,7 +50,7 @@ dfl_sources = \
 	$(NULL)
 
 dfl_main_header = libdunfell/dunfell.h
-dfl_public_headers = $(dflinclude_HEADERS)
+dfl_public_headers = $(nobase_dflinclude_HEADERS)
 
 libdunfell_libdunfell_@DFL_API_VERSION@_la_SOURCES = \
 	$(dfl_private_headers) \
@@ -59,8 +59,7 @@ libdunfell_libdunfell_@DFL_API_VERSION@_la_SOURCES = \
 
 libdunfell_libdunfell_@DFL_API_VERSION@_la_CPPFLAGS = \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/libdunfell \
-	-I$(top_builddir)/libdunfell \
+	-I$(top_builddir) \
 	-DG_LOG_DOMAIN=\"libdunfell\" \
 	$(DISABLE_DEPRECATED) \
 	$(AM_CPPFLAGS) \
@@ -92,7 +91,7 @@ check-local: check-headers
 check-headers:
 	@any_missing=0; for header_file in $(dfl_public_headers); do \
 		if test "x$$header_file" != "x$(dfl_main_header)"; then \
-			if ! grep "#include <$${header_file#lib}>" $(top_srcdir)/$(dfl_main_header) >/dev/null; then \
+			if ! grep "#include <$$header_file>" $(top_srcdir)/$(dfl_main_header) >/dev/null; then \
 				echo "$(dfl_main_header) doesn't appear to include \"$$header_file\""; \
 				any_missing=1; \
 			fi; \
@@ -102,7 +101,7 @@ check-headers:
 # libdunfell-ui library
 lib_LTLIBRARIES += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
 
-dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@/dunfell-ui
+dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@
 dwl_headers = \
 	libdunfell-ui/dwl-timeline.h \
 	libdunfell-ui/dwl-version.h \
@@ -111,7 +110,7 @@ dwl_headers = \
 # The following headers are private, and shouldn't be installed:
 dwl_private_headers = \
 	$(NULL)
-dwlinclude_HEADERS = \
+nobase_dwlinclude_HEADERS = \
 	$(dwl_main_header) \
 	$(dwl_headers) \
 	$(NULL)
@@ -121,7 +120,7 @@ dwl_sources = \
 	$(NULL)
 
 dwl_main_header = libdunfell-ui/dunfell-ui.h
-dwl_public_headers = $(dwlinclude_HEADERS)
+dwl_public_headers = $(nobase_dwlinclude_HEADERS)
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
 	$(dwl_private_headers) \
@@ -130,10 +129,7 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_SOURCES = \
 
 libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_CPPFLAGS = \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/libdunfell \
-	-I$(top_builddir)/libdunfell \
-	-I$(top_srcdir)/libdunfell-ui \
-	-I$(top_builddir)/libdunfell-ui \
+	-I$(top_builddir) \
 	-DG_LOG_DOMAIN=\"libdunfell-ui\" \
 	$(DISABLE_DEPRECATED) \
 	$(AM_CPPFLAGS) \
@@ -168,7 +164,7 @@ check-local: check-dwl-headers
 check-dwl-headers:
 	@any_missing=0; for header_file in $(dwl_public_headers); do \
 		if test "x$$header_file" != "x$(dwl_main_header)"; then \
-			if ! grep "#include <$${header_file#lib}>" $(top_srcdir)/$(dwl_main_header) >/dev/null; then \
+			if ! grep "#include <$$header_file>" $(top_srcdir)/$(dwl_main_header) >/dev/null; then \
 				echo "$(dwl_main_header) doesn't appear to include \"$$header_file\""; \
 				any_missing=1; \
 			fi; \
@@ -204,12 +200,7 @@ nodist_viewer_dunfell_viewer_SOURCES = \
 	$(NULL)
 viewer_dunfell_viewer_CPPFLAGS = \
 	-I$(top_srcdir) \
-	-I$(top_srcdir)/libdunfell \
-	-I$(top_builddir)/libdunfell \
-	-I$(top_srcdir)/libdunfell-ui \
-	-I$(top_builddir)/libdunfell-ui \
-	-I$(top_srcdir)/viewer \
-	-I$(top_builddir)/viewer \
+	-I$(top_builddir) \
 	-DG_LOG_DOMAIN=\"dunfell-viewer\" \
 	$(DISABLE_DEPRECATED) \
 	$(AM_CPPFLAGS) \

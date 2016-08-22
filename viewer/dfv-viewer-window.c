@@ -34,13 +34,13 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "dfl-main-context.h"
-#include "dfl-parser.h"
-#include "dfl-source.h"
-#include "dfl-task.h"
-#include "dfl-thread.h"
-#include "dfv-viewer-window.h"
-#include "dwl-timeline.h"
+#include "libdunfell/dfl-main-context.h"
+#include "libdunfell/dfl-parser.h"
+#include "libdunfell/dfl-source.h"
+#include "libdunfell/dfl-task.h"
+#include "libdunfell/dfl-thread.h"
+#include "libdunfell-ui/dwl-timeline.h"
+#include "viewer/dfv-viewer-window.h"
 
 
 static void dfv_viewer_window_get_property (GObject      *object,

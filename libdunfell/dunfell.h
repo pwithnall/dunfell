@@ -20,14 +20,14 @@
 #define DFL_H
 
 /* Core files */
-#include <dunfell/dfl-event.h>
-#include <dunfell/dfl-event-sequence.h>
-#include <dunfell/dfl-main-context.h>
-#include <dunfell/dfl-parser.h>
-#include <dunfell/dfl-source.h>
-#include <dunfell/dfl-thread.h>
-#include <dunfell/dfl-time-sequence.h>
-#include <dunfell/dfl-types.h>
-#include <dunfell/dfl-version.h>
+#include <libdunfell/dfl-event.h>
+#include <libdunfell/dfl-event-sequence.h>
+#include <libdunfell/dfl-main-context.h>
+#include <libdunfell/dfl-parser.h>
+#include <libdunfell/dfl-source.h>
+#include <libdunfell/dfl-thread.h>
+#include <libdunfell/dfl-time-sequence.h>
+#include <libdunfell/dfl-types.h>
+#include <libdunfell/dfl-version.h>
 
 #endif /* !DFL_H */

@@ -37,13 +37,13 @@
 #include <math.h>
 #include <string.h>
 
-#include "dfl-main-context.h"
-#include "dfl-source.h"
-#include "dfl-task.h"
-#include "dfl-thread.h"
-#include "dfl-time-sequence.h"
-#include "dfl-types.h"
-#include "dwl-timeline.h"
+#include "libdunfell/dfl-main-context.h"
+#include "libdunfell/dfl-source.h"
+#include "libdunfell/dfl-task.h"
+#include "libdunfell/dfl-thread.h"
+#include "libdunfell/dfl-time-sequence.h"
+#include "libdunfell/dfl-types.h"
+#include "libdunfell-ui/dwl-timeline.h"
 
 
 static void dwl_timeline_get_property (GObject    *object,

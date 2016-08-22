@@ -20,7 +20,7 @@
 #define DWL_H
 
 /* Core files */
-#include <dunfell-ui/dwl-timeline.h>
-#include <dunfell-ui/dwl-version.h>
+#include <libdunfell-ui/dwl-timeline.h>
+#include <libdunfell-ui/dwl-version.h>
 
 #endif /* !DWL_H */
