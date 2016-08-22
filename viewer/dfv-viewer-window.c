@@ -538,6 +538,7 @@ set_file_cb2 (GObject      *source_object,
                      self->timeline);
   gtk_widget_show (self->timeline);
   gtk_stack_set_visible_child_name (self->main_stack, "timeline");
+  gtk_widget_grab_focus (self->timeline);
 
   g_ptr_array_unref (sources);
   g_ptr_array_unref (threads);

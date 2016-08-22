@@ -178,6 +178,7 @@ dwl_timeline_init (DwlTimeline *self)
 
   add_default_css (gtk_widget_get_style_context (GTK_WIDGET (self)));
 
+  gtk_widget_set_can_focus (GTK_WIDGET (self), TRUE);
   gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
 }
 
@@ -1801,6 +1802,10 @@ dwl_timeline_button_release_event (GtkWidget      *widget,
                                    GdkEventButton *event)
 {
   DwlTimeline *self = DWL_TIMELINE (widget);
+
+  /* Focus the widget? */
+  if (gtk_widget_get_focus_on_click (widget) && !gtk_widget_has_focus (widget))
+    gtk_widget_grab_focus (widget);
 
   /* If an element is being hovered over, turn it into the currently selected
    * element. */
