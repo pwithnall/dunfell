@@ -383,6 +383,7 @@ add_default_css (GtkStyleContext *context)
 #define TASK_CALLBACK_OFFSET 30 /* pixels */
 #define LEFT_GUTTER_WIDTH 70 /* pixels */
 #define LEFT_GUTTER_RIGHT_PADDING 5 /* pixels */
+#define AUTO_SCROLL_MARGIN 0.1 /* × viewport height */
 
 /* Calculate various values from the data model we have (the threads, main
  * contexts and sources). The calculated values will be used frequently when
@@ -1912,12 +1913,223 @@ dwl_timeline_button_release_event (GtkWidget      *widget,
   return GDK_EVENT_STOP;
 }
 
+static void
+dwl_timeline_scroll_to_timestamp (DwlTimeline  *self,
+                                  DflTimestamp  timestamp)
+{
+  gint new_y;
+
+  new_y = timestamp_to_y (self, timestamp - self->min_timestamp);
+
+  if (GTK_IS_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self))))
+    {
+      GtkScrollable *scrollable;
+      GtkAdjustment *vadjustment;
+      gdouble current_value;
+      gint parent_widget_height;
+
+      scrollable = GTK_SCROLLABLE (gtk_widget_get_parent (GTK_WIDGET (self)));
+      vadjustment = gtk_scrollable_get_vadjustment (scrollable);
+
+      /* Is the given @y value already visible? If so, don’t scroll. */
+      current_value = gtk_adjustment_get_value (vadjustment);
+      parent_widget_height = gtk_widget_get_allocated_height (GTK_WIDGET (scrollable));
+
+      g_debug ("%s: current_value: %f, parent_widget_height: %d, new_y: %d",
+               G_STRFUNC, current_value, parent_widget_height, new_y);
+
+      if (current_value + AUTO_SCROLL_MARGIN * parent_widget_height <= new_y &&
+          current_value + (1.0 - AUTO_SCROLL_MARGIN) * parent_widget_height >= new_y)
+        return;
+
+      gtk_adjustment_set_value (vadjustment, new_y - parent_widget_height / 2);
+    }
+}
+
+static void
+dwl_timeline_scroll_to_selected (DwlTimeline *self)
+{
+  DflTimestamp timestamp;
+
+  switch (self->selected_element.type)
+    {
+    case ELEMENT_CONTEXT_DISPATCH:
+      timestamp = dfl_time_sequence_iter_get_timestamp (self->selected_element.iter);
+      break;
+    case ELEMENT_SOURCE:
+      {
+        DflSource *source = self->sources->pdata[self->selected_element.index];
+        timestamp = dfl_source_get_new_timestamp (source);
+        break;
+      }
+    case ELEMENT_TASK:
+      {
+        DflTask *task = self->tasks->pdata[self->selected_element.index];
+        timestamp = dfl_task_get_new_timestamp (task);
+        break;
+      }
+    case ELEMENT_NONE:
+      /* Nothing to do. */
+      return;
+    default:
+      g_assert_not_reached ();
+    }
+
+  dwl_timeline_scroll_to_timestamp (self, timestamp);
+}
+
+/* Version of move_selected_sibling() specially for %ELEMENT_CONTEXT_DISPATCH
+ * elements. */
+static void
+move_selected_sibling_main_context_dispatch (DwlTimeline *self,
+                                             gint         distance)
+{
+  g_autoptr (DflTimeSequenceIter) iter = NULL;
+  DflTimestamp new_timestamp;
+  guint i;
+  gboolean changed = FALSE;
+
+  g_assert (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH);
+
+  /* Grab the existing selected timestamp and iterate @distance further.
+   * If we can go no further, clamp on the highest value. */
+  iter = dfl_time_sequence_iter_copy (self->selected_element.iter);
+
+  for (i = 0; i < (guint) ABS (distance); i++)
+    {
+      if ((distance > 0 &&
+           !dfl_time_sequence_iter_next (iter, &new_timestamp, NULL)) ||
+          (distance < 0 &&
+           !dfl_time_sequence_iter_previous (iter, &new_timestamp, NULL)))
+        break;
+
+      changed = dwl_timeline_set_selected_element (self,
+                                                   ELEMENT_CONTEXT_DISPATCH,
+                                                   self->selected_element.index,
+                                                   dfl_time_sequence_iter_copy (iter)) || changed;
+    }
+
+  if (changed)
+    {
+      dwl_timeline_scroll_to_selected (self);
+      gtk_widget_queue_draw (GTK_WIDGET (self));
+    }
+}
+
+/* Change the selection to a previous or following sibling of the current
+ * selection. Must only be called if the current selection is valid. */
+static void
+move_selected_sibling (DwlTimeline *self,
+                       gint         distance)
+{
+  GPtrArray/*<unknown>*/ *array;
+  guint new_index;
+
+  switch (self->selected_element.type)
+    {
+    case ELEMENT_CONTEXT_DISPATCH:
+      /* Requires some special handling, because main context dispatches are
+       * done by timestamp rather than by index. */
+      move_selected_sibling_main_context_dispatch (self, distance);
+      return;
+    case ELEMENT_SOURCE:
+      array = self->sources;
+      break;
+    case ELEMENT_TASK:
+      array = self->tasks;
+      break;
+    case ELEMENT_NONE:
+    default:
+      g_assert_not_reached ();
+    }
+
+  /* Clamp to the bounds of the @array. */
+  if (distance > 0 && (guint) distance >= array->len - self->selected_element.index)
+    new_index = array->len - 1;
+  else if (distance < 0 && self->selected_element.index < (guint) -distance)
+    new_index = 0;
+  else
+    new_index = self->selected_element.index + distance;
+
+  if (self->selected_element.index != new_index)
+    {
+      self->selected_element.index = new_index;
+      dwl_timeline_scroll_to_selected (self);
+      gtk_widget_queue_draw (GTK_WIDGET (self));
+    }
+}
+
+/* Change the selection to an ancestor or descendent of the current
+ * selection. Must only be called if the current selection is valid. */
+static void
+move_selected_ancestor (DwlTimeline *self,
+                        gint         distance)
+{
+  /* FIXME: What kind of navigation do we want to implement here? */
+}
+
 static gboolean
 dwl_timeline_move_selected (DwlTimeline              *timeline,
                             DwlSelectionMovementStep  step,
                             gint                      distance)
 {
   g_debug ("%s: step: %u, distance: %d", G_STRFUNC, step, distance);
+
+  /* Do we need to do anything? */
+  if (distance == 0)
+    return TRUE;
+
+  /* If there is currently no selection, select the first source element
+   * (arbitrarily). */
+  if (timeline->selected_element.type == ELEMENT_NONE)
+    {
+      if (timeline->sources->len > 0)
+        {
+          g_assert (dwl_timeline_set_selected_element (timeline,
+                                                       ELEMENT_SOURCE,
+                                                       0, NULL));
+        }
+      else if (timeline->tasks->len > 0)
+        {
+          g_assert (dwl_timeline_set_selected_element (timeline,
+                                                       ELEMENT_TASK,
+                                                       0, NULL));
+        }
+      else if (timeline->main_contexts->len > 0)
+        {
+          DflTimeSequenceIter iter;
+
+          dfl_main_context_thread_ownership_iter (timeline->main_contexts->pdata[0],
+                                                  &iter, 0);
+
+          if (!dfl_time_sequence_iter_next (&iter,
+                                            NULL, NULL))
+            return TRUE;
+
+          g_assert (dwl_timeline_set_selected_element (timeline,
+                                                       ELEMENT_CONTEXT_DISPATCH,
+                                                       0,
+                                                       dfl_time_sequence_iter_copy (&iter)));
+        }
+
+      dwl_timeline_scroll_to_selected (timeline);
+      gtk_widget_queue_draw (GTK_WIDGET (timeline));
+
+      return TRUE;
+    }
+
+  /* Otherwise, change the selection from the current one. */
+  switch (step)
+    {
+    case DWL_SELECTION_MOVEMENT_SIBLING:
+      move_selected_sibling (timeline, distance);
+      break;
+    case DWL_SELECTION_MOVEMENT_ANCESTOR:
+      move_selected_ancestor (timeline, distance);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
 
   return TRUE;
 }

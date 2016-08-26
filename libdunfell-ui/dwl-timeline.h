@@ -28,15 +28,17 @@ G_BEGIN_DECLS
 
 /**
  * DwlSelectionMovementStep:
- * @TODO
+ * @DWL_SELECTION_MOVEMENT_SIBLING: Move the selection to a sibling of the
+ *    current selection.
+ * @DWL_SELECTION_MOVEMENT_ANCESTOR: Move the selection an ancestor or
+ *    descendent of the current selection.
  *
  * Since: UNRELEASED
  */
 typedef enum
 {
   DWL_SELECTION_MOVEMENT_SIBLING,
-  DWL_SELECTION_MOVEMENT_PARENT,
-  DWL_SELECTION_MOVEMENT_CHILD,
+  DWL_SELECTION_MOVEMENT_ANCESTOR,
 } DwlSelectionMovementStep;
 
 /**
