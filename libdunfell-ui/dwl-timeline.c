@@ -116,14 +116,14 @@ struct _DwlTimeline
   struct {
     DwlTimelineElement type;
     guint index;
-    DflTimestamp timestamp;
+    DflTimeSequenceIter *iter;  /* owned */
   } hover_element;
 
   /* Currently selected item. */
   struct {
     DwlTimelineElement type;
     guint index;
-    DflTimestamp timestamp;
+    DflTimeSequenceIter *iter;  /* owned */
   } selected_element;
 };
 
@@ -278,6 +278,8 @@ dwl_timeline_dispose (GObject *object)
   g_clear_pointer (&self->main_contexts, g_ptr_array_unref);
   g_clear_pointer (&self->threads, g_ptr_array_unref);
   g_clear_pointer (&self->tasks, g_ptr_array_unref);
+  g_clear_pointer (&self->hover_element.iter, dfl_time_sequence_iter_free);
+  g_clear_pointer (&self->selected_element.iter, dfl_time_sequence_iter_free);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dwl_timeline_parent_class)->dispose (object);
@@ -1314,11 +1316,11 @@ dwl_timeline_draw (GtkWidget *widget,
 
           if (self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
               self->hover_element.index == i &&
-              self->hover_element.timestamp == timestamp)
+              dfl_time_sequence_iter_equal (self->hover_element.iter, &iter))
             gtk_style_context_add_class (context, "main_context_dispatch_hover");
           if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH &&
               self->selected_element.index == i &&
-              self->selected_element.timestamp == timestamp)
+              dfl_time_sequence_iter_equal (self->selected_element.iter, &iter))
             gtk_style_context_add_class (context, "main_context_dispatch_selected");
 
           gtk_render_background (context, cr,
@@ -1334,11 +1336,11 @@ dwl_timeline_draw (GtkWidget *widget,
 
           if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH &&
               self->selected_element.index == i &&
-              self->selected_element.timestamp == timestamp)
+              dfl_time_sequence_iter_equal (self->selected_element.iter, &iter))
             gtk_style_context_remove_class (context, "main_context_dispatch_selected");
           if (self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
               self->hover_element.index == i &&
-              self->hover_element.timestamp == timestamp)
+              dfl_time_sequence_iter_equal (self->hover_element.iter, &iter))
             gtk_style_context_remove_class (context, "main_context_dispatch_hover");
         }
 
@@ -1476,27 +1478,15 @@ dwl_timeline_draw (GtkWidget *widget,
     }
   else if (self->selected_element.type == ELEMENT_CONTEXT_DISPATCH)
     {
-      DflMainContext *main_context;
-      DflTimeSequenceIter main_context_iter;
+      g_autoptr (DflTimeSequenceIter) main_context_iter = NULL;
       DflTimestamp main_context_timestamp;
       DflMainContextDispatchData *main_context_data;
 
       /* For each of the sources in this main context dispatch, highlight them
        * and draw their dispatch lines. */
-      main_context = self->main_contexts->pdata[self->selected_element.index];
-      dfl_main_context_dispatch_iter (main_context, &main_context_iter,
-                                      self->selected_element.timestamp);
-
-      do
-        {
-          dfl_time_sequence_iter_next (&main_context_iter,
-                                       &main_context_timestamp,
-                                       (gpointer *) &main_context_data);
-        }
-      while (main_context_timestamp < self->selected_element.timestamp);
-
-      g_assert_cmpuint (self->selected_element.timestamp, ==,
-                        main_context_timestamp);
+      main_context_iter = dfl_time_sequence_iter_copy (self->selected_element.iter);
+      main_context_timestamp = dfl_time_sequence_iter_get_timestamp (self->selected_element.iter);
+      main_context_data = dfl_time_sequence_iter_get_data (self->selected_element.iter);
 
       /* TODO: Speed this up. Perhaps move the list of dispatched sources into
        * DflMainContextDispatchData? */
@@ -1524,7 +1514,7 @@ dwl_timeline_draw (GtkWidget *widget,
            * the source is rendered (the g_source_new()). */
 
           dfl_source_dispatch_iter (source, &source_iter,
-                                    main_context_timestamp);
+                                    dfl_time_sequence_iter_get_timestamp (main_context_iter));
           dispatch_drawn = FALSE;
 
           while (dfl_time_sequence_iter_next (&source_iter, &source_timestamp,
@@ -1703,7 +1693,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
   guint nearest_thread_index;
   DwlTimelineElement new_hover_type = ELEMENT_NONE;
   guint new_hover_index = 0;
-  DflTimestamp new_hover_timestamp = 0;
+  g_autoptr (DflTimeSequenceIter) new_hover_iter = NULL;
 
   widget_width = gtk_widget_get_allocated_width (widget);
   n_threads = self->threads->len;
@@ -1795,7 +1785,7 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
             {
               new_hover_type = ELEMENT_CONTEXT_DISPATCH;
               new_hover_index = i;
-              new_hover_timestamp = timestamp;
+              new_hover_iter = dfl_time_sequence_iter_copy (&iter);
               goto done;
             }
         }
@@ -1831,21 +1821,74 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
     }
 
   /* No hover element found. */
-  self->hover_element.type = ELEMENT_NONE;
+  if (self->hover_element.type != ELEMENT_NONE)
+    {
+      self->hover_element.type = ELEMENT_NONE;
+      g_debug ("%s: clearing hover element", G_STRFUNC);
+      gtk_widget_queue_draw (widget);
+    }
 
 done:
   if (new_hover_type != self->hover_element.type ||
       new_hover_index != self->hover_element.index ||
-      new_hover_timestamp != self->hover_element.timestamp)
+      (new_hover_type == ELEMENT_CONTEXT_DISPATCH &&
+       self->hover_element.type == ELEMENT_CONTEXT_DISPATCH &&
+       !dfl_time_sequence_iter_equal (self->hover_element.iter, new_hover_iter)))
     {
+      g_debug ("%s: type: %u, index: %u, iter: %p (%" G_GUINT64_FORMAT "), "
+               "changed: %s",
+               G_STRFUNC, new_hover_type, new_hover_index, new_hover_iter,
+               (new_hover_iter != NULL) ? dfl_time_sequence_iter_get_timestamp (new_hover_iter) : 0,
+               "yes");
+
       self->hover_element.type = new_hover_type;
       self->hover_element.index = new_hover_index;
-      self->hover_element.timestamp = new_hover_timestamp;
+
+      g_clear_pointer (&self->hover_element.iter, dfl_time_sequence_iter_free);
+      self->hover_element.iter = g_steal_pointer (&new_hover_iter);
+
+      g_assert (self->hover_element.type != ELEMENT_CONTEXT_DISPATCH ||
+                self->hover_element.iter != NULL);
 
       gtk_widget_queue_draw (widget);
     }
 
   return GDK_EVENT_STOP;
+}
+
+/* Returns %TRUE if the selected element has actually changed. */
+static gboolean
+dwl_timeline_set_selected_element (DwlTimeline         *self,
+                                   DwlTimelineElement   type,
+                                   guint                index,
+                                   DflTimeSequenceIter *iter  /* transfer full */)
+{
+  gboolean changed;
+
+  g_assert (DWL_IS_TIMELINE (self));
+  g_assert (type != ELEMENT_CONTEXT_DISPATCH || iter != NULL);
+
+  changed = (self->selected_element.type != type ||
+             self->selected_element.index != index ||
+             (self->selected_element.iter != NULL &&
+              iter != NULL &&
+              !dfl_time_sequence_iter_equal (self->selected_element.iter,
+                                             iter)));
+
+  g_debug ("%s: type: %u, index: %u, iter: %p (%" G_GUINT64_FORMAT "), "
+           "changed: %s",
+           G_STRFUNC, type, index, iter,
+           (iter != NULL) ? dfl_time_sequence_iter_get_timestamp (iter) : 0,
+           changed ? "yes" : "no");
+
+  self->selected_element.type = type;
+  self->selected_element.index = index;
+
+  g_clear_pointer (&self->selected_element.iter, dfl_time_sequence_iter_free);
+  if (iter != NULL)
+    self->selected_element.iter = g_steal_pointer (&iter);
+
+  return changed;
 }
 
 static gboolean
@@ -1859,15 +1902,12 @@ dwl_timeline_button_release_event (GtkWidget      *widget,
     gtk_widget_grab_focus (widget);
 
   /* If an element is being hovered over, turn it into the currently selected
-   * element. */
-  if (self->hover_element.type != self->selected_element.type ||
-      self->hover_element.index != self->selected_element.index ||
-      self->hover_element.timestamp != self->selected_element.timestamp)
-    {
-      memcpy (&self->selected_element, &self->hover_element,
-              sizeof (self->selected_element));
-      gtk_widget_queue_draw (widget);
-    }
+   * element. Otherwise, clear the selection. */
+  if (dwl_timeline_set_selected_element (self,
+                                         self->hover_element.type,
+                                         self->hover_element.index,
+                                         (self->hover_element.iter != NULL) ? dfl_time_sequence_iter_copy (self->hover_element.iter) : NULL))
+    gtk_widget_queue_draw (widget);
 
   return GDK_EVENT_STOP;
 }

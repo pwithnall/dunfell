@@ -50,6 +50,9 @@ typedef struct
 G_STATIC_ASSERT (sizeof (DflTimeSequenceIterReal) ==
                  sizeof (DflTimeSequenceIter));
 
+G_DEFINE_BOXED_TYPE (DflTimeSequenceIter, dfl_time_sequence_iter,
+                     dfl_time_sequence_iter_copy, dfl_time_sequence_iter_free)
+
 typedef struct
 {
   gsize element_size;
@@ -366,4 +369,180 @@ dfl_time_sequence_iter_next (DflTimeSequenceIter *iter,
   self->index++;
 
   return TRUE;
+}
+
+/**
+ * dfl_time_sequence_iter_previous:
+ * @iter: a #DflTimeSequenceIter
+ * @timestamp: (out caller-allocates) (optional): TODO
+ * @data: (out caller-allocates) (optional) (nullable): TODO
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+gboolean
+dfl_time_sequence_iter_previous (DflTimeSequenceIter *iter,
+                                 DflTimestamp        *timestamp,
+                                 gpointer            *data)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+  DflTimeSequenceElement *element;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), FALSE);
+
+  /* Reached the end? */
+  if (self->index == 0)
+    return FALSE;
+
+  /* Return the previous element. */
+  self->index--;
+  element = dfl_time_sequence_index (self->sequence, self->index);
+
+  if (timestamp != NULL)
+    *timestamp = element->timestamp;
+  if (data != NULL)
+    *data = element->data;
+
+  return (self->index > 0);
+}
+
+/**
+ * dfl_time_sequence_iter_copy:
+ * @iter: a #DflTimeSequenceIter
+ *
+ * Copy a #DflTimeSequenceIter, resulting in a second iterator which can be
+ * iterated independently of the original.
+ *
+ * Returns: (transfer full): copy of @iter
+ * Since: UNRELEASED
+ */
+DflTimeSequenceIter *
+dfl_time_sequence_iter_copy (DflTimeSequenceIter *iter)
+{
+  g_autoptr (DflTimeSequenceIter) new_iter = NULL;
+  DflTimeSequenceIterReal *new_iter_real, *iter_real;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), NULL);
+
+  new_iter = g_new0 (DflTimeSequenceIter, 1);
+  new_iter_real = (DflTimeSequenceIterReal *) new_iter;
+  iter_real = (DflTimeSequenceIterReal *) iter;
+
+  new_iter_real->sequence = iter_real->sequence;
+  new_iter_real->index = iter_real->index;
+
+  return g_steal_pointer (&new_iter);
+}
+
+/**
+ * dfl_time_sequence_iter_free:
+ * @iter: (transfer full): a #DflTimeSequenceIter
+ *
+ * Free a heap-allocated #DflTimeSequenceIter, such as allocated by
+ * dfl_time_sequence_iter_copy().
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_time_sequence_iter_free (DflTimeSequenceIter *iter)
+{
+  g_return_if_fail (dfl_time_sequence_iter_is_valid (iter));
+
+  g_free (iter);
+}
+
+/**
+ * dfl_time_sequence_iter_equal:
+ * @iter1: a #DflTimeSequenceIter
+ * @iter2: another #DflTimeSequenceIter
+ *
+ * Check whether @iter1 and @iter2 point to the same position in the same time
+ * sequence. It is an error to call this function on two iterators which come
+ * from different #DflTimeSequences.
+ *
+ * Returns: %TRUE if the iterators point to the same position; %FALSE otherwise
+ * Since: UNRELEASED
+ */
+gboolean
+dfl_time_sequence_iter_equal (DflTimeSequenceIter *iter1,
+                              DflTimeSequenceIter *iter2)
+{
+  DflTimeSequenceIterReal *iter1_real, *iter2_real;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter1), FALSE);
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter2), FALSE);
+
+  iter1_real = (DflTimeSequenceIterReal *) iter1;
+  iter2_real = (DflTimeSequenceIterReal *) iter2;
+
+  /* Note: Equality is not defined for iters from different sequences. */
+  g_return_val_if_fail (iter1_real->sequence == iter2_real->sequence, FALSE);
+
+  return (iter1_real->index == iter2_real->index);
+}
+
+/**
+ * dfl_time_sequence_iter_get_timestamp:
+ * @iter: a #DflTimeSequenceIter
+ *
+ * Get the timestamp returned by the most recent call to
+ * dfl_time_sequence_iter_next(). If at the beginning of the time sequence, 0
+ * will be returned.
+ *
+ * Returns: timestamp of @iter’s position in the time sequence
+ * Since: UNRELEASED
+ */
+DflTimestamp
+dfl_time_sequence_iter_get_timestamp (DflTimeSequenceIter *iter)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+  DflTimeSequenceReal *sequence;
+  DflTimeSequenceElement *element;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), 0);
+
+  sequence = (DflTimeSequenceReal *) self->sequence;
+
+  /* At the beginning or overshot the end? */
+  if (self->index == 0 || self->index > sequence->n_elements_valid)
+    return 0;
+
+  /* Return the current element. */
+  element = dfl_time_sequence_index (self->sequence, self->index - 1);
+
+  return element->timestamp;
+}
+
+/**
+ * dfl_time_sequence_iter_get_data:
+ * @iter: a #DflTimeSequenceIter
+ *
+ * Get the data returned by the most recent call to
+ * dfl_time_sequence_iter_next(). If at the beginning of the time sequence,
+ * %NULL will be returned.
+ *
+ * Returns: data from @iter’s position in the time sequence
+ * Since: UNRELEASED
+ */
+gpointer
+dfl_time_sequence_iter_get_data (DflTimeSequenceIter *iter)
+{
+  DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+  DflTimeSequenceReal *sequence;
+  DflTimeSequenceElement *element;
+
+  g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), NULL);
+
+  sequence = (DflTimeSequenceReal *) self->sequence;
+
+  /* At the beginning or overshot the end? */
+  if (self->index == 0 || self->index > sequence->n_elements_valid)
+    return NULL;
+
+  /* Return the current element. */
+  element = dfl_time_sequence_index (self->sequence, self->index - 1);
+
+  return element->data;
 }
