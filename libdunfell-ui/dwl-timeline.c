@@ -1704,8 +1704,8 @@ dwl_timeline_motion_notify_event (GtkWidget      *widget,
     return GDK_EVENT_STOP;
 
   /* Find the nearest thread. */
-  thread_width = widget_width / n_threads;
-  nearest_thread_index = event->x / thread_width;
+  thread_width = (widget_width - LEFT_GUTTER_WIDTH) / n_threads;
+  nearest_thread_index = (event->x - LEFT_GUTTER_WIDTH) / thread_width;
   nearest_thread_centre = thread_index_to_centre (self, nearest_thread_index);
 
   if (ABS (nearest_thread_centre - event->x) > SOURCE_OFFSET + SOURCE_WIDTH / 2.0)
