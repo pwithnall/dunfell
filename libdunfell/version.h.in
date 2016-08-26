@@ -16,64 +16,64 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DWL_VERSION_H
-#define DWL_VERSION_H
+#ifndef DFL_VERSION_H
+#define DFL_VERSION_H
 
 /**
- * SECTION:dwl-version
- * @Short_description: Macros to check the libdunfell-ui version
+ * SECTION:version
+ * @Short_description: Macros to check the libdunfell version
  * @Title: Version Information
  *
- * Dunfell UI provides compile-time version information.
+ * Dunfell provides compile-time version information.
  *
  * Since: 0.1.0
  */
 
 /**
- * DWL_MAJOR_VERSION:
+ * DFL_MAJOR_VERSION:
  *
- * Evaluates to the major version of the libdunfell-ui headers at compile time.
- * (e.g. in libdunfell-ui version 1.2.3 this is 1).
- *
- * Since: 0.1.0
- */
-#define DWL_MAJOR_VERSION (@DWL_VERSION_MAJOR@)
-
-/**
- * DWL_MINOR_VERSION:
- *
- * Evaluates to the minor version of the libdunfell-ui headers at compile time.
- * (e.g. in libdunfell-ui version 1.2.3 this is 2).
+ * Evaluates to the major version of the libdunfell headers at compile time.
+ * (e.g. in libdunfell version 1.2.3 this is 1).
  *
  * Since: 0.1.0
  */
-#define DWL_MINOR_VERSION (@DWL_VERSION_MINOR@)
+#define DFL_MAJOR_VERSION (@DFL_VERSION_MAJOR@)
 
 /**
- * DWL_MICRO_VERSION:
+ * DFL_MINOR_VERSION:
  *
- * Evaluates to the micro version of the libdunfell-ui headers at compile time.
- * (e.g. in libdunfell-ui version 1.2.3 this is 3).
+ * Evaluates to the minor version of the libdunfell headers at compile time.
+ * (e.g. in libdunfell version 1.2.3 this is 2).
  *
  * Since: 0.1.0
  */
-#define DWL_MICRO_VERSION (@DWL_VERSION_MICRO@)
+#define DFL_MINOR_VERSION (@DFL_VERSION_MINOR@)
 
 /**
- * DWL_CHECK_VERSION:
+ * DFL_MICRO_VERSION:
+ *
+ * Evaluates to the micro version of the libdunfell headers at compile time.
+ * (e.g. in libdunfell version 1.2.3 this is 3).
+ *
+ * Since: 0.1.0
+ */
+#define DFL_MICRO_VERSION (@DFL_VERSION_MICRO@)
+
+/**
+ * DFL_CHECK_VERSION:
  * @major: major version (e.g. 1 for version 1.2.3)
  * @minor: minor version (e.g. 2 for version 1.2.3)
  * @micro: micro version (e.g. 3 for version 1.2.3)
  *
- * Evaluates to %TRUE if the version of the libdunfell-ui header files
+ * Evaluates to %TRUE if the version of the libdunfell header files
  * is the same as or newer than the passed-in version.
  *
  * Since: 0.1.0
  */
-#define DWL_CHECK_VERSION(major,minor,micro) \
-    (DWL_MAJOR_VERSION > (major) || \
-     (DWL_MAJOR_VERSION == (major) && DWL_MINOR_VERSION > (minor)) || \
-     (DWL_MAJOR_VERSION == (major) && DWL_MINOR_VERSION == (minor) && \
-      DWL_MICRO_VERSION >= (micro)))
+#define DFL_CHECK_VERSION(major,minor,micro) \
+    (DFL_MAJOR_VERSION > (major) || \
+     (DFL_MAJOR_VERSION == (major) && DFL_MINOR_VERSION > (minor)) || \
+     (DFL_MAJOR_VERSION == (major) && DFL_MINOR_VERSION == (minor) && \
+      DFL_MICRO_VERSION >= (micro)))
 
-#endif /* !DWL_VERSION_H */
+#endif /* !DFL_VERSION_H */

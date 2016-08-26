@@ -18,16 +18,16 @@ lib_LTLIBRARIES += libdunfell/libdunfell-@DFL_API_VERSION@.la
 
 dflincludedir = $(includedir)/libdunfell-@DFL_API_VERSION@
 dfl_headers = \
-	libdunfell/dfl-event.h \
-	libdunfell/dfl-event-sequence.h \
-	libdunfell/dfl-main-context.h \
-	libdunfell/dfl-parser.h \
-	libdunfell/dfl-source.h \
-	libdunfell/dfl-task.h \
-	libdunfell/dfl-thread.h \
-	libdunfell/dfl-time-sequence.h \
-	libdunfell/dfl-types.h \
-	libdunfell/dfl-version.h \
+	libdunfell/event.h \
+	libdunfell/event-sequence.h \
+	libdunfell/main-context.h \
+	libdunfell/parser.h \
+	libdunfell/source.h \
+	libdunfell/task.h \
+	libdunfell/thread.h \
+	libdunfell/time-sequence.h \
+	libdunfell/types.h \
+	libdunfell/version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
@@ -39,14 +39,14 @@ nobase_dflinclude_HEADERS = \
 	$(NULL)
 
 dfl_sources = \
-	libdunfell/dfl-event.c \
-	libdunfell/dfl-event-sequence.c \
-	libdunfell/dfl-main-context.c \
-	libdunfell/dfl-parser.c \
-	libdunfell/dfl-source.c \
-	libdunfell/dfl-task.c \
-	libdunfell/dfl-thread.c \
-	libdunfell/dfl-time-sequence.c \
+	libdunfell/event.c \
+	libdunfell/event-sequence.c \
+	libdunfell/main-context.c \
+	libdunfell/parser.c \
+	libdunfell/source.c \
+	libdunfell/task.c \
+	libdunfell/thread.c \
+	libdunfell/time-sequence.c \
 	$(NULL)
 
 dfl_main_header = libdunfell/dunfell.h
@@ -103,11 +103,11 @@ lib_LTLIBRARIES += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
 
 dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@
 dwl_headers = \
-	libdunfell-ui/dwl-timeline.h \
+	libdunfell-ui/timeline.h \
 	$(NULL)
 nodist_dwl_headers = \
-	$(top_builddir)/libdunfell-ui/dwl-enums.h \
-	$(top_builddir)/libdunfell-ui/dwl-version.h \
+	$(top_builddir)/libdunfell-ui/enums.h \
+	$(top_builddir)/libdunfell-ui/version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
@@ -122,10 +122,10 @@ nodist_dwlinclude_HEADERS = \
 	$(NULL)
 
 dwl_sources = \
-	libdunfell-ui/dwl-timeline.c \
+	libdunfell-ui/timeline.c \
 	$(NULL)
 nodist_dwl_sources = \
-	$(top_builddir)/libdunfell-ui/dwl-enums.c \
+	$(top_builddir)/libdunfell-ui/enums.c \
 	$(NULL)
 
 dwl_main_header = libdunfell-ui/dunfell-ui.h
@@ -171,8 +171,8 @@ libdunfell_ui_libdunfell_ui_@DWL_API_VERSION@_la_LDFLAGS = \
 	$(AM_LDFLAGS) \
 	$(NULL)
 
-dwl_enum_header_file = libdunfell-ui/dwl-enums.h
-dwl_enum_source_file = libdunfell-ui/dwl-enums.c
+dwl_enum_header_file = libdunfell-ui/enums.h
+dwl_enum_source_file = libdunfell-ui/enums.c
 dwl_enum_prerequisites = $(dwl_public_headers)
 
 $(dwl_enum_header_file): $(dwl_enum_header_file:%=%.template) $(dwl_enum_prerequisites)
@@ -228,14 +228,14 @@ record/dunfell-record: $(srcdir)/record/dunfell-record.in
 bin_PROGRAMS += viewer/dunfell-viewer
 
 viewer_dunfell_viewer_SOURCES = \
-	viewer/dfv-application.c \
-	viewer/dfv-application.h \
-	viewer/dfv-viewer-window.c \
-	viewer/dfv-viewer-window.h \
+	viewer/application.c \
+	viewer/application.h \
+	viewer/viewer-window.c \
+	viewer/viewer-window.h \
 	viewer/main.c \
 	$(NULL)
 nodist_viewer_dunfell_viewer_SOURCES = \
-	viewer/dfv-resources.c \
+	viewer/resources.c \
 	$(NULL)
 viewer_dunfell_viewer_CPPFLAGS = \
 	-I$(top_srcdir) \
@@ -267,11 +267,11 @@ viewer_dunfell_viewer_LDFLAGS = \
 
 viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps = \
 	$(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir=$(top_srcdir)/viewer $(top_srcdir)/viewer/org.gnome.Dunfell.Viewer.gresource.xml)
-viewer/dfv-resources.c: $(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps)
+viewer/resources.c: $(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps)
 	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(top_srcdir)/viewer --generate-source $(top_srcdir)/viewer/org.gnome.Dunfell.Viewer.gresource.xml
 
-BUILT_SOURCES += viewer/dfv-resources.c
-CLEANFILES += viewer/dfv-resources.c
+BUILT_SOURCES += viewer/resources.c
+CLEANFILES += viewer/resources.c
 EXTRA_DIST += \
 	viewer/org.gnome.Dunfell.Viewer.gresource.xml \
 	$(viewer_org_gnome_Dunfell_Viewer_gresource_xml_deps) \
@@ -448,9 +448,9 @@ pkgconfig_DATA = \
 DISTCLEANFILES += $(pkgconfig_DATA)
 EXTRA_DIST += \
 	libdunfell/libdunfell.pc.in \
-	libdunfell/dfl-version.h.in \
+	libdunfell/version.h.in \
 	libdunfell-ui/libdunfell-ui.pc.in \
-	libdunfell-ui/dwl-version.h.in \
+	libdunfell-ui/version.h.in \
 	$(NULL)
 
 # ChangeLog

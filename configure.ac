@@ -116,11 +116,11 @@ AC_SUBST([ENABLE_INSTALLED_TESTS],[$enable_installed_tests])
 AC_CONFIG_FILES([
 Makefile
 libdunfell/libdunfell-$DFL_API_VERSION.pc:libdunfell/libdunfell.pc.in
-libdunfell/dfl-version.h
+libdunfell/version.h
 libdunfell/tests/Makefile
 libdunfell/docs/Makefile
 libdunfell-ui/libdunfell-ui-$DWL_API_VERSION.pc:libdunfell-ui/libdunfell-ui.pc.in
-libdunfell-ui/dwl-version.h
+libdunfell-ui/version.h
 libdunfell-ui/tests/Makefile
 libdunfell-ui/docs/Makefile
 ],[],

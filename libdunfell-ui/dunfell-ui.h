@@ -20,8 +20,8 @@
 #define DWL_H
 
 /* Core files */
-#include <libdunfell-ui/dwl-enums.h>
-#include <libdunfell-ui/dwl-timeline.h>
-#include <libdunfell-ui/dwl-version.h>
+#include <libdunfell-ui/enums.h>
+#include <libdunfell-ui/timeline.h>
+#include <libdunfell-ui/version.h>
 
 #endif /* !DWL_H */

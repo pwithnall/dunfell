@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-event-sequence
+ * SECTION:event-sequence
  * @short_description: sequence of #DflEvents
  * @stability: Unstable
- * @include: libdunfell/dfl-event-sequence.h
+ * @include: libdunfell/event-sequence.h
  *
  * An //event sequence// is a list of #DflEvents, in ascending time order. It
  * uses a moderately compact representation which is optimised for in-order
@@ -73,8 +73,8 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-event-sequence.h"
+#include "event.h"
+#include "event-sequence.h"
 
 
 static void dfl_event_sequence_list_model_init (GListModelInterface *iface);

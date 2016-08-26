@@ -23,7 +23,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "dfl-types.h"
+#include "types.h"
 
 G_BEGIN_DECLS
 

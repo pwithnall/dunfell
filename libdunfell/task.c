@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-task
+ * SECTION:task
  * @short_description: model of a #GTask from a log
  * @stability: Unstable
- * @include: libdunfell/dfl-task.h
+ * @include: libdunfell/task.h
  *
  * TODO
  *
@@ -34,9 +34,9 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-task.h"
-#include "dfl-time-sequence.h"
+#include "event.h"
+#include "task.h"
+#include "time-sequence.h"
 
 
 static void dfl_task_dispose (GObject *object);
@@ -127,7 +127,7 @@ dfl_task_new (DflId        id,
 }
 
 
-#include "dfl-event-sequence.h"
+#include "event-sequence.h"
 
 static void
 task_set_source_tag_cb (DflEventSequence *sequence,

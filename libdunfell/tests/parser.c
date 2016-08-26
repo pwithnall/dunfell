@@ -20,7 +20,7 @@
 #include <locale.h>
 #include <string.h>
 
-#include "dfl-parser.h"
+#include "parser.h"
 
 
 typedef struct

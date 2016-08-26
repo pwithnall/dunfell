@@ -22,15 +22,15 @@
 		<title>Core API</title>
 		<chapter>
 			<title>Core API</title>
-			<xi:include href="xml/dfl-event.xml"/>
-			<xi:include href="xml/dfl-event-sequence.xml"/>
-			<xi:include href="xml/dfl-main-context.xml"/>
-			<xi:include href="xml/dfl-parser.xml"/>
-			<xi:include href="xml/dfl-source.xml"/>
-			<xi:include href="xml/dfl-thread.xml"/>
-			<xi:include href="xml/dfl-time-sequence.xml"/>
-			<xi:include href="xml/dfl-types.xml"/>
-			<xi:include href="xml/dfl-version.xml"/>
+			<xi:include href="xml/event.xml"/>
+			<xi:include href="xml/event-sequence.xml"/>
+			<xi:include href="xml/main-context.xml"/>
+			<xi:include href="xml/parser.xml"/>
+			<xi:include href="xml/source.xml"/>
+			<xi:include href="xml/thread.xml"/>
+			<xi:include href="xml/time-sequence.xml"/>
+			<xi:include href="xml/types.xml"/>
+			<xi:include href="xml/version.xml"/>
 		</chapter>
 	</part>
 

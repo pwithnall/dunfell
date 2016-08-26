@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-time-sequence
+ * SECTION:time-sequence
  * @short_description: data structure for storing sequences of events
  * @stability: Unstable
- * @include: libdunfell/dfl-time-sequence.h
+ * @include: libdunfell/time-sequence.h
  *
  * TODO
  *
@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <glib.h>
 
-#include "dfl-time-sequence.h"
+#include "time-sequence.h"
 
 
 typedef struct

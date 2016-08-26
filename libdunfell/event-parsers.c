@@ -16,11 +16,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* This file is included into dfl-parser.c. All its contents must be static. */
+/* This file is included into parser.c. All its contents must be static. */
 
 #include <glib.h>
 
-#include "dfl-event.h"
+#include "event.h"
 
 static DflEvent *
 parse_main_context_acquire (const gchar *event_type,

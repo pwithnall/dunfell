@@ -21,7 +21,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 
-#include "dfv-application.h"
+#include "application.h"
 
 int
 main (int argc, char *argv[])

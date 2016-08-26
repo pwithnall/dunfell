@@ -1,5 +1,5 @@
 <SECTION>
-<FILE>dfl-version</FILE>
+<FILE>version</FILE>
 <TITLE>Version Information</TITLE>
 DFL_MAJOR_VERSION
 DFL_MINOR_VERSION
@@ -8,7 +8,7 @@ DFL_CHECK_VERSION
 </SECTION>
 
 <SECTION>
-<FILE>dfl-parser</FILE>
+<FILE>parser</FILE>
 <TITLE>DflParser</TITLE>
 DflParser
 dfl_parser_new
@@ -23,7 +23,7 @@ DFL_TYPE_PARSER
 </SECTION>
 
 <SECTION>
-<FILE>dfl-event-sequence</FILE>
+<FILE>event-sequence</FILE>
 <TITLE>DflEventSequence</TITLE>
 DflEventSequence
 dfl_event_sequence_new
@@ -36,7 +36,7 @@ DFL_TYPE_EVENT_SEQUENCE
 </SECTION>
 
 <SECTION>
-<FILE>dfl-event</FILE>
+<FILE>event</FILE>
 <TITLE>DflEvent</TITLE>
 DflEvent
 dfl_event_new
@@ -49,7 +49,7 @@ DFL_TYPE_EVENT
 </SECTION>
 
 <SECTION>
-<FILE>dfl-types</FILE>
+<FILE>types</FILE>
 <TITLE>Types</TITLE>
 DflThreadId
 DflTimestamp
@@ -59,7 +59,7 @@ DFL_ID_INVALID
 </SECTION>
 
 <SECTION>
-<FILE>dfl-thread</FILE>
+<FILE>thread</FILE>
 <TITLE>DflThread</TITLE>
 DflThread
 dfl_thread_factory_from_event_sequence
@@ -72,7 +72,7 @@ DFL_TYPE_THREAD
 </SECTION>
 
 <SECTION>
-<FILE>dfl-main-context</FILE>
+<FILE>main-context</FILE>
 <TITLE>DflMainContext</TITLE>
 DflMainContext
 dfl_main_context_factory_from_event_sequence
@@ -87,7 +87,7 @@ DFL_TYPE_MAIN_CONTEXT
 </SECTION>
 
 <SECTION>
-<FILE>dfl-time-sequence</FILE>
+<FILE>time-sequence</FILE>
 <TITLE>DflTimeSequence</TITLE>
 dfl_time_sequence_init
 dfl_time_sequence_clear
@@ -98,7 +98,7 @@ dfl_time_sequence_iter_next
 </SECTION>
 
 <SECTION>
-<FILE>dfl-source</FILE>
+<FILE>source</FILE>
 <TITLE>DflSource</TITLE>
 DflSource
 dfl_source_factory_from_event_sequence

@@ -18,10 +18,10 @@
  */
 
 /**
- * SECTION:dwl-timeline
+ * SECTION:timeline
  * @short_description: Dunfell timeline renderer
  * @stability: Unstable
- * @include: libdunfell-ui/dwl-timeline.h
+ * @include: libdunfell-ui/timeline.h
  *
  * TODO
  *
@@ -37,14 +37,14 @@
 #include <math.h>
 #include <string.h>
 
-#include "libdunfell/dfl-main-context.h"
-#include "libdunfell/dfl-source.h"
-#include "libdunfell/dfl-task.h"
-#include "libdunfell/dfl-thread.h"
-#include "libdunfell/dfl-time-sequence.h"
-#include "libdunfell/dfl-types.h"
-#include "libdunfell-ui/dwl-enums.h"
-#include "libdunfell-ui/dwl-timeline.h"
+#include "libdunfell/main-context.h"
+#include "libdunfell/source.h"
+#include "libdunfell/task.h"
+#include "libdunfell/thread.h"
+#include "libdunfell/time-sequence.h"
+#include "libdunfell/types.h"
+#include "libdunfell-ui/enums.h"
+#include "libdunfell-ui/timeline.h"
 
 
 static void dwl_timeline_get_property (GObject    *object,

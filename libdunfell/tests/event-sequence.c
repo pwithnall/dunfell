@@ -19,7 +19,7 @@
 #include <glib.h>
 #include <locale.h>
 
-#include "dfl-event-sequence.h"
+#include "event-sequence.h"
 
 
 typedef struct

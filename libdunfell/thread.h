@@ -22,7 +22,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include "dfl-event-sequence.h"
+#include "event-sequence.h"
 
 G_BEGIN_DECLS
 

@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-parser
+ * SECTION:parser
  * @short_description: Dunfell log file parser
  * @stability: Unstable
- * @include: libdunfell/dfl-parser.h
+ * @include: libdunfell/parser.h
  *
  * TODO
  *
@@ -34,9 +34,9 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-event-sequence.h"
-#include "dfl-parser.h"
+#include "event.h"
+#include "event-sequence.h"
+#include "parser.h"
 
 
 static void dfl_parser_dispose (GObject *object);

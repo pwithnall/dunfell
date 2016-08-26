@@ -23,7 +23,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
-#include "dfl-event.h"
+#include "event.h"
 
 G_BEGIN_DECLS
 

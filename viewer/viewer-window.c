@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfv-viewer-window
+ * SECTION:viewer-window
  * @short_description: #GtkApplicationWindow subclass for a viewer window
  * @stability: Unstable
- * @include: viewer/dfv-viewer-window.h
+ * @include: viewer/viewer-window.h
  *
  * TODO
  *
@@ -34,13 +34,13 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "libdunfell/dfl-main-context.h"
-#include "libdunfell/dfl-parser.h"
-#include "libdunfell/dfl-source.h"
-#include "libdunfell/dfl-task.h"
-#include "libdunfell/dfl-thread.h"
-#include "libdunfell-ui/dwl-timeline.h"
-#include "viewer/dfv-viewer-window.h"
+#include "libdunfell/main-context.h"
+#include "libdunfell/parser.h"
+#include "libdunfell/source.h"
+#include "libdunfell/task.h"
+#include "libdunfell/thread.h"
+#include "libdunfell-ui/timeline.h"
+#include "viewer/viewer-window.h"
 
 
 static void dfv_viewer_window_get_property (GObject      *object,

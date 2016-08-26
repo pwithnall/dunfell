@@ -20,8 +20,8 @@
 #include <locale.h>
 #include <string.h>
 
-#include "dfl-main-context.h"
-#include "dfl-parser.h"
+#include "main-context.h"
+#include "parser.h"
 
 
 /* Test the properties of newly constructed #DflMainContext. */

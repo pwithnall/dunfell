@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-source
+ * SECTION:source
  * @short_description: model of a #GMainContext from a log
  * @stability: Unstable
- * @include: libdunfell/dfl-source.h
+ * @include: libdunfell/source.h
  *
  * TODO
  *
@@ -34,10 +34,10 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-event-sequence.h"
-#include "dfl-source.h"
-#include "dfl-time-sequence.h"
+#include "event.h"
+#include "event-sequence.h"
+#include "source.h"
+#include "time-sequence.h"
 
 
 static void dfl_source_dispose (GObject *object);

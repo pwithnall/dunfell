@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-thread
+ * SECTION:thread
  * @short_description: model of a #GMainContext from a log
  * @stability: Unstable
- * @include: libdunfell/dfl-thread.h
+ * @include: libdunfell/thread.h
  *
  * TODO
  *
@@ -34,10 +34,10 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-event-sequence.h"
-#include "dfl-thread.h"
-#include "dfl-time-sequence.h"
+#include "event.h"
+#include "event-sequence.h"
+#include "thread.h"
+#include "time-sequence.h"
 
 
 static void dfl_thread_finalize (GObject *object);

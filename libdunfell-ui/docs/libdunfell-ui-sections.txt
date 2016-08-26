@@ -1,5 +1,5 @@
 <SECTION>
-<FILE>dwl-version</FILE>
+<FILE>version</FILE>
 <TITLE>Version Information</TITLE>
 DWL_MAJOR_VERSION
 DWL_MINOR_VERSION
@@ -8,7 +8,7 @@ DWL_CHECK_VERSION
 </SECTION>
 
 <SECTION>
-<FILE>dwl-timeline</FILE>
+<FILE>timeline</FILE>
 <TITLE>DwlTimeline</TITLE>
 DwlTimeline
 dwl_timeline_new

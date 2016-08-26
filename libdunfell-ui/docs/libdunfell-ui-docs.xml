@@ -22,8 +22,8 @@
 		<title>Core API</title>
 		<chapter>
 			<title>Core API</title>
-			<xi:include href="xml/dwl-timeline.xml"/>
-			<xi:include href="xml/dwl-version.xml"/>
+			<xi:include href="xml/timeline.xml"/>
+			<xi:include href="xml/version.xml"/>
 		</chapter>
 	</part>
 

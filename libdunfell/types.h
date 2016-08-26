@@ -20,10 +20,10 @@
 #define DFL_TYPES_H
 
 /**
- * SECTION:dfl-types
+ * SECTION:types
  * @short_description: common data types
  * @stability: Unstable
- * @include: libdunfell/dfl-types.h
+ * @include: libdunfell/types.h
  *
  * TODO
  *

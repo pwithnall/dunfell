@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-event
+ * SECTION:event
  * @short_description: main context or source event
  * @stability: Unstable
- * @include: libdunfell/dfl-event.h
+ * @include: libdunfell/event.h
  *
  * TODO
  *
@@ -34,7 +34,7 @@
 #include <glib-object.h>
 #include <string.h>
 
-#include "dfl-event.h"
+#include "event.h"
 
 
 static void dfl_event_get_property (GObject      *object,

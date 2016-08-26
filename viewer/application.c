@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfv-application
+ * SECTION:application
  * @short_description: #GtkApplication subclass for the viewer application
  * @stability: Unstable
- * @include: viewer/dfv-application.h
+ * @include: viewer/application.h
  *
  * TODO
  *
@@ -34,8 +34,8 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "dfv-application.h"
-#include "dfv-viewer-window.h"
+#include "application.h"
+#include "viewer-window.h"
 
 
 static void dfv_application_activate (GApplication *application);

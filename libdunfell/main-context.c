@@ -17,10 +17,10 @@
  */
 
 /**
- * SECTION:dfl-main-context
+ * SECTION:main-context
  * @short_description: model of a #GMainContext from a log
  * @stability: Unstable
- * @include: libdunfell/dfl-main-context.h
+ * @include: libdunfell/main-context.h
  *
  * TODO
  *
@@ -34,9 +34,9 @@
 #include <gio/gio.h>
 #include <string.h>
 
-#include "dfl-event.h"
-#include "dfl-main-context.h"
-#include "dfl-time-sequence.h"
+#include "event.h"
+#include "main-context.h"
+#include "time-sequence.h"
 
 
 static void dfl_main_context_dispose (GObject *object);
@@ -135,7 +135,7 @@ dfl_main_context_new (DflId        id,
 }
 
 
-#include "dfl-event-sequence.h"
+#include "event-sequence.h"
 
 static void
 main_context_acquire_release_cb (DflEventSequence *sequence,
