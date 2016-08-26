@@ -451,9 +451,9 @@ set_file_cb1 (GObject      *source_object,
 {
   DfvViewerWindow *self;
   GFile *file;
-  DflParser *parser = NULL;
-  GFileInputStream *stream = NULL;
-  GError *error = NULL;
+  g_autoptr (DflParser) parser = NULL;
+  g_autoptr (GFileInputStream) stream = NULL;
+  g_autoptr (GError) error = NULL;
 
   file = G_FILE (source_object);
   self = DFV_VIEWER_WINDOW (user_data);
@@ -462,15 +462,7 @@ set_file_cb1 (GObject      *source_object,
 
   if (error != NULL)
     {
-      gchar *parse_name = NULL;
-
-      parse_name = g_file_get_parse_name (file);
-      g_prefix_error (&error, "Error loading file ‘%s’: ", parse_name);
-      g_free (parse_name);
-
       dfv_viewer_window_clear_file (self, error);
-      g_error_free (error);
-
       return;
     }
 
@@ -480,9 +472,6 @@ set_file_cb1 (GObject      *source_object,
   dfl_parser_load_from_stream_async (parser, G_INPUT_STREAM (stream),
                                      self->open_cancellable,
                                      set_file_cb2, self);
-
-  g_object_unref (parser);
-  g_object_unref (stream);
 }
 
 static void
@@ -553,23 +542,22 @@ set_file_cb_name (GObject      *source_object,
 {
   DfvViewerWindow *self;
   GFile *file;
-  GFileInfo *file_info = NULL;
-  GError *error = NULL;
+  g_autoptr (GFileInfo) file_info = NULL;
+  g_autoptr (GError) error = NULL;
 
   self = DFV_VIEWER_WINDOW (user_data);
   file = G_FILE (source_object);
 
   file_info = g_file_query_info_finish (file, result, &error);
 
-  if (error != NULL)
+  if (error != NULL &&
+      !g_error_matches (error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
     {
-      gchar *parse_name = NULL;
+      g_autofree gchar *parse_name = NULL;
 
       parse_name = g_file_get_parse_name (file);
       g_warning ("Error loading information for file ‘%s’: %s",
                  parse_name, error->message);
-      g_free (parse_name);
-      g_error_free (error);
 
       return;
     }
@@ -582,6 +570,4 @@ set_file_cb_name (GObject      *source_object,
       gtk_window_set_title (GTK_WINDOW (self),
                             g_file_info_get_display_name (file_info));
     }
-
-  g_object_unref (file_info);
 }
