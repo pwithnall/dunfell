@@ -106,8 +106,8 @@ dwl_headers = \
 	libdunfell-ui/timeline.h \
 	$(NULL)
 nodist_dwl_headers = \
-	$(top_builddir)/libdunfell-ui/enums.h \
-	$(top_builddir)/libdunfell-ui/version.h \
+	libdunfell-ui/enums.h \
+	libdunfell-ui/version.h \
 	$(NULL)
 
 # The following headers are private, and shouldn't be installed:
@@ -125,7 +125,7 @@ dwl_sources = \
 	libdunfell-ui/timeline.c \
 	$(NULL)
 nodist_dwl_sources = \
-	$(top_builddir)/libdunfell-ui/enums.c \
+	libdunfell-ui/enums.c \
 	$(NULL)
 
 dwl_main_header = libdunfell-ui/dunfell-ui.h
