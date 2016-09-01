@@ -51,6 +51,8 @@ gpointer dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
 gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,
                                              DflTimestamp     timestamp);
 
+G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (DflTimeSequence, dfl_time_sequence_clear)
+
 /**
  * DflTimeSequenceIter:
  *
