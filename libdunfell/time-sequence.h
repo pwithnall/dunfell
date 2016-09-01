@@ -30,7 +30,8 @@ G_BEGIN_DECLS
 /**
  * DflTimeSequence:
  *
- * All the fields in this structure are private.
+ * All the fields in this structure are private. Use dfl_time_sequence_init()
+ * to initialise an already-allocated sequence.
  *
  * Since: 0.1.0
  */
@@ -53,7 +54,8 @@ gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,
 /**
  * DflTimeSequenceIter:
  *
- * TODO
+ * All the fields in this structure are private. Use
+ * dfl_time_sequence_iter_init() to initialise an already-allocated iterator.
  *
  * Since: 0.1.0
  */
