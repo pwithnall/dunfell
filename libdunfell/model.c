@@ -55,6 +55,7 @@ static void dfl_model_set_property (GObject      *object,
                                     GParamSpec   *pspec);
 static void dfl_model_constructed  (GObject      *object);
 static void dfl_model_finalize     (GObject      *object);
+static void dfl_model_analyse      (DflModel     *self);
 
 struct _DflModel
 {
@@ -158,15 +159,8 @@ dfl_model_constructed (GObject *object)
   /* Chain up first. */
   G_OBJECT_CLASS (dfl_model_parent_class)->constructed (object);
 
-  /* Analyse the event sequence. */
-  g_assert (self->event_sequence != NULL);
-
-  self->main_contexts = dfl_main_context_factory_from_event_sequence (self->event_sequence);
-  self->threads = dfl_thread_factory_from_event_sequence (self->event_sequence);
-  self->sources = dfl_source_factory_from_event_sequence (self->event_sequence);
-  self->tasks = dfl_task_factory_from_event_sequence (self->event_sequence);
-
-  dfl_event_sequence_walk (self->event_sequence);
+  /* Analyse the model. */
+  dfl_model_analyse (self);
 }
 
 static void
@@ -182,6 +176,20 @@ dfl_model_finalize (GObject *object)
   g_clear_object (&self->event_sequence);
 
   G_OBJECT_CLASS (dfl_model_parent_class)->finalize (object);
+}
+
+static void
+dfl_model_analyse (DflModel *self)
+{
+  g_assert (self->event_sequence != NULL);
+
+  /* Grab various objects out of the event sequence. */
+  self->main_contexts = dfl_main_context_factory_from_event_sequence (self->event_sequence);
+  self->threads = dfl_thread_factory_from_event_sequence (self->event_sequence);
+  self->sources = dfl_source_factory_from_event_sequence (self->event_sequence);
+  self->tasks = dfl_task_factory_from_event_sequence (self->event_sequence);
+
+  dfl_event_sequence_walk (self->event_sequence);
 }
 
 /**
