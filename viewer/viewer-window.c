@@ -34,11 +34,8 @@
 #include <glib/gi18n.h>
 #include <gtk/gtk.h>
 
-#include "libdunfell/main-context.h"
+#include "libdunfell/model.h"
 #include "libdunfell/parser.h"
-#include "libdunfell/source.h"
-#include "libdunfell/task.h"
-#include "libdunfell/thread.h"
 #include "libdunfell-ui/timeline.h"
 #include "viewer/viewer-window.h"
 
@@ -482,10 +479,7 @@ set_file_cb2 (GObject      *source_object,
   DfvViewerWindow *self;
   DflParser *parser;
   DflEventSequence *sequence;
-  GPtrArray/*<owned DflMainContext>*/ *main_contexts = NULL;
-  GPtrArray/*<owned DflThread>*/ *threads = NULL;
-  GPtrArray/*<owned DflSource>*/ *sources = NULL;
-  GPtrArray/*<owned DflTask>*/ *tasks = NULL;
+  g_autoptr (DflModel) model = NULL;
   GError *child_error = NULL;
 
   self = DFV_VIEWER_WINDOW (user_data);
@@ -503,13 +497,7 @@ set_file_cb2 (GObject      *source_object,
     }
 
   sequence = dfl_parser_get_event_sequence (parser);
-
-  /* Analyse the event sequence. */
-  main_contexts = dfl_main_context_factory_from_event_sequence (sequence);
-  threads = dfl_thread_factory_from_event_sequence (sequence);
-  sources = dfl_source_factory_from_event_sequence (sequence);
-  tasks = dfl_task_factory_from_event_sequence (sequence);
-  dfl_event_sequence_walk (sequence);
+  model = dfl_model_new (sequence);
 
   /* Done. One last check for cancellation, then. Clear up the loading state. */
   if (g_cancellable_is_cancelled (self->open_cancellable))
@@ -520,19 +508,13 @@ set_file_cb2 (GObject      *source_object,
 
   g_clear_object (&self->open_cancellable);
 
-  /* Create and show the timeline widget. */
-  self->timeline = GTK_WIDGET (dwl_timeline_new (threads, main_contexts,
-                                                 sources, tasks));
+  /* Create and show the timeline and statistics widgets. */
+  self->timeline = GTK_WIDGET (dwl_timeline_new (model));
   gtk_container_add (GTK_CONTAINER (self->timeline_scrolled_window),
                      self->timeline);
   gtk_widget_show (self->timeline);
   gtk_stack_set_visible_child_name (self->main_stack, "timeline");
   gtk_widget_grab_focus (self->timeline);
-
-  g_ptr_array_unref (sources);
-  g_ptr_array_unref (threads);
-  g_ptr_array_unref (main_contexts);
-  g_ptr_array_unref (tasks);
 }
 
 static void

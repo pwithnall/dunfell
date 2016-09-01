@@ -24,6 +24,8 @@
 #include <gio/gio.h>
 #include <gtk/gtk.h>
 
+#include <libdunfell/model.h>
+
 G_BEGIN_DECLS
 
 /**
@@ -51,10 +53,7 @@ typedef enum
 #define DWL_TYPE_TIMELINE dwl_timeline_get_type ()
 G_DECLARE_FINAL_TYPE (DwlTimeline, dwl_timeline, DWL, TIMELINE, GtkWidget)
 
-DwlTimeline *dwl_timeline_new (GPtrArray/*<owned DflThread>*/      *threads,
-                               GPtrArray/*<owned DflMainContext>*/ *main_contexts,
-                               GPtrArray/*<owned DflSource>*/      *sources,
-                               GPtrArray/*<owned DflTask>*/        *tasks);
+DwlTimeline *dwl_timeline_new (DflModel *model);
 
 gfloat   dwl_timeline_get_zoom (DwlTimeline *self);
 gboolean dwl_timeline_set_zoom (DwlTimeline *self,

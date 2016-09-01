@@ -38,6 +38,7 @@
 #include <string.h>
 
 #include "libdunfell/main-context.h"
+#include "libdunfell/model.h"
 #include "libdunfell/source.h"
 #include "libdunfell/task.h"
 #include "libdunfell/thread.h"
@@ -99,6 +100,8 @@ struct _DwlTimeline
   GtkWidget parent;
 
   GdkWindow *event_window;  /* owned */
+
+  DflModel *model;  /* (ownership full) */
 
   GPtrArray/*<owned DflMainContext>*/ *main_contexts;  /* owned */
   GPtrArray/*<owned DflThread>*/ *threads;  /* owned */
@@ -274,6 +277,7 @@ dwl_timeline_dispose (GObject *object)
 {
   DwlTimeline *self = DWL_TIMELINE (object);
 
+  g_clear_object (&self->model);
   g_clear_pointer (&self->sources, g_ptr_array_unref);
   g_clear_pointer (&self->main_contexts, g_ptr_array_unref);
   g_clear_pointer (&self->threads, g_ptr_array_unref);
@@ -287,10 +291,7 @@ dwl_timeline_dispose (GObject *object)
 
 /**
  * dwl_timeline_new:
- * @threads: (element-type DflThread): TODO
- * @main_contexts: (element-type DflMainContext): TODO
- * @sources: (element-type DflSource): TODO
- * @tasks: (element-type DflTask): TODO
+ * @model: (transfer none): TODO
  *
  * TODO
  *
@@ -298,20 +299,19 @@ dwl_timeline_dispose (GObject *object)
  * Since: 0.1.0
  */
 DwlTimeline *
-dwl_timeline_new (GPtrArray *threads,
-                  GPtrArray *main_contexts,
-                  GPtrArray *sources,
-                  GPtrArray *tasks)
+dwl_timeline_new (DflModel *model)
 {
   DwlTimeline *timeline = NULL;
 
   /* TODO: Properties. */
   timeline = g_object_new (DWL_TYPE_TIMELINE, NULL);
 
-  timeline->threads = g_ptr_array_ref (threads);
-  timeline->main_contexts = g_ptr_array_ref (main_contexts);
-  timeline->sources = g_ptr_array_ref (sources);
-  timeline->tasks = g_ptr_array_ref (tasks);
+  timeline->model = g_object_ref (model);
+
+  timeline->threads = dfl_model_dup_threads (model);
+  timeline->main_contexts = dfl_model_dup_main_contexts (model);
+  timeline->sources = dfl_model_dup_sources (model);
+  timeline->tasks = dfl_model_dup_tasks (model);
 
   update_cache (timeline);
 
