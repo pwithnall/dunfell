@@ -56,7 +56,7 @@ G_DEFINE_BOXED_TYPE (DflTimeSequenceIter, dfl_time_sequence_iter,
 
 typedef struct
 {
-  gsize element_size;
+  gsize element_size;  /* does not include sizeof(DflTimeSequenceElement); in bytes */
   GDestroyNotify element_destroy_notify;
   gsize n_elements_valid;
   gsize n_elements_allocated;
@@ -96,6 +96,22 @@ dfl_time_sequence_init (DflTimeSequence *sequence,
                                sizeof (DflTimeSequenceElement) + element_size);
 }
 
+static gboolean
+dfl_time_sequence_is_valid_element (DflTimeSequence        *sequence,
+                                    DflTimeSequenceElement *element)
+{
+  DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
+  gsize element_size;  /* size, in bytes, of a single element */
+  gsize elements_length;  /* length, in bytes, of the self->elements allocation */
+
+  element_size = sizeof (DflTimeSequenceElement) + self->element_size;
+  elements_length = self->n_elements_valid * element_size;
+
+  return ((guint8 *) element >= (guint8 *) self->elements &&
+          (guint8 *) element < (guint8 *) self->elements + elements_length &&
+          (((guint8 *) element - (guint8 *) self->elements) % element_size) == 0);
+}
+
 static DflTimeSequenceElement *
 dfl_time_sequence_index (DflTimeSequence *sequence,
                          gsize            index)
@@ -107,6 +123,9 @@ dfl_time_sequence_index (DflTimeSequence *sequence,
 
   element = ((guint8 *) self->elements +
              index * (sizeof (DflTimeSequenceElement) + self->element_size));
+
+  g_return_val_if_fail (dfl_time_sequence_is_valid_element (sequence, element),
+                        NULL);
   return (DflTimeSequenceElement *) element;
 }
 
@@ -300,11 +319,14 @@ static gboolean
 dfl_time_sequence_iter_is_valid (DflTimeSequenceIter *iter)
 {
   DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
+  DflTimeSequenceReal *sequence = (DflTimeSequenceReal *) self->sequence;
 
   return (self != NULL &&
           self->sequence != NULL &&
-          self->index <=
-          ((DflTimeSequenceReal *) self->sequence)->n_elements_valid);
+          self->index <= sequence->n_elements_valid &&
+          (self->last_returned_element == NULL ||
+           dfl_time_sequence_is_valid_element (self->sequence,
+                                               self->last_returned_element)));
 }
 
 /**
