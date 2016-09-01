@@ -30,6 +30,7 @@ test_programs = \
 	event-sequence \
 	main-context \
 	parser \
+	time-sequence \
 	$(NULL)
 
 -include $(top_srcdir)/git.mk
