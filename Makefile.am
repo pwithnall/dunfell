@@ -21,6 +21,7 @@ dfl_headers = \
 	libdunfell/event.h \
 	libdunfell/event-sequence.h \
 	libdunfell/main-context.h \
+	libdunfell/model.h \
 	libdunfell/parser.h \
 	libdunfell/source.h \
 	libdunfell/task.h \
@@ -42,6 +43,7 @@ dfl_sources = \
 	libdunfell/event.c \
 	libdunfell/event-sequence.c \
 	libdunfell/main-context.c \
+	libdunfell/model.c \
 	libdunfell/parser.c \
 	libdunfell/source.c \
 	libdunfell/task.c \

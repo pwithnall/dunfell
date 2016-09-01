@@ -23,6 +23,7 @@
 #include <libdunfell/event.h>
 #include <libdunfell/event-sequence.h>
 #include <libdunfell/main-context.h>
+#include <libdunfell/model.h>
 #include <libdunfell/parser.h>
 #include <libdunfell/source.h>
 #include <libdunfell/thread.h>
