@@ -141,19 +141,23 @@ dfl_time_sequence_find_timestamp (DflTimeSequence *sequence,
 {
   DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
   gsize left_index, right_index, middle;
-  DflTimeSequenceElement *element;
+  DflTimeSequenceElement *element, *prev_element, *next_element;
+  gsize _index;
+  gboolean valid;
 
   /* Trivial cases. */
   if (self->n_elements_valid == 0)
     {
-      *index = 0;
-      return FALSE;
+      _index = 0;
+      valid = FALSE;
+      goto done;
     }
 
   if (timestamp == 0)
     {
-      *index = 0;
-      return TRUE;
+      _index = 0;
+      valid = TRUE;
+      goto done;
     }
 
   /* Binary search. */
@@ -172,26 +176,55 @@ dfl_time_sequence_find_timestamp (DflTimeSequence *sequence,
       else
         break;
     }
-  while (left_index < right_index);
+  while (left_index <= right_index);
 
   /* Work backwards until we find the first of the matching elements. (Multiple
    * elements can have the same timestamp.) */
-  while (element->timestamp >= timestamp && middle > 0)
+  prev_element = (middle > 0) ? dfl_time_sequence_index (sequence, middle - 1) : NULL;
+
+  while (middle > 1 &&
+         (prev_element->timestamp >= timestamp ||
+          prev_element->timestamp == element->timestamp))
     {
       middle--;
-      element = dfl_time_sequence_index (sequence, middle);
+      element = prev_element;
+      prev_element = dfl_time_sequence_index (sequence, middle - 1);
     }
 
   if (element->timestamp <= timestamp)
     {
-      *index = middle;
-      return TRUE;
+      _index = middle;
+      valid = TRUE;
     }
   else
     {
-      *index = 0;
-      return FALSE;
+      _index = 0;
+      valid = FALSE;
     }
+
+done:
+  element = valid ? dfl_time_sequence_index (sequence, _index) : NULL;
+  prev_element = (_index > 0) ? dfl_time_sequence_index (sequence, _index - 1) : NULL;
+  next_element = (_index + 1 < self->n_elements_valid) ?
+                 dfl_time_sequence_index (sequence, _index + 1) : NULL;
+
+  g_assert (valid || _index == 0);
+  g_assert (_index == 0 || element->timestamp <= timestamp);
+  g_assert (_index == 0 || prev_element->timestamp < timestamp);
+  g_assert (_index == 0 || prev_element->timestamp < element->timestamp);
+  g_assert (_index == 0 || _index + 1 == self->n_elements_valid ||
+            next_element->timestamp > timestamp ||
+            next_element->timestamp == element->timestamp);
+
+  if (valid)
+    g_debug ("%s: timestamp: %" G_GUINT64_FORMAT "; returning index: "
+             "%" G_GSIZE_FORMAT, G_STRFUNC, timestamp, _index);
+  else
+    g_debug ("%s: timestamp: %" G_GUINT64_FORMAT "; failure",
+             G_STRFUNC, timestamp);
+
+  *index = _index;
+  return valid;
 }
 
 /**
