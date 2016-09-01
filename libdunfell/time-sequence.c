@@ -415,7 +415,7 @@ dfl_time_sequence_iter_previous (DflTimeSequenceIter *iter,
   if (data != NULL)
     *data = element->data;
 
-  return (self->index > 0);
+  return TRUE;
 }
 
 /**
