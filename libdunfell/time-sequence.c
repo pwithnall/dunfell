@@ -307,6 +307,11 @@ dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
  *
  * TODO
  *
+ * Note that the pointers returned from dfl_time_sequence_append() may change
+ * if dfl_time_sequence_append() is called again, due to internal reallocations.
+ * The returned pointer is only valid until the next call to
+ * dfl_time_sequence_append().
+ *
  * Returns: (transfer none): TODO
  * Since: 0.1.0
  */
