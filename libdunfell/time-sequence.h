@@ -63,7 +63,7 @@ G_DEFINE_AUTO_CLEANUP_CLEAR_FUNC (DflTimeSequence, dfl_time_sequence_clear)
  */
 typedef struct
 {
-  gpointer dummy[2];
+  gpointer dummy[3];
 } DflTimeSequenceIter;
 
 GType dfl_time_sequence_iter_get_type (void);

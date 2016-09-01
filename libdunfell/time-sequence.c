@@ -45,6 +45,7 @@ typedef struct
 {
   DflTimeSequence *sequence;
   gsize index;
+  DflTimeSequenceElement *last_returned_element;  /* (nullable) (ownership none) */
 } DflTimeSequenceIterReal;
 
 G_STATIC_ASSERT (sizeof (DflTimeSequenceIterReal) ==
@@ -327,6 +328,7 @@ dfl_time_sequence_iter_init (DflTimeSequenceIter *iter,
   g_return_if_fail (sequence != NULL);
 
   self->sequence = sequence;
+  self->last_returned_element = NULL;
   dfl_time_sequence_find_timestamp (sequence, start, &self->index);
 }
 
@@ -356,10 +358,14 @@ dfl_time_sequence_iter_next (DflTimeSequenceIter *iter,
 
   /* Reached the end? */
   if (self->index >= sequence->n_elements_valid)
-    return FALSE;
+    {
+      self->last_returned_element = NULL;
+      return FALSE;
+    }
 
   /* Return the next element. */
   element = dfl_time_sequence_index (self->sequence, self->index);
+  self->last_returned_element = element;
 
   if (timestamp != NULL)
     *timestamp = element->timestamp;
@@ -394,11 +400,15 @@ dfl_time_sequence_iter_previous (DflTimeSequenceIter *iter,
 
   /* Reached the end? */
   if (self->index == 0)
-    return FALSE;
+    {
+      self->last_returned_element = NULL;
+      return FALSE;
+    }
 
   /* Return the previous element. */
   self->index--;
   element = dfl_time_sequence_index (self->sequence, self->index);
+  self->last_returned_element = element;
 
   if (timestamp != NULL)
     *timestamp = element->timestamp;
@@ -432,6 +442,7 @@ dfl_time_sequence_iter_copy (DflTimeSequenceIter *iter)
 
   new_iter_real->sequence = iter_real->sequence;
   new_iter_real->index = iter_real->index;
+  new_iter_real->last_returned_element = iter_real->last_returned_element;
 
   return g_steal_pointer (&new_iter);
 }
@@ -488,8 +499,8 @@ dfl_time_sequence_iter_equal (DflTimeSequenceIter *iter1,
  * @iter: a #DflTimeSequenceIter
  *
  * Get the timestamp returned by the most recent call to
- * dfl_time_sequence_iter_next(). If at the beginning of the time sequence, 0
- * will be returned.
+ * dfl_time_sequence_iter_next() or dfl_time_sequence_iter_previous(). If at
+ * the beginning or end of the time sequence, 0 will be returned.
  *
  * Returns: timestamp of @iter’s position in the time sequence
  * Since: UNRELEASED
@@ -498,21 +509,13 @@ DflTimestamp
 dfl_time_sequence_iter_get_timestamp (DflTimeSequenceIter *iter)
 {
   DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
-  DflTimeSequenceReal *sequence;
-  DflTimeSequenceElement *element;
 
   g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), 0);
 
-  sequence = (DflTimeSequenceReal *) self->sequence;
-
-  /* At the beginning or overshot the end? */
-  if (self->index == 0 || self->index > sequence->n_elements_valid)
+  if (self->last_returned_element == NULL)
     return 0;
 
-  /* Return the current element. */
-  element = dfl_time_sequence_index (self->sequence, self->index - 1);
-
-  return element->timestamp;
+  return self->last_returned_element->timestamp;
 }
 
 /**
@@ -520,8 +523,8 @@ dfl_time_sequence_iter_get_timestamp (DflTimeSequenceIter *iter)
  * @iter: a #DflTimeSequenceIter
  *
  * Get the data returned by the most recent call to
- * dfl_time_sequence_iter_next(). If at the beginning of the time sequence,
- * %NULL will be returned.
+ * dfl_time_sequence_iter_next() or dfl_time_sequence_previous(). If at the
+ * beginning or end of the time sequence, %NULL will be returned.
  *
  * Returns: data from @iter’s position in the time sequence
  * Since: UNRELEASED
@@ -530,19 +533,11 @@ gpointer
 dfl_time_sequence_iter_get_data (DflTimeSequenceIter *iter)
 {
   DflTimeSequenceIterReal *self = (DflTimeSequenceIterReal *) iter;
-  DflTimeSequenceReal *sequence;
-  DflTimeSequenceElement *element;
 
   g_return_val_if_fail (dfl_time_sequence_iter_is_valid (iter), NULL);
 
-  sequence = (DflTimeSequenceReal *) self->sequence;
-
-  /* At the beginning or overshot the end? */
-  if (self->index == 0 || self->index > sequence->n_elements_valid)
+  if (self->last_returned_element == NULL)
     return NULL;
 
-  /* Return the current element. */
-  element = dfl_time_sequence_index (self->sequence, self->index - 1);
-
-  return element->data;
+  return self->last_returned_element->data;
 }
