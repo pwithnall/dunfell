@@ -105,6 +105,7 @@ lib_LTLIBRARIES += libdunfell-ui/libdunfell-ui-@DWL_API_VERSION@.la
 
 dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@
 dwl_headers = \
+	libdunfell-ui/statistics-pane.h \
 	libdunfell-ui/timeline.h \
 	$(NULL)
 nodist_dwl_headers = \
@@ -124,10 +125,12 @@ nodist_dwlinclude_HEADERS = \
 	$(NULL)
 
 dwl_sources = \
+	libdunfell-ui/statistics-pane.c \
 	libdunfell-ui/timeline.c \
 	$(NULL)
 nodist_dwl_sources = \
 	libdunfell-ui/enums.c \
+	libdunfell-ui/resources.c \
 	$(NULL)
 
 dwl_main_header = libdunfell-ui/dunfell-ui.h
@@ -198,6 +201,18 @@ BUILT_SOURCES += \
 CLEANFILES += \
 	$(dwl_enum_header_file) \
 	$(dwl_enum_source_file) \
+	$(NULL)
+
+libdunfell_ui_org_gnome_libdunfell_ui_gresource_xml_deps = \
+	$(shell $(GLIB_COMPILE_RESOURCES) --generate-dependencies --sourcedir=$(top_srcdir)/libdunfell-ui $(top_srcdir)/libdunfell-ui/org.gnome.libdunfell-ui.gresource.xml)
+libdunfell-ui/resources.c: $(libdunfell_ui_org_gnome_libdunfell_ui_gresource_xml_deps)
+	$(AM_V_GEN)$(GLIB_COMPILE_RESOURCES) --target=$@ --sourcedir=$(top_srcdir)/libdunfell-ui --generate-source $(top_srcdir)/libdunfell-ui/org.gnome.libdunfell-ui.gresource.xml
+
+BUILT_SOURCES += libdunfell-ui/resources.c
+CLEANFILES += libdunfell-ui/resources.c
+EXTRA_DIST += \
+	libdunfell-ui/org.gnome.libdunfell-ui.gresource.xml \
+	$(libdunfell_ui_org_gnome_libdunfell_ui_gresource_xml_deps) \
 	$(NULL)
 
 # Check if dunfell-ui.h includes all the public headers

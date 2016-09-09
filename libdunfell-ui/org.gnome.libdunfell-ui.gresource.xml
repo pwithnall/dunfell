@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/gnome/libdunfell-ui/ui">
+    <file preprocess="xml-stripblanks">statistics-pane.ui</file>
+  </gresource>
+</gresources>

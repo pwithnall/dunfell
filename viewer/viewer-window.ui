@@ -131,12 +131,22 @@
           </packing>
         </child>
         <child>
-          <object class="GtkScrolledWindow" id="timeline_scrolled_window">
-            <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
+          <object class="GtkPaned" id="main_paned">
+            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+            <property name="position">2147483647</property>
             <child>
-              <placeholder/>
+              <object class="GtkScrolledWindow" id="timeline_scrolled_window">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="shadow_type">in</property>
+                <child>
+                  <placeholder/>
+                </child>
+              </object>
+              <packing>
+                <property name="shrink">False</property>
+                <property name="resize">True</property>
+              </packing>
             </child>
           </object>
           <packing>

@@ -36,6 +36,7 @@
 
 #include "libdunfell/model.h"
 #include "libdunfell/parser.h"
+#include "libdunfell-ui/statistics-pane.h"
 #include "libdunfell-ui/timeline.h"
 #include "viewer/viewer-window.h"
 
@@ -67,7 +68,9 @@ struct _DfvViewerWindow
 
   GtkStack *main_stack;
   GtkWidget *timeline_scrolled_window;
+  GtkPaned *main_paned;
   GtkWidget *timeline;  /* NULL iff not loaded */
+  GtkWidget *statistics_pane;  /* (nullable); NULL iff not loaded */
   GtkWidget *home_page_box;
 };
 
@@ -91,6 +94,8 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
                                         DfvViewerWindow, main_stack);
   gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
                                         timeline_scrolled_window);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        main_paned);
   gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
                                         home_page_box);
   gtk_widget_class_bind_template_callback (widget_class, open_button_clicked);
@@ -513,6 +518,11 @@ set_file_cb2 (GObject      *source_object,
   gtk_container_add (GTK_CONTAINER (self->timeline_scrolled_window),
                      self->timeline);
   gtk_widget_show (self->timeline);
+
+  self->statistics_pane = GTK_WIDGET (dwl_statistics_pane_new (model));
+  gtk_paned_pack2 (self->main_paned, self->statistics_pane, FALSE, FALSE);
+  gtk_widget_show (self->statistics_pane);
+
   gtk_stack_set_visible_child_name (self->main_stack, "timeline");
   gtk_widget_grab_focus (self->timeline);
 }

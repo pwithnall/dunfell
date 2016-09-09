@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk+" version="3.16"/>
+  <template class="DwlStatisticsPane" parent="GtkBin">
+    <child>
+      <object class="GtkStack" id="stack">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <child>
+          <object class="GtkBox">
+            <property name="visible">true</property>
+            <property name="orientation">vertical</property>
+            <property name="margin-start">12</property>
+            <property name="margin-end">12</property>
+            <property name="margin-top">12</property>
+            <property name="margin-bottom">12</property>
+            <property name="spacing">10</property>
+            <property name="width-request">200</property>
+            <child>
+              <object class="GtkLabel" id="pane_title">
+                <property name="visible">True</property>
+                <property name="halign">start</property>
+                <property name="xalign">0.0</property>
+                <property name="label" translatable="yes">Overall Statistics</property>
+                <attributes>
+                  <attribute name="weight" value="PANGO_WEIGHT_BOLD"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="fill">True</property>
+                <property name="expand">False</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFrame">
+                <property name="visible">True</property>
+                <property name="halign">center</property>
+                <child>
+                  <object class="GtkListBox" id="statistics_list">
+                    <property name="visible">True</property>
+                    <property name="selection-mode">none</property>
+
+                    <child>
+                      <object class="GtkListBoxRow" id="n_sources_row">
+                        <property name="visible">True</property>
+                        <property name="activatable">False</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="margin">10</property>
+                            <property name="spacing">40</property>
+                            <child>
+                              <object class="GtkLabel" id="n_sources_label">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Number of GSources</property>
+                                <property name="halign">start</property>
+                                <property name="valign">baseline</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="n_sources">
+                                <property name="visible">True</property>
+                                <property name="selectable">True</property>
+                                <property name="halign">end</property>
+                                <property name="valign">baseline</property>
+                                <property name="wrap">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkListBoxRow" id="n_tasks_row">
+                        <property name="visible">True</property>
+                        <property name="activatable">False</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="margin">10</property>
+                            <property name="spacing">40</property>
+                            <child>
+                              <object class="GtkLabel" id="n_tasks_label">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Number of GTasks</property>
+                                <property name="halign">start</property>
+                                <property name="valign">baseline</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="n_tasks">
+                                <property name="visible">True</property>
+                                <property name="selectable">True</property>
+                                <property name="halign">end</property>
+                                <property name="valign">baseline</property>
+                                <property name="wrap">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="name">overall</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </template>
+
+  <object class="GtkSizeGroup">
+    <property name="mode">horizontal</property>
+    <widgets>
+      <widget name="n_sources_label"/>
+      <widget name="n_tasks_label"/>
+    </widgets>
+  </object>
+</interface>

@@ -21,6 +21,7 @@
 
 /* Core files */
 #include <libdunfell-ui/enums.h>
+#include <libdunfell-ui/statistics-pane.h>
 #include <libdunfell-ui/timeline.h>
 #include <libdunfell-ui/version.h>
 
