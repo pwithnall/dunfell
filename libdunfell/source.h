@@ -83,6 +83,15 @@ void dfl_source_dispatch_iter (DflSource           *self,
                                DflTimeSequenceIter *iter,
                                DflTimestamp         start);
 
+gsize dfl_source_get_n_long_dispatches (DflSource   *self,
+                                        DflDuration  min_duration);
+
+void dfl_source_get_dispatch_statistics (DflSource   *self,
+                                         gsize       *n_dispatches,
+                                         DflDuration *min_duration,
+                                         DflDuration *median_duration,
+                                         DflDuration *max_duration);
+
 void dfl_source_get_priority_statistics (DflSource   *self,
                                          gint        *min_priority,
                                          gint        *max_priority);

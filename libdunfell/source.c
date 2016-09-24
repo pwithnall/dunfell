@@ -680,6 +680,116 @@ dfl_source_dispatch_iter (DflSource           *self,
 }
 
 /**
+ * dfl_source_get_n_long_dispatches:
+ * @self: a #DflSource
+ * @min_duration: minimum dispatch duration to count (inclusive), in
+ *    microseconds
+ *
+ * TODO
+ *
+ * Returns: number of dispatches whose duration is equal to or greater than
+ *    @min_duration
+ * Since: UNRELEASED
+ */
+gsize
+dfl_source_get_n_long_dispatches (DflSource   *self,
+                                  DflDuration  min_duration)
+{
+  DflTimeSequenceIter iter;
+  DflSourceDispatchData *dispatch_data;
+  gsize count;
+
+  g_return_val_if_fail (DFL_IS_SOURCE (self), 0);
+
+  /* Fast path. */
+  if (min_duration == 0)
+    return dfl_time_sequence_get_n_elements (&self->dispatch_events);
+
+  /* Iteration path. */
+  dfl_time_sequence_iter_init (&iter, &self->dispatch_events, 0);
+  count = 0;
+
+  while (dfl_time_sequence_iter_next (&iter, NULL, (gpointer *) &dispatch_data))
+    {
+      if (dispatch_data->duration >= min_duration)
+        count++;
+    }
+
+  return count;
+}
+
+static gint
+compare_durations (gconstpointer a,
+                   gconstpointer b)
+{
+  const DflDuration *duration_a = a, *duration_b = b;
+
+  return (*duration_a - *duration_b);
+}
+
+/* TODO: Docs */
+void
+dfl_source_get_dispatch_statistics (DflSource   *self,
+                                    gsize       *n_dispatches,
+                                    DflDuration *min_duration,
+                                    DflDuration *median_duration,
+                                    DflDuration *max_duration)
+{
+  g_autoptr (GArray) durations = NULL;  /* (element-type DflDuration) */
+  DflTimeSequenceIter iter;
+  DflSourceDispatchData *dispatch_data;
+
+  g_return_if_fail (DFL_IS_SOURCE (self));
+
+  if (n_dispatches != NULL)
+    *n_dispatches = dfl_time_sequence_get_n_elements (&self->dispatch_events);
+
+  /* Fast paths. */
+  if (min_duration == NULL && median_duration == NULL && max_duration == NULL)
+    return;
+
+  if (dfl_time_sequence_get_n_elements (&self->dispatch_events) == 0)
+    {
+      if (min_duration != NULL)
+        *min_duration = 0;
+      if (median_duration != NULL)
+        *median_duration = 0;
+      if (max_duration != NULL)
+        *max_duration = 0;
+
+      return;
+    }
+
+  /* In order to calculate the median, we need to order all the dispatches by
+   * duration. */
+  durations = g_array_sized_new (FALSE, FALSE, sizeof (DflDuration),
+                                 dfl_time_sequence_get_n_elements (&self->dispatch_events));
+
+  dfl_time_sequence_iter_init (&iter, &self->dispatch_events, 0);
+
+  while (dfl_time_sequence_iter_next (&iter, NULL, (gpointer *) &dispatch_data))
+    g_array_append_val (durations, dispatch_data->duration);
+
+  g_array_sort (durations, compare_durations);
+
+  /* Calculate the aggregates. */
+  if (min_duration != NULL)
+    *min_duration = g_array_index (durations, DflDuration, 0);
+
+  if (max_duration != NULL)
+    *max_duration = g_array_index (durations, DflDuration, durations->len - 1);
+
+  if (median_duration != NULL)
+    {
+      if ((durations->len % 2) == 0)
+        *median_duration = (g_array_index (durations, DflDuration, durations->len / 2) +
+                            g_array_index (durations, DflDuration, durations->len / 2 + 1)) / 2;
+      else
+        *median_duration = g_array_index (durations, DflDuration, durations->len / 2);
+    }
+}
+
+/**
  * dfl_source_get_priority_statistics:
  * @self: a #DflSource
  * @min_priority: (out caller-allocates) (optional): TODO
