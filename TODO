@@ -1,8 +1,8 @@
 Link the DflTask and DflSource which handles its idle callback and render a link between them
+Try systemtap on various distro VMs
 Add a details pane for viewing more detailed information about something selected in the timeline
 Keep thread IDs visible all the time in the timeline
 Add keyboard shortcuts for the timeline
-	Jump to next event
 	Jump to source creation
 	Cycle through source dispatches
 Add a search function to look for a particular GSource, GTask or dispatch
@@ -27,7 +27,7 @@ take a look at Chromium trace view
 group related GSources
 use monotonic clock in stap file
 look at thread scheduling to avoid/highlight gaps in timeline
-look at perf probes for grabbing backtraces
+look at perf probes or stackwalkAPI for grabbing backtraces
 check whether systemtap can attach part-way through a process' lifetime; would be useful for gnome-shell (telling a random user on the internet to debug a particular perf bug; or bugs which only appear after a few days)
 maybe look at GooCanvas?
 cursor which shows what's alive at some point in time
