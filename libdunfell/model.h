@@ -45,6 +45,10 @@ GPtrArray        *dfl_model_dup_threads        (DflModel *self);
 GPtrArray        *dfl_model_dup_sources        (DflModel *self);
 GPtrArray        *dfl_model_dup_tasks          (DflModel *self);
 
+gsize dfl_model_get_n_long_dispatches              (DflModel    *self,
+                                                    DflDuration  min_duration);
+gsize dfl_model_get_n_main_context_thread_switches (DflModel    *self);
+
 G_END_DECLS
 
 #endif /* !DFL_MODEL_H */

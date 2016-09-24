@@ -300,3 +300,79 @@ dfl_model_dup_tasks (DflModel *self)
 
   return g_ptr_array_ref (self->tasks);
 }
+
+/**
+ * dfl_model_get_n_long_dispatches:
+ * @self: a #DflModel
+ * @min_duration: minimum dispatch duration to count (inclusive), in
+ *    microseconds
+ *
+ * TODO
+ *
+ * Returns: number of dispatches whose duration is equal to or greater than
+ *    @min_duration, over all sources
+ * Since: UNRELEASED
+ */
+gsize
+dfl_model_get_n_long_dispatches (DflModel    *self,
+                                 DflDuration  min_duration)
+{
+  gsize i;
+  gsize total;
+
+  g_return_val_if_fail (DFL_IS_MODEL (self), 0);
+
+  total = 0;
+
+  for (i = 0; i < self->sources->len; i++)
+    {
+      DflSource *source = self->sources->pdata[i];
+      gsize source_n_dispatches;
+
+      source_n_dispatches = dfl_source_get_n_long_dispatches (source, min_duration);
+
+      /* Bail out on potential overflow. */
+      if (total > G_MAXSIZE - source_n_dispatches)
+        return G_MAXSIZE;
+
+      total += source_n_dispatches;
+    }
+
+  return total;
+}
+
+/**
+ * dfl_model_get_n_main_context_thread_switches:
+ * @self: a #DflModel
+ *
+ * TODO
+ *
+ * Returns: number of times any main context has switched between threads
+ * Since: UNRELEASED
+ */
+gsize
+dfl_model_get_n_main_context_thread_switches (DflModel *self)
+{
+  gsize i;
+  gsize total;
+
+  g_return_val_if_fail (DFL_IS_MODEL (self), 0);
+
+  total = 0;
+
+  for (i = 0; i < self->main_contexts->len; i++)
+    {
+      DflMainContext *main_context = self->main_contexts->pdata[i];
+      gsize main_context_n_thread_switches;
+
+      main_context_n_thread_switches = dfl_main_context_get_n_thread_switches (main_context);
+
+      /* Bail out on potential overflow. */
+      if (total > G_MAXSIZE - main_context_n_thread_switches)
+        return G_MAXSIZE;
+
+      total += main_context_n_thread_switches;
+    }
+
+  return total;
+}
