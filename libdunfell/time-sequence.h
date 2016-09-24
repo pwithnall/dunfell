@@ -46,6 +46,7 @@ void dfl_time_sequence_init (DflTimeSequence *sequence,
                              gsize            n_elements_preallocated);
 void dfl_time_sequence_clear (DflTimeSequence *sequence);
 
+gsize    dfl_time_sequence_get_n_elements   (DflTimeSequence *sequence);
 gpointer dfl_time_sequence_get_last_element (DflTimeSequence *sequence,
                                              DflTimestamp    *timestamp);
 gpointer dfl_time_sequence_append           (DflTimeSequence *sequence,

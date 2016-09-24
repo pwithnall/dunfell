@@ -261,6 +261,25 @@ dfl_time_sequence_clear (DflTimeSequence *sequence)
 }
 
 /**
+ * dfl_time_sequence_get_n_elements:
+ * @sequence: a #DflTimeSequence
+ *
+ * TODO
+ *
+ * Returns: number of elements in the sequence
+ * Since: UNRELEASED
+ */
+gsize
+dfl_time_sequence_get_n_elements (DflTimeSequence *sequence)
+{
+  DflTimeSequenceReal *self = (DflTimeSequenceReal *) sequence;
+
+  g_return_val_if_fail (sequence != NULL, 0);
+
+  return self->n_elements_valid;
+}
+
+/**
  * dfl_time_sequence_get_last_element:
  * @sequence: a #DflTimeSequence
  * @timestamp: (out caller-allocates) (optional): TODO
