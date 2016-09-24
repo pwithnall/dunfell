@@ -40,6 +40,14 @@
 #include "time-sequence.h"
 
 
+static void dfl_source_get_property (GObject    *object,
+                                     guint       property_id,
+                                     GValue     *value,
+                                     GParamSpec *pspec);
+static void dfl_source_set_property (GObject      *object,
+                                     guint         property_id,
+                                     const GValue *value,
+                                     GParamSpec   *pspec);
 static void dfl_source_dispose (GObject *object);
 static void dfl_source_dispatch_data_clear (DflSourceDispatchData *data);
 
@@ -79,12 +87,289 @@ struct _DflSource
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
 
+typedef enum
+{
+  PROP_ID = 1,
+  PROP_NAME,
+  PROP_NEW_TIMESTAMP,
+  PROP_NEW_THREAD_ID,
+  PROP_FREE_TIMESTAMP,
+  PROP_ATTACH_TIMESTAMP,
+  PROP_ATTACH_THREAD_ID,
+  PROP_ATTACH_CONTEXT,
+  PROP_DESTROY_TIMESTAMP,
+  PROP_DESTROY_THREAD_ID,
+  PROP_MIN_PRIORITY,
+  PROP_MAX_PRIORITY,
+  PROP_N_DISPATCHES,
+  PROP_MIN_DISPATCH_DURATION,
+  PROP_MEDIAN_DISPATCH_DURATION,
+  PROP_MAX_DISPATCH_DURATION,
+} DflSourceProperty;
+
 static void
 dfl_source_class_init (DflSourceClass *klass)
 {
   GObjectClass *object_class = (GObjectClass *) klass;
 
+  object_class->get_property = dfl_source_get_property;
+  object_class->set_property = dfl_source_set_property;
   object_class->dispose = dfl_source_dispose;
+
+  /**
+   * DflSource:id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_ID,
+                                   g_param_spec_ulong ("id",
+                                                       "ID",
+                                                       "TODO.",
+                                                       0, G_MAXULONG,
+                                                       DFL_ID_INVALID,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:name:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_NAME,
+                                   g_param_spec_string ("name",
+                                                        "Name",
+                                                        "TODO.",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:new-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_NEW_TIMESTAMP,
+                                   g_param_spec_uint64 ("new-timestamp",
+                                                        "New Timestamp",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:new-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_NEW_THREAD_ID,
+                                   g_param_spec_uint64 ("new-thread-id",
+                                                        "New Thread ID",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:free-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_FREE_TIMESTAMP,
+                                   g_param_spec_uint64 ("free-timestamp",
+                                                        "Free Timestamp",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:attach-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_ATTACH_TIMESTAMP,
+                                   g_param_spec_uint64 ("attach-timestamp",
+                                                        "Attach Timestamp",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:attach-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_ATTACH_THREAD_ID,
+                                   g_param_spec_uint64 ("attach-thread-id",
+                                                        "Attach Thread ID",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:attach-context:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_ATTACH_CONTEXT,
+                                   g_param_spec_ulong ("attach-context",
+                                                       "Attach Context",
+                                                       "TODO.",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:destroy-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_DESTROY_TIMESTAMP,
+                                   g_param_spec_uint64 ("destroy-timestamp",
+                                                        "Destroy Timestamp",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:destroy-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_DESTROY_THREAD_ID,
+                                   g_param_spec_uint64 ("destroy-thread-id",
+                                                        "Destroy Thread ID",
+                                                        "TODO.",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:min-priority:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_MIN_PRIORITY,
+                                   g_param_spec_int ("min-priority",
+                                                     "Minimum Priority",
+                                                     "TODO.",
+                                                     G_MININT, G_MAXINT,
+                                                     G_PRIORITY_DEFAULT,
+                                                     G_PARAM_CONSTRUCT_ONLY |
+                                                     G_PARAM_READWRITE |
+                                                     G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:max-priority:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_MAX_PRIORITY,
+                                   g_param_spec_int ("max-priority",
+                                                     "Maximum Priority",
+                                                     "TODO.",
+                                                     G_MININT, G_MAXINT,
+                                                     G_PRIORITY_DEFAULT,
+                                                     G_PARAM_CONSTRUCT_ONLY |
+                                                     G_PARAM_READWRITE |
+                                                     G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:n-dispatches:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_N_DISPATCHES,
+                                   g_param_spec_ulong ("n-dispatches",
+                                                       "Number of Dispatches",
+                                                       "TODO.",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:min-dispatch-duration:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_MIN_DISPATCH_DURATION,
+                                   g_param_spec_int64 ("min-dispatch-duration",
+                                                       "Minimum Dispatch Duration",
+                                                       "TODO.",
+                                                       0, G_MAXINT64, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:median-dispatch-duration:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_MEDIAN_DISPATCH_DURATION,
+                                   g_param_spec_int64 ("median-dispatch-duration",
+                                                       "Median Dispatch Duration",
+                                                       "TODO.",
+                                                       0, G_MAXINT64, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflSource:max-dispatch-duration:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_MAX_DISPATCH_DURATION,
+                                   g_param_spec_int64 ("max-dispatch-duration",
+                                                       "Maximum Dispatch Duration",
+                                                       "TODO.",
+                                                       0, G_MAXINT64, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
 }
 
 static void
@@ -95,6 +380,162 @@ dfl_source_init (DflSource *self)
                           (GDestroyNotify) dfl_source_dispatch_data_clear, 0);
 
   self->children = g_ptr_array_new_with_free_func (g_object_unref);
+}
+
+static void
+dfl_source_get_property (GObject     *object,
+                         guint        property_id,
+                         GValue      *value,
+                         GParamSpec  *pspec)
+{
+  DflSource *self = DFL_SOURCE (object);
+
+  switch ((DflSourceProperty) property_id)
+    {
+    case PROP_ID:
+      g_value_set_ulong (value, self->id);
+      break;
+    case PROP_NAME:
+      g_value_set_string (value, self->name);
+      break;
+    case PROP_NEW_TIMESTAMP:
+      g_value_set_uint64 (value, self->new_timestamp);
+      break;
+    case PROP_NEW_THREAD_ID:
+      g_value_set_uint64 (value, self->new_thread_id);
+      break;
+    case PROP_FREE_TIMESTAMP:
+      g_value_set_uint64 (value, self->free_timestamp);
+      break;
+    case PROP_ATTACH_TIMESTAMP:
+      g_value_set_uint64 (value, self->attach_timestamp);
+      break;
+    case PROP_ATTACH_THREAD_ID:
+      g_value_set_uint64 (value, self->attach_thread_id);
+      break;
+    case PROP_ATTACH_CONTEXT:
+      g_value_set_ulong (value, self->attach_context);
+      break;
+    case PROP_DESTROY_TIMESTAMP:
+      g_value_set_uint64 (value, self->destroy_timestamp);
+      break;
+    case PROP_DESTROY_THREAD_ID:
+      g_value_set_uint64 (value, self->destroy_thread_id);
+      break;
+    case PROP_MIN_PRIORITY:
+      g_value_set_int (value, self->min_priority);
+      break;
+    case PROP_MAX_PRIORITY:
+      g_value_set_int (value, self->max_priority);
+      break;
+    case PROP_N_DISPATCHES:
+      {
+        gsize n_dispatches;
+
+        dfl_source_get_dispatch_statistics (self, &n_dispatches,
+                                            NULL, NULL, NULL);
+        g_value_set_ulong (value, n_dispatches);
+        break;
+      }
+    case PROP_MIN_DISPATCH_DURATION:
+      {
+        DflDuration min_duration;
+
+        dfl_source_get_dispatch_statistics (self, NULL,
+                                            &min_duration, NULL, NULL);
+        g_value_set_int64 (value, min_duration);
+        break;
+      }
+    case PROP_MEDIAN_DISPATCH_DURATION:
+      {
+        DflDuration median_duration;
+
+        dfl_source_get_dispatch_statistics (self, NULL, NULL,
+                                            &median_duration, NULL);
+        g_value_set_int64 (value, median_duration);
+        break;
+      }
+    case PROP_MAX_DISPATCH_DURATION:
+      {
+        DflDuration max_duration;
+
+        dfl_source_get_dispatch_statistics (self, NULL, NULL, NULL,
+                                            &max_duration);
+        g_value_set_int64 (value, max_duration);
+        break;
+      }
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+dfl_source_set_property (GObject           *object,
+                         guint              property_id,
+                         const GValue      *value,
+                         GParamSpec        *pspec)
+{
+  DflSource *self = DFL_SOURCE (object);
+
+  /* All construct only. */
+  switch ((DflSourceProperty) property_id)
+    {
+    case PROP_ID:
+      g_assert (self->id == DFL_ID_INVALID);
+      self->id = g_value_get_ulong (value);
+      break;
+    case PROP_NAME:
+      g_assert (self->name == NULL);
+      self->name = g_value_dup_string (value);
+      break;
+    case PROP_NEW_TIMESTAMP:
+      g_assert (self->new_timestamp == 0);
+      self->new_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_NEW_THREAD_ID:
+      g_assert (self->new_thread_id == 0);
+      self->new_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_FREE_TIMESTAMP:
+      g_assert (self->free_timestamp == 0);
+      self->free_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_ATTACH_TIMESTAMP:
+      g_assert (self->attach_timestamp == 0);
+      self->attach_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_ATTACH_THREAD_ID:
+      g_assert (self->attach_thread_id == 0);
+      self->attach_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_ATTACH_CONTEXT:
+      g_assert (self->attach_context == 0);
+      self->attach_context = g_value_get_ulong (value);
+      break;
+    case PROP_DESTROY_TIMESTAMP:
+      g_assert (self->destroy_timestamp == 0);
+      self->destroy_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_DESTROY_THREAD_ID:
+      g_assert (self->destroy_thread_id == 0);
+      self->destroy_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_MIN_PRIORITY:
+      g_assert (self->min_priority == G_PRIORITY_DEFAULT);
+      self->min_priority = g_value_get_int (value);
+      break;
+    case PROP_MAX_PRIORITY:
+      g_assert (self->max_priority == G_PRIORITY_DEFAULT);
+      self->max_priority = g_value_get_int (value);
+      break;
+    case PROP_N_DISPATCHES:
+    case PROP_MIN_DISPATCH_DURATION:
+    case PROP_MEDIAN_DISPATCH_DURATION:
+    case PROP_MAX_DISPATCH_DURATION:
+      /* Read only. */
+    default:
+      g_assert_not_reached ();
+    }
 }
 
 static void
@@ -134,17 +575,12 @@ dfl_source_new (DflId        id,
                 DflTimestamp new_timestamp,
                 DflThreadId  new_thread_id)
 {
-  DflSource *source = NULL;
-
-  source = g_object_new (DFL_TYPE_SOURCE, NULL);
-
-  /* TODO: Use properties properly. */
-  source->id = id;
-  source->new_timestamp = new_timestamp;
-  source->new_thread_id = new_thread_id;
-  source->free_timestamp = new_timestamp;
-
-  return source;
+  return g_object_new (DFL_TYPE_SOURCE,
+                       "id", id,
+                       "new-timestamp", new_timestamp,
+                       "new-thread-id", new_thread_id,
+                       "free-timestamp", new_timestamp,
+                       NULL);
 }
 
 static void
