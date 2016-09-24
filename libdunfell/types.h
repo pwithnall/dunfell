@@ -39,6 +39,8 @@ G_BEGIN_DECLS
  *
  * TODO
  *
+ * In microseconds.
+ *
  * Since: 0.1.0
  */
 typedef guint64 DflTimestamp;
@@ -56,6 +58,8 @@ typedef guint64 DflThreadId;
  * DflDuration:
  *
  * TODO
+ *
+ * In microseconds.
  *
  * Since: 0.1.0
  */
