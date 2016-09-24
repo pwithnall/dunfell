@@ -28,7 +28,7 @@
 G_BEGIN_DECLS
 
 /**
- * DwlStatisticsPan:
+ * DwlStatisticsPane:
  *
  * All the fields in this structure are private.
  *
