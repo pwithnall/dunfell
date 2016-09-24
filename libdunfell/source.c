@@ -59,7 +59,7 @@ struct _DflSource
 
   /* Sequence of thread IDs and the duration between the start and end of the
    * dispatch. A duration of ≥ 0 is valid; < 0 is not. */
-  DflTimeSequence/*<DflMainContextDispatchData>*/ dispatch_events;
+  DflTimeSequence/*<DflSourceDispatchData>*/ dispatch_events;
 
   gchar *name;  /* owned; nullable */
 
