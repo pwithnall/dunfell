@@ -409,6 +409,11 @@ CLEANFILES += $(vapi_DATA)
 endif
 endif
 
+# Example programs.
+EXTRA_DIST += \
+	examples/source-names.py \
+	$(NULL)
+
 # Code coverage
 @CODE_COVERAGE_RULES@
 CODE_COVERAGE_DIRECTORY = $(top_builddir)/libdunfell $(top_builddir)/libdunfell-ui
