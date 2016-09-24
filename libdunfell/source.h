@@ -83,6 +83,9 @@ void dfl_source_dispatch_iter (DflSource           *self,
                                DflTimeSequenceIter *iter,
                                DflTimestamp         start);
 
+GPtrArray *dfl_source_get_children (DflSource *self);
+DflSource *dfl_source_get_parent   (DflSource *self);
+
 G_END_DECLS
 
 #endif /* !DFL_SOURCE_H */

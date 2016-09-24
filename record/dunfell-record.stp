@@ -132,6 +132,10 @@ probe glib.source_set_name {
   printdln (",", "g_source_set_name", gettimeofday_us (), tid (), source, name);
 }
 
+probe glib.source_add_child_source {
+  printdln (",", "g_source_add_child_source", gettimeofday_us (), tid (), source, child_source);
+}
+
 probe glib.source_before_free {
   printdln (",", "g_source_before_free", gettimeofday_us (), tid (), source, context, glib_usymname (finalize));
 }

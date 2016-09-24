@@ -68,6 +68,9 @@ struct _DflSource
   DflThreadId attach_thread_id;
   DflTimestamp destroy_timestamp;
   DflThreadId destroy_thread_id;
+
+  DflSource *parent_source;  /* (ownership none) */
+  GPtrArray *children;  /* (element-type DflSource) (ownership container) */
 };
 
 G_DEFINE_TYPE (DflSource, dfl_source, G_TYPE_OBJECT)
@@ -86,6 +89,8 @@ dfl_source_init (DflSource *self)
   dfl_time_sequence_init (&self->dispatch_events,
                           sizeof (DflSourceDispatchData),
                           (GDestroyNotify) dfl_source_dispatch_data_clear, 0);
+
+  self->children = g_ptr_array_new_with_free_func (g_object_unref);
 }
 
 static void
@@ -95,6 +100,8 @@ dfl_source_dispose (GObject *object)
 
   dfl_time_sequence_clear (&self->dispatch_events);
   g_clear_pointer (&self->name, g_free);
+
+  g_clear_pointer (&self->children, g_ptr_array_unref);
 
   /* Chain up to the parent class */
   G_OBJECT_CLASS (dfl_source_parent_class)->dispose (object);
@@ -374,6 +381,50 @@ source_new_cb (DflEventSequence *sequence,
   g_ptr_array_add (sources, source);  /* transfer */
 }
 
+static void
+source_add_child_source_cb (DflEventSequence *sequence,
+                            DflEvent         *event,
+                            gpointer          user_data)
+{
+  GPtrArray/*<owned DflSource>*/ *sources = user_data;
+  DflSource *parent_source = NULL, *child_source = NULL;
+  DflId parent_source_id, child_source_id;
+  gsize i;
+
+  parent_source_id = dfl_event_get_parameter_id (event, 0);
+  child_source_id = dfl_event_get_parameter_id (event, 1);
+
+  /* Find the two sources. */
+  for (i = 0;
+       i < sources->len && (parent_source == NULL || child_source == NULL);
+       i++)
+    {
+      if (parent_source == NULL &&
+          dfl_source_get_id (sources->pdata[i]) == parent_source_id)
+        parent_source = DFL_SOURCE (sources->pdata[i]);
+
+      if (child_source == NULL &&
+          dfl_source_get_id (sources->pdata[i]) == child_source_id)
+        child_source = DFL_SOURCE (sources->pdata[i]);
+    }
+
+  if (parent_source == NULL || child_source == NULL)
+    {
+      g_warning ("g_source_add_child_source() seen for a parent or child "
+                 "source which don’t exist.");
+      return;
+    }
+
+  if (child_source->parent_source != NULL)
+    {
+      g_warning ("g_source_add_child_source() seen twice for the same source.");
+      return;
+    }
+
+  g_ptr_array_add (parent_source->children, g_object_ref (child_source));
+  child_source->parent_source = parent_source;
+}
+
 /**
  * dfl_source_factory_from_event_sequence:
  * @sequence: an event sequence to analyse
@@ -392,6 +443,10 @@ dfl_source_factory_from_event_sequence (DflEventSequence *sequence)
   sources = g_ptr_array_new_with_free_func (g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_source_new", DFL_ID_INVALID,
                                  source_new_cb,
+                                 g_ptr_array_ref (sources),
+                                 (GDestroyNotify) g_ptr_array_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_add_child_source",
+                                 DFL_ID_INVALID, source_add_child_source_cb,
                                  g_ptr_array_ref (sources),
                                  (GDestroyNotify) g_ptr_array_unref);
 
@@ -587,4 +642,40 @@ dfl_source_dispatch_iter (DflSource           *self,
   g_return_if_fail (iter != NULL);
 
   dfl_time_sequence_iter_init (iter, &self->dispatch_events, start);
+}
+
+/**
+ * dfl_source_get_children:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: (element-type DflSource) (transfer none): potentially empty array
+ *    containing the children of this #DflSource
+ * Since: UNRELEASED
+ */
+GPtrArray *
+dfl_source_get_children (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), NULL);
+
+  return self->children;
+}
+
+/**
+ * dfl_source_get_parent:
+ * @self: a #DflSource
+ *
+ * TODO
+ *
+ * Returns: (transfer none) (nullable): parent #DflSource, or %NULL if this
+ *    #DflSource has no parent
+ * Since: UNRELEASED
+ */
+DflSource *
+dfl_source_get_parent (DflSource *self)
+{
+  g_return_val_if_fail (DFL_IS_SOURCE (self), NULL);
+
+  return self->parent_source;
 }
