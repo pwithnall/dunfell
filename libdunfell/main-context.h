@@ -83,6 +83,8 @@ void dfl_main_context_dispatch_iter (DflMainContext      *self,
                                      DflTimeSequenceIter *iter,
                                      DflTimestamp         start);
 
+gsize dfl_main_context_get_n_thread_switches (DflMainContext *self);
+
 G_END_DECLS
 
 #endif /* !DFL_MAIN_CONTEXT_H */

@@ -529,3 +529,44 @@ dfl_main_context_dispatch_iter (DflMainContext      *self,
 
   dfl_time_sequence_iter_init (iter, &self->dispatch_events, start);
 }
+
+/**
+ * dfl_main_context_get_n_thread_switches:
+ * @self: a #DflMainContext
+ *
+ * TODO
+ *
+ * Returns: number of times this main context has switched between threads
+ * Since: UNRELEASED
+ */
+gsize
+dfl_main_context_get_n_thread_switches (DflMainContext *self)
+{
+  DflTimeSequenceIter iter;
+  gsize count;
+  DflMainContextDispatchData *dispatch_data, *prev_dispatch_data;
+
+  g_return_val_if_fail (DFL_IS_MAIN_CONTEXT (self), 0);
+
+  dfl_time_sequence_iter_init (&iter, &self->dispatch_events, 0);
+  count = 0;
+
+  if (!dfl_time_sequence_iter_next (&iter, NULL,
+                                    (gpointer *) &prev_dispatch_data))
+    return 0;
+
+  while (dfl_time_sequence_iter_next (&iter, NULL, (gpointer *) &dispatch_data))
+    {
+      if (dispatch_data->thread_id != prev_dispatch_data->thread_id)
+        {
+          if (count == G_MAXSIZE)
+            return G_MAXSIZE;
+
+          count++;
+        }
+
+      prev_dispatch_data = dispatch_data;
+    }
+
+  return count;
+}
