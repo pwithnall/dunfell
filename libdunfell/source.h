@@ -83,6 +83,10 @@ void dfl_source_dispatch_iter (DflSource           *self,
                                DflTimeSequenceIter *iter,
                                DflTimestamp         start);
 
+void dfl_source_get_priority_statistics (DflSource   *self,
+                                         gint        *min_priority,
+                                         gint        *max_priority);
+
 GPtrArray *dfl_source_get_children (DflSource *self);
 DflSource *dfl_source_get_parent   (DflSource *self);
 

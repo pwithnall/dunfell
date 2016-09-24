@@ -69,6 +69,10 @@ struct _DflSource
   DflTimestamp destroy_timestamp;
   DflThreadId destroy_thread_id;
 
+  gboolean priority_set;
+  gint min_priority;
+  gint max_priority;
+
   DflSource *parent_source;  /* (ownership none) */
   GPtrArray *children;  /* (element-type DflSource) (ownership container) */
 };
@@ -294,6 +298,33 @@ source_set_name_cb (DflEventSequence *sequence,
 }
 
 static void
+source_set_priority_cb (DflEventSequence *sequence,
+                        DflEvent         *event,
+                        gpointer          user_data)
+{
+  DflSource *source = user_data;
+  gint64 priority;
+
+  /* Does this event correspond to the right source? */
+  g_assert (dfl_event_get_parameter_id (event, 0) == source->id);
+
+  priority = dfl_event_get_parameter_int64 (event, 2);
+
+  if (!source->priority_set)
+    {
+      source->min_priority = priority;
+      source->max_priority = priority;
+    }
+  else
+    {
+      source->min_priority = MIN (source->min_priority, priority);
+      source->max_priority = MAX (source->max_priority, priority);
+    }
+
+  source->priority_set = TRUE;
+}
+
+static void
 source_attach_cb (DflEventSequence *sequence,
                   DflEvent         *event,
                   gpointer          user_data)
@@ -350,6 +381,10 @@ source_new_cb (DflEventSequence *sequence,
 
   dfl_event_sequence_add_walker (sequence, "g_source_set_name", source_id,
                                  source_set_name_cb,
+                                 g_object_ref (source),
+                                 (GDestroyNotify) g_object_unref);
+  dfl_event_sequence_add_walker (sequence, "g_source_set_priority", source_id,
+                                 source_set_priority_cb,
                                  g_object_ref (source),
                                  (GDestroyNotify) g_object_unref);
   dfl_event_sequence_add_walker (sequence, "g_source_before_free", source_id,
@@ -642,6 +677,29 @@ dfl_source_dispatch_iter (DflSource           *self,
   g_return_if_fail (iter != NULL);
 
   dfl_time_sequence_iter_init (iter, &self->dispatch_events, start);
+}
+
+/**
+ * dfl_source_get_priority_statistics:
+ * @self: a #DflSource
+ * @min_priority: (out caller-allocates) (optional): TODO
+ * @max_priority: (out caller-allocates) (optional): TODO
+ *
+ * TODO
+ *
+ * Since: UNRELEASED
+ */
+void
+dfl_source_get_priority_statistics (DflSource *self,
+                                    gint      *min_priority,
+                                    gint      *max_priority)
+{
+  g_return_if_fail (DFL_IS_SOURCE (self));
+
+  if (min_priority != NULL)
+    *min_priority = self->min_priority;
+  if (max_priority != NULL)
+    *max_priority = self->max_priority;
 }
 
 /**
