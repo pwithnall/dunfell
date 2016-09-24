@@ -120,6 +120,86 @@
                       </object>
                     </child>
 
+                    <child>
+                      <object class="GtkListBoxRow" id="n_long_dispatches_row">
+                        <property name="visible">True</property>
+                        <property name="activatable">False</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="margin">10</property>
+                            <property name="spacing">40</property>
+                            <child>
+                              <object class="GtkLabel" id="n_long_dispatches_label">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Number of Long Dispatches</property>
+                                <property name="halign">start</property>
+                                <property name="valign">baseline</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="n_long_dispatches">
+                                <property name="visible">True</property>
+                                <property name="selectable">True</property>
+                                <property name="halign">end</property>
+                                <property name="valign">baseline</property>
+                                <property name="wrap">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
+                    <child>
+                      <object class="GtkListBoxRow" id="n_thread_switches_row">
+                        <property name="visible">True</property>
+                        <property name="activatable">False</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="visible">True</property>
+                            <property name="orientation">horizontal</property>
+                            <property name="margin">10</property>
+                            <property name="spacing">40</property>
+                            <child>
+                              <object class="GtkLabel" id="n_thread_switches_label">
+                                <property name="visible">True</property>
+                                <property name="label" translatable="yes">Number of GMainContext Thread Switches</property>
+                                <property name="halign">start</property>
+                                <property name="valign">baseline</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="n_thread_switches">
+                                <property name="visible">True</property>
+                                <property name="selectable">True</property>
+                                <property name="halign">end</property>
+                                <property name="valign">baseline</property>
+                                <property name="wrap">True</property>
+                              </object>
+                              <packing>
+                                <property name="expand">True</property>
+                                <property name="fill">True</property>
+                              </packing>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+
                   </object>
                 </child>
               </object>
@@ -143,6 +223,8 @@
     <widgets>
       <widget name="n_sources_label"/>
       <widget name="n_tasks_label"/>
+      <widget name="n_long_dispatches_label"/>
+      <widget name="n_thread_switches_label"/>
     </widgets>
   </object>
 </interface>

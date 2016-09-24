@@ -57,6 +57,8 @@ static void add_default_css                  (GtkWidget *widget);
 
 static void dwl_statistics_pane_update_overall_statistics (DwlStatisticsPane *self);
 
+#define LONG_DISPATCH_DURATION (1 * G_USEC_PER_SEC / 60)  /* microseconds */
+
 struct _DwlStatisticsPane
 {
   GtkBin parent;
@@ -69,6 +71,8 @@ struct _DwlStatisticsPane
   /* Overall statistics. */
   GtkLabel *n_sources;
   GtkLabel *n_tasks;
+  GtkLabel *n_long_dispatches;
+  GtkLabel *n_thread_switches;
 };
 
 G_DEFINE_TYPE (DwlStatisticsPane, dwl_statistics_pane, GTK_TYPE_BIN)
@@ -95,6 +99,10 @@ dwl_statistics_pane_class_init (DwlStatisticsPaneClass *klass)
                                         DwlStatisticsPane, n_sources);
   gtk_widget_class_bind_template_child (widget_class,
                                         DwlStatisticsPane, n_tasks);
+  gtk_widget_class_bind_template_child (widget_class,
+                                        DwlStatisticsPane, n_long_dispatches);
+  gtk_widget_class_bind_template_child (widget_class,
+                                        DwlStatisticsPane, n_thread_switches);
 
   object_class->get_property = dwl_statistics_pane_get_property;
   object_class->set_property = dwl_statistics_pane_set_property;
@@ -298,13 +306,21 @@ dwl_statistics_pane_update_overall_statistics (DwlStatisticsPane *self)
   g_autoptr (GPtrArray) sources = NULL;  /* (element-type DflSource) */
   g_autoptr (GPtrArray) tasks = NULL;  /* (element-type DflTask) */
   g_autofree gchar *n_sources = NULL, *n_tasks = NULL;
+  g_autofree gchar *n_long_dispatches = NULL, *n_thread_switches = NULL;
 
   sources = dfl_model_dup_sources (self->model);
   tasks = dfl_model_dup_tasks (self->model);
 
   n_sources = g_strdup_printf ("%u", sources->len);
   n_tasks = g_strdup_printf ("%u", tasks->len);
+  n_long_dispatches = g_strdup_printf ("%" G_GSIZE_FORMAT,
+                                       dfl_model_get_n_long_dispatches (self->model,
+                                                                        LONG_DISPATCH_DURATION));
+  n_thread_switches = g_strdup_printf ("%" G_GSIZE_FORMAT,
+                                       dfl_model_get_n_main_context_thread_switches (self->model));
 
   gtk_label_set_text (self->n_sources, n_sources);
   gtk_label_set_text (self->n_tasks, n_tasks);
+  gtk_label_set_text (self->n_long_dispatches, n_long_dispatches);
+  gtk_label_set_text (self->n_thread_switches, n_thread_switches);
 }
