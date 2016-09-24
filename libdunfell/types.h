@@ -44,6 +44,7 @@ G_BEGIN_DECLS
  * Since: 0.1.0
  */
 typedef guint64 DflTimestamp;
+#define DFL_TYPE_TIMESTAMP G_TYPE_UINT64
 
 /**
  * DflThreadId:
@@ -53,6 +54,7 @@ typedef guint64 DflTimestamp;
  * Since: 0.1.0
  */
 typedef guint64 DflThreadId;
+#define DFL_TYPE_THREAD_ID G_TYPE_UINT64
 
 /**
  * DflDuration:
@@ -64,6 +66,7 @@ typedef guint64 DflThreadId;
  * Since: 0.1.0
  */
 typedef gint64 DflDuration;
+#define DFL_TYPE_DURATION G_TYPE_INT64
 
 /**
  * DflId:
@@ -73,6 +76,7 @@ typedef gint64 DflDuration;
  * Since: 0.1.0
  */
 typedef guintptr DflId;
+#define DFL_TYPE_ID G_TYPE_ULONG
 
 /**
  * DFL_ID_INVALID:
