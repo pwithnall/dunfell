@@ -48,6 +48,8 @@ DflThreadId  dfl_event_get_thread_id    (DflEvent *self);
 
 DflId        dfl_event_get_parameter_id (DflEvent *self,
                                          guint     parameter_index);
+gint64       dfl_event_get_parameter_int64 (DflEvent *self,
+                                            guint     parameter_index);
 const gchar *dfl_event_get_parameter_utf8 (DflEvent *self,
                                            guint     parameter_index);
 

@@ -382,3 +382,46 @@ dfl_event_get_parameter_utf8 (DflEvent *self,
                         NULL);
   return NULL;
 }
+
+/**
+ * dfl_event_get_parameter_int64:
+ * @self: a #DflEvent
+ * @parameter_index: index of the parameter
+ *
+ * TODO
+ *
+ * Returns: TODO
+ * Since: UNRELEASED
+ */
+gint64
+dfl_event_get_parameter_int64 (DflEvent *self,
+                               guint     parameter_index)
+{
+  gsize i;
+
+  g_return_val_if_fail (DFL_IS_EVENT (self), 0);
+
+  for (i = 0; self->parameters[i] != NULL; i++)
+    {
+      if (i == parameter_index)
+        {
+          gint64 retval;
+          const gchar *end;
+
+          retval = g_ascii_strtoll (self->parameters[i], (gchar **) &end, 10);
+
+          if (errno == ERANGE || end == self->parameters[i] || *end != '\0')
+            g_warning ("Event parameter ‘%s’ cannot be interpreted as an int64.",
+                       self->parameters[i]);
+
+          return retval;
+        }
+    }
+
+  /* Invalid @parameter_index. This check will always be hit if this code is
+   * reached, as the check is actually performed more efficiently in the loop
+   * above. */
+  g_return_val_if_fail (parameter_index < g_strv_length (self->parameters),
+                        DFL_ID_INVALID);
+  return DFL_ID_INVALID;
+}
