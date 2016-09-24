@@ -1106,6 +1106,10 @@ dwl_timeline_draw (GtkWidget *widget,
   g_assert (min_timestamp <= min_visible_timestamp);
   g_assert (max_visible_timestamp <= max_timestamp);
 
+  /* Render the background and frame. */
+  gtk_render_background (context, cr, 0, 0, widget_width, widget_height);
+  gtk_render_frame (context, cr, 0, 0, widget_width, widget_height);
+
   /* If there are no threads, there’s nothing to draw. */
   if (n_threads == 0)
     {
