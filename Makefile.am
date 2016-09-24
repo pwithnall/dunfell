@@ -107,6 +107,7 @@ dwlincludedir = $(includedir)/libdunfell-ui-@DWL_API_VERSION@
 dwl_headers = \
 	libdunfell-ui/source-model.h \
 	libdunfell-ui/statistics-pane.h \
+	libdunfell-ui/task-model.h \
 	libdunfell-ui/timeline.h \
 	$(NULL)
 nodist_dwl_headers = \
@@ -128,6 +129,7 @@ nodist_dwlinclude_HEADERS = \
 dwl_sources = \
 	libdunfell-ui/source-model.c \
 	libdunfell-ui/statistics-pane.c \
+	libdunfell-ui/task-model.c \
 	libdunfell-ui/timeline.c \
 	$(NULL)
 nodist_dwl_sources = \
