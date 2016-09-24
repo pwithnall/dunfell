@@ -96,7 +96,7 @@ dfv_application_activate (GApplication *application)
 
   /* Create a new window. */
   window = GTK_WINDOW (dfv_viewer_window_new (GTK_APPLICATION (application)));
-  gtk_widget_show_all (GTK_WIDGET (window));
+  gtk_widget_show (GTK_WIDGET (window));
 }
 
 static void
@@ -113,7 +113,7 @@ dfv_application_open (GApplication  *application,
 
       window = GTK_WINDOW (dfv_viewer_window_new_for_file (GTK_APPLICATION (application),
                                                            files[i]));
-      gtk_widget_show_all (GTK_WIDGET (window));
+      gtk_widget_show (GTK_WIDGET (window));
     }
 }
 
