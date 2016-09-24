@@ -24,6 +24,7 @@
 #include <gio/gio.h>
 
 #include "event-sequence.h"
+#include "model.h"
 
 G_BEGIN_DECLS
 
@@ -62,6 +63,8 @@ void dfl_parser_load_from_stream_finish (DflParser *self,
                                          GError **error);
 
 DflEventSequence *dfl_parser_get_event_sequence (DflParser *self);
+
+DflModel *dfl_parser_dup_model (DflParser *self);
 
 G_END_DECLS
 

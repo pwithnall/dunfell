@@ -605,3 +605,21 @@ dfl_parser_get_event_sequence (DflParser *self)
   return self->sequence;
 }
 
+/**
+ * dfl_parser_dup_model:
+ * @self: a #DflParser
+ *
+ * TODO
+ *
+ * Returns: (transfer full) (nullable): TODO
+ * Since: UNRELEASED
+ */
+DflModel *
+dfl_parser_dup_model (DflParser *self)
+{
+  g_return_val_if_fail (DFL_IS_PARSER (self), NULL);
+
+  if (self->sequence == NULL)
+    return NULL;
+  return dfl_model_new (self->sequence);
+}
