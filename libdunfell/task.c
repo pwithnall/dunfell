@@ -39,6 +39,14 @@
 #include "time-sequence.h"
 
 
+static void dfl_task_get_property (GObject           *object,
+                                   guint              property_id,
+                                   GValue            *value,
+                                   GParamSpec        *pspec);
+static void dfl_task_set_property (GObject           *object,
+                                   guint              property_id,
+                                   const GValue      *value,
+                                   GParamSpec        *pspec);
 static void dfl_task_dispose (GObject *object);
 
 struct _DflTask
@@ -71,18 +79,528 @@ struct _DflTask
 
 G_DEFINE_TYPE (DflTask, dfl_task, G_TYPE_OBJECT)
 
+typedef enum
+{
+  PROP_ID = 1,
+  PROP_NEW_TIMESTAMP,
+  PROP_NEW_THREAD_ID,
+  PROP_SOURCE_OBJECT,
+  PROP_CANCELLABLE,
+  PROP_CALLBACK_NAME,
+  PROP_CALLBACK_DATA,
+  PROP_SOURCE_TAG_NAME,
+  PROP_RETURN_TIMESTAMP,
+  PROP_RETURN_THREAD_ID,
+  PROP_PROPAGATE_TIMESTAMP,
+  PROP_PROPAGATE_THREAD_ID,
+  PROP_RETURNED_ERROR,
+  PROP_RUN_IN_THREAD_ID,
+  PROP_BEFORE_RUN_IN_THREAD_TIMESTAMP,
+  PROP_AFTER_RUN_IN_THREAD_TIMESTAMP,
+  PROP_RUN_IN_THREAD_NAME,
+  PROP_RUN_IN_THREAD_CANCELLED,
+  PROP_RUN_DURATION,
+  PROP_RUN_IN_THREAD_DURATION,
+} DflTaskProperty;
+
 static void
 dfl_task_class_init (DflTaskClass *klass)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->dispose = dfl_task_dispose;
+  object_class->get_property = dfl_task_get_property;
+  object_class->set_property = dfl_task_set_property;
+  object_class->dispose = dfl_task_dispose;
+
+  /**
+   * DflTask:id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_ID,
+                                   g_param_spec_ulong ("id",
+                                                       "ID",
+                                                       "TODO",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:new-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_NEW_TIMESTAMP,
+                                   g_param_spec_uint64 ("new-timestamp",
+                                                        "New Timestamp",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:new-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_NEW_THREAD_ID,
+                                   g_param_spec_uint64 ("new-thread-id",
+                                                        "New Thread ID",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:source-object:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_SOURCE_OBJECT,
+                                   g_param_spec_ulong ("source-object",
+                                                       "Source Object",
+                                                       "TODO",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:cancellable:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_CANCELLABLE,
+                                   g_param_spec_ulong ("cancellable",
+                                                       "Cancellable",
+                                                       "TODO",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:callback-name:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_CALLBACK_NAME,
+                                   g_param_spec_string ("callback-name",
+                                                        "Callback Name",
+                                                        "TODO",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:callback-data:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_CALLBACK_DATA,
+                                   g_param_spec_ulong ("callback-data",
+                                                       "New Timestamp",
+                                                       "TODO",
+                                                       0, G_MAXULONG, 0,
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:source-tag-name:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_SOURCE_TAG_NAME,
+                                   g_param_spec_string ("source-tag-name",
+                                                        "Source Tag Name",
+                                                        "TODO",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:return-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RETURN_TIMESTAMP,
+                                   g_param_spec_uint64 ("return-timestamp",
+                                                        "Return Timestamp",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:return-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RETURN_THREAD_ID,
+                                   g_param_spec_uint64 ("return-thread-id",
+                                                        "Return Thread ID",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:propagate-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_PROPAGATE_TIMESTAMP,
+                                   g_param_spec_uint64 ("propagate-timestamp",
+                                                        "Propagate Timestamp",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:propagate-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_PROPAGATE_THREAD_ID,
+                                   g_param_spec_uint64 ("propagate-thread-id",
+                                                        "Propagate Thread ID",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:returned-error:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RETURNED_ERROR,
+                                   g_param_spec_boolean ("returned-error",
+                                                         "Returned Error",
+                                                         "TODO",
+                                                         FALSE,
+                                                         G_PARAM_CONSTRUCT_ONLY |
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:run-in-thread-id:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RUN_IN_THREAD_ID,
+                                   g_param_spec_uint64 ("run-in-thread-id",
+                                                        "Run in Thread ID",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:before-run-in-thread-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_BEFORE_RUN_IN_THREAD_TIMESTAMP,
+                                   g_param_spec_uint64 ("before-run-in-thread-timestamp",
+                                                        "Before Run in Thread Timestamp",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:after-run-in-thread-timestamp:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_AFTER_RUN_IN_THREAD_TIMESTAMP,
+                                   g_param_spec_uint64 ("after-run-in-thread-timestamp",
+                                                        "After Run in Thread Timestamp",
+                                                        "TODO",
+                                                        0, G_MAXUINT64, 0,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:run-in-thread-name:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RUN_IN_THREAD_NAME,
+                                   g_param_spec_string ("run-in-thread-name",
+                                                        "Run in Thread Name",
+                                                        "TODO",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:run-in-thread-cancelled:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RUN_IN_THREAD_CANCELLED,
+                                   g_param_spec_boolean ("run-in-thread-cancelled",
+                                                         "Run in Thread Cancelled",
+                                                         "TODO",
+                                                         FALSE,
+                                                         G_PARAM_CONSTRUCT_ONLY |
+                                                         G_PARAM_READWRITE |
+                                                         G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:run-duration:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RUN_DURATION,
+                                   g_param_spec_int64 ("run-duration",
+                                                       "Run Duration",
+                                                       "TODO",
+                                                       0, G_MAXINT64, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
+
+  /**
+   * DflTask:run-in-thread-duration:
+   *
+   * TODO
+   *
+   * Since: UNRELEASED
+   */
+  g_object_class_install_property (object_class, PROP_RUN_IN_THREAD_DURATION,
+                                   g_param_spec_int64 ("run-in-thread-duration",
+                                                       "Run in Thread Duration",
+                                                       "TODO",
+                                                       0, G_MAXINT64, 0,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_STRINGS));
 }
 
 static void
 dfl_task_init (DflTask *self)
 {
   /* Nothing here. */
+}
+
+static void
+dfl_task_get_property (GObject     *object,
+                       guint        property_id,
+                       GValue      *value,
+                       GParamSpec  *pspec)
+{
+  DflTask *self = DFL_TASK (object);
+
+  switch ((DflTaskProperty) property_id)
+    {
+    case PROP_ID:
+      g_value_set_ulong (value, self->id);
+      break;
+    case PROP_NEW_TIMESTAMP:
+      g_value_set_uint64 (value, self->new_timestamp);
+      break;
+    case PROP_NEW_THREAD_ID:
+      g_value_set_uint64 (value, self->new_thread_id);
+      break;
+    case PROP_SOURCE_OBJECT:
+      g_value_set_ulong (value, self->source_object);
+      break;
+    case PROP_CANCELLABLE:
+      g_value_set_ulong (value, self->cancellable);
+      break;
+    case PROP_CALLBACK_NAME:
+      g_value_set_string (value, self->callback_name);
+      break;
+    case PROP_CALLBACK_DATA:
+      g_value_set_ulong (value, self->callback_data);
+      break;
+    case PROP_SOURCE_TAG_NAME:
+      g_value_set_string (value, self->source_tag_name);
+      break;
+    case PROP_RETURN_TIMESTAMP:
+      g_value_set_uint64 (value, self->return_timestamp);
+      break;
+    case PROP_RETURN_THREAD_ID:
+      g_value_set_uint64 (value, self->return_thread_id);
+      break;
+    case PROP_PROPAGATE_TIMESTAMP:
+      g_value_set_uint64 (value, self->propagate_timestamp);
+      break;
+    case PROP_PROPAGATE_THREAD_ID:
+      g_value_set_uint64 (value, self->propagate_thread_id);
+      break;
+    case PROP_RETURNED_ERROR:
+      g_value_set_boolean (value, self->returned_error);
+      break;
+    case PROP_RUN_IN_THREAD_ID:
+      g_value_set_uint64 (value, self->run_in_thread_id);
+      break;
+    case PROP_BEFORE_RUN_IN_THREAD_TIMESTAMP:
+      g_value_set_uint64 (value, self->before_run_in_thread_timestamp);
+      break;
+    case PROP_AFTER_RUN_IN_THREAD_TIMESTAMP:
+      g_value_set_uint64 (value, self->after_run_in_thread_timestamp);
+      break;
+    case PROP_RUN_IN_THREAD_NAME:
+      g_value_set_string (value, self->run_in_thread_name);
+      break;
+    case PROP_RUN_IN_THREAD_CANCELLED:
+      g_value_set_boolean (value, self->run_in_thread_cancelled);
+      break;
+    case PROP_RUN_DURATION:
+      g_value_set_int64 (value, self->return_timestamp - self->new_timestamp);
+      break;
+    case PROP_RUN_IN_THREAD_DURATION:
+      g_value_set_int64 (value,
+                         self->after_run_in_thread_timestamp -
+                         self->before_run_in_thread_timestamp);
+      break;
+    default:
+      g_assert_not_reached ();
+    }
+}
+
+static void
+dfl_task_set_property (GObject           *object,
+                       guint              property_id,
+                       const GValue      *value,
+                       GParamSpec        *pspec)
+{
+  DflTask *self = DFL_TASK (object);
+
+  /* All construct only. */
+  switch ((DflTaskProperty) property_id)
+    {
+    case PROP_ID:
+      g_assert (self->id == DFL_ID_INVALID);
+      self->id = g_value_get_ulong (value);
+      break;
+    case PROP_NEW_TIMESTAMP:
+      g_assert (self->new_timestamp == 0);
+      self->new_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_NEW_THREAD_ID:
+      g_assert (self->new_thread_id == 0);
+      self->new_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_SOURCE_OBJECT:
+      g_assert (self->source_object == 0);
+      self->source_object = g_value_get_ulong (value);
+      break;
+    case PROP_CANCELLABLE:
+      g_assert (self->cancellable == 0);
+      self->cancellable = g_value_get_ulong (value);
+      break;
+    case PROP_CALLBACK_NAME:
+      g_assert (self->callback_name == NULL);
+      self->callback_name = g_value_dup_string (value);
+      break;
+    case PROP_CALLBACK_DATA:
+      g_assert (self->callback_data == 0);
+      self->callback_data = g_value_get_ulong (value);
+      break;
+    case PROP_SOURCE_TAG_NAME:
+      g_assert (self->source_tag_name == NULL);
+      self->source_tag_name = g_value_dup_string (value);
+      break;
+    case PROP_RETURN_TIMESTAMP:
+      g_assert (self->return_timestamp == 0);
+      self->return_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_RETURN_THREAD_ID:
+      g_assert (self->return_thread_id == 0);
+      self->return_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_PROPAGATE_TIMESTAMP:
+      g_assert (self->propagate_timestamp == 0);
+      self->propagate_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_PROPAGATE_THREAD_ID:
+      g_assert (self->propagate_thread_id == 0);
+      self->propagate_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_RETURNED_ERROR:
+      self->returned_error = g_value_get_boolean (value);
+      break;
+    case PROP_RUN_IN_THREAD_ID:
+      g_assert (self->run_in_thread_id == 0);
+      self->run_in_thread_id = g_value_get_uint64 (value);
+      break;
+    case PROP_BEFORE_RUN_IN_THREAD_TIMESTAMP:
+      g_assert (self->before_run_in_thread_timestamp == 0);
+      self->before_run_in_thread_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_AFTER_RUN_IN_THREAD_TIMESTAMP:
+      g_assert (self->after_run_in_thread_timestamp == 0);
+      self->after_run_in_thread_timestamp = g_value_get_uint64 (value);
+      break;
+    case PROP_RUN_IN_THREAD_NAME:
+      g_assert (self->run_in_thread_name == NULL);
+      self->run_in_thread_name = g_value_dup_string (value);
+      break;
+    case PROP_RUN_IN_THREAD_CANCELLED:
+      self->run_in_thread_cancelled = g_value_get_boolean (value);
+      break;
+    case PROP_RUN_DURATION:
+    case PROP_RUN_IN_THREAD_DURATION:
+      /* Read only. */
+    default:
+      g_assert_not_reached ();
+    }
 }
 
 static void
@@ -114,16 +632,11 @@ dfl_task_new (DflId        id,
               DflTimestamp new_timestamp,
               DflThreadId  new_thread_id)
 {
-  DflTask *task = NULL;
-
-  /* TODO: Properties */
-  task = g_object_new (DFL_TYPE_TASK, NULL);
-
-  task->id = id;
-  task->new_timestamp = new_timestamp;
-  task->new_thread_id = new_thread_id;
-
-  return task;
+  return g_object_new (DFL_TYPE_TASK,
+                       "id", id,
+                       "new-timestamp", new_timestamp,
+                       "new-thread-id", new_thread_id,
+                       NULL);
 }
 
 
