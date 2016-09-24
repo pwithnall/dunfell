@@ -3,6 +3,7 @@
 <interface>
   <requires lib="gtk+" version="3.16"/>
   <template class="DfvViewerWindow" parent="GtkApplicationWindow">
+    <property name="title" translatable="yes">Dunfell Viewer</property>
     <property name="can_focus">False</property>
     <property name="default_width">600</property>
     <property name="default_height">500</property>
@@ -10,6 +11,7 @@
       <object class="GtkStack" id="main_stack">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
+        <signal name="notify::visible-child-name" handler="main_stack_notify_visible_child_name" swapped="no"/>
         <child>
           <object class="GtkBox" id="home_page_box">
             <property name="visible">True</property>
@@ -131,26 +133,247 @@
           </packing>
         </child>
         <child>
-          <object class="GtkPaned" id="main_paned">
-            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-            <property name="position">2147483647</property>
+          <object class="GtkStack" id="file_stack">
+            <property name="visible">True</property>
             <child>
-              <object class="GtkScrolledWindow" id="timeline_scrolled_window">
+              <object class="GtkPaned" id="main_paned">
+                <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                <property name="position">2147483647</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="shadow_type">in</property>
                 <child>
-                  <placeholder/>
+                  <object class="GtkScrolledWindow" id="timeline_scrolled_window">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="shadow_type">in</property>
+                    <child>
+                      <placeholder/>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="shrink">False</property>
+                    <property name="resize">True</property>
+                  </packing>
                 </child>
               </object>
               <packing>
-                <property name="shrink">False</property>
-                <property name="resize">True</property>
+                <property name="name">timeline</property>
+                <property name="title" translatable="yes">Timeline</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="hscrollbar-policy">automatic</property>
+                <property name="vscrollbar-policy">automatic</property>
+                <child>
+                  <object class="GtkTreeView" id="sources_tree_view">
+                    <property name="visible">True</property>
+                    <property name="search-column">0</property>
+                    <property name="enable-search">True</property>
+                    <property name="enable-grid-lines">vertical</property>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_name_column">
+                        <property name="title" translatable="yes">Name</property>
+                        <property name="resizable">True</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_name_renderer"/>
+                          <attributes>
+                            <attribute name="text">4</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_address_column">
+                        <property name="title" translatable="yes">Address</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_address_renderer"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_max_priority_column">
+                        <property name="title" translatable="yes">Max. Priority</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_max_priority_renderer"/>
+                          <attributes>
+                            <attribute name="text">11</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_n_dispatches_column">
+                        <property name="title" translatable="yes"># Dispatches</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_n_dispatches_renderer"/>
+                          <attributes>
+                            <attribute name="text">12</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_min_dispatch_duration_column">
+                        <property name="title" translatable="yes">Min. Dispatch Duration (µs)</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_min_dispatch_duration_renderer"/>
+                          <attributes>
+                            <attribute name="text">13</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_median_dispatch_duration_column">
+                        <property name="title" translatable="yes">Median Dispatch Duration (µs)</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_median_dispatch_duration_renderer"/>
+                          <attributes>
+                            <attribute name="text">14</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="sources_max_dispatch_duration_column">
+                        <property name="title" translatable="yes">Max. Dispatch Duration (µs)</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="sources_max_dispatch_duration_renderer"/>
+                          <attributes>
+                            <attribute name="text">15</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="name">sources</property>
+                <property name="title" translatable="yes">Sources</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow">
+                <property name="visible">True</property>
+                <property name="expand">True</property>
+                <property name="hscrollbar-policy">automatic</property>
+                <property name="vscrollbar-policy">automatic</property>
+                <child>
+                  <object class="GtkTreeView" id="tasks_tree_view">
+                    <property name="visible">True</property>
+                    <property name="search-column">0</property>
+                    <property name="enable-search">True</property>
+                    <property name="enable-grid-lines">vertical</property>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Source Tag</property>
+                        <property name="resizable">True</property>
+                        <child>
+                          <object class="GtkCellRendererText"/>
+                          <attributes>
+                            <attribute name="text">7</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="tasks_address_column">
+                        <property name="title" translatable="yes">Address</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tasks_address_renderer"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="tasks_run_duration_column">
+                        <property name="title" translatable="yes">Run Duration (µs)</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tasks_run_duration_renderer"/>
+                          <attributes>
+                            <attribute name="text">18</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="tasks_thread_run_duration_column">
+                        <property name="title" translatable="yes">Thread Run Duration (µs)</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tasks_thread_run_duration_renderer"/>
+                          <attributes>
+                            <attribute name="text">19</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Returned Error?</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererToggle"/>
+                          <attributes>
+                            <attribute name="active">12</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Thread Cancelled?</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererToggle"/>
+                          <attributes>
+                            <attribute name="active">17</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn" id="tasks_thread_name_column">
+                        <property name="title" translatable="yes">Thread Name</property>
+                        <property name="resizable">False</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="tasks_thread_name_renderer"/>
+                          <attributes>
+                            <attribute name="text">16</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="name">tasks</property>
+                <property name="title" translatable="yes">Tasks</property>
+                <property name="position">3</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="name">timeline</property>
+            <property name="name">file</property>
             <property name="position">1</property>
           </packing>
         </child>

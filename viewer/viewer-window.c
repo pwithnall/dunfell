@@ -36,7 +36,9 @@
 
 #include "libdunfell/model.h"
 #include "libdunfell/parser.h"
+#include "libdunfell-ui/source-model.h"
 #include "libdunfell-ui/statistics-pane.h"
+#include "libdunfell-ui/task-model.h"
 #include "libdunfell-ui/timeline.h"
 #include "viewer/viewer-window.h"
 
@@ -58,6 +60,32 @@ static void open_button_clicked            (GtkButton *button,
                                             gpointer   user_data);
 static void record_button_clicked          (GtkButton *button,
                                             gpointer   user_data);
+static void main_stack_notify_visible_child_name (GObject    *object,
+                                                  GParamSpec *pspec,
+                                                  gpointer    user_data);
+
+typedef struct {
+  const gchar *text;
+  gint column;
+} EmptyStringRendererData;
+
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (EmptyStringRendererData, g_free)
+
+static void hex_renderer_cb (GtkTreeViewColumn *tree_column,
+                             GtkCellRenderer   *cell,
+                             GtkTreeModel      *tree_model,
+                             GtkTreeIter       *iter,
+                             gpointer           user_data);
+static void number_renderer_cb (GtkTreeViewColumn *tree_column,
+                                GtkCellRenderer   *cell,
+                                GtkTreeModel      *tree_model,
+                                GtkTreeIter       *iter,
+                                gpointer           user_data);
+static void empty_string_renderer_cb (GtkTreeViewColumn *tree_column,
+                                      GtkCellRenderer   *cell,
+                                      GtkTreeModel      *tree_model,
+                                      GtkTreeIter       *iter,
+                                      gpointer           user_data);
 
 struct _DfvViewerWindow
 {
@@ -72,6 +100,37 @@ struct _DfvViewerWindow
   GtkWidget *timeline;  /* NULL iff not loaded */
   GtkWidget *statistics_pane;  /* (nullable); NULL iff not loaded */
   GtkWidget *home_page_box;
+  GtkStack *file_stack;
+  GtkStackSwitcher *file_stack_switcher;
+  GtkHeaderBar *header_bar;
+
+  /* Sources tree view. */
+  GtkTreeView *sources_tree_view;
+  GtkTreeViewColumn *sources_name_column;
+  GtkCellRenderer *sources_name_renderer;
+  GtkTreeViewColumn *sources_address_column;
+  GtkCellRenderer *sources_address_renderer;
+  GtkTreeViewColumn *sources_max_priority_column;
+  GtkCellRenderer *sources_max_priority_renderer;
+  GtkTreeViewColumn *sources_n_dispatches_column;
+  GtkCellRenderer *sources_n_dispatches_renderer;
+  GtkTreeViewColumn *sources_min_dispatch_duration_column;
+  GtkCellRenderer *sources_min_dispatch_duration_renderer;
+  GtkTreeViewColumn *sources_median_dispatch_duration_column;
+  GtkCellRenderer *sources_median_dispatch_duration_renderer;
+  GtkTreeViewColumn *sources_max_dispatch_duration_column;
+  GtkCellRenderer *sources_max_dispatch_duration_renderer;
+
+  /* Tasks tree view. */
+  GtkTreeView *tasks_tree_view;
+  GtkTreeViewColumn *tasks_address_column;
+  GtkCellRenderer *tasks_address_renderer;
+  GtkTreeViewColumn *tasks_run_duration_column;
+  GtkCellRenderer *tasks_run_duration_renderer;
+  GtkTreeViewColumn *tasks_thread_run_duration_column;
+  GtkCellRenderer *tasks_thread_run_duration_renderer;
+  GtkTreeViewColumn *tasks_thread_name_column;
+  GtkCellRenderer *tasks_thread_name_renderer;
 };
 
 G_DEFINE_TYPE (DfvViewerWindow, dfv_viewer_window, GTK_TYPE_APPLICATION_WINDOW)
@@ -98,8 +157,63 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
                                         main_paned);
   gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
                                         home_page_box);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        file_stack);
+
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_tree_view);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_name_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_name_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_address_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_address_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_max_priority_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_max_priority_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_n_dispatches_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_n_dispatches_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_min_dispatch_duration_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_min_dispatch_duration_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_median_dispatch_duration_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_median_dispatch_duration_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_max_dispatch_duration_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        sources_max_dispatch_duration_renderer);
+
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_tree_view);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_address_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_address_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_run_duration_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_run_duration_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_thread_run_duration_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_thread_run_duration_renderer);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_thread_name_column);
+  gtk_widget_class_bind_template_child (widget_class, DfvViewerWindow,
+                                        tasks_thread_name_renderer);
+
   gtk_widget_class_bind_template_callback (widget_class, open_button_clicked);
   gtk_widget_class_bind_template_callback (widget_class, record_button_clicked);
+  gtk_widget_class_bind_template_callback (widget_class,
+                                           main_stack_notify_visible_child_name);
 
   object_class->get_property = dfv_viewer_window_get_property;
   object_class->set_property = dfv_viewer_window_set_property;
@@ -124,10 +238,102 @@ dfv_viewer_window_class_init (DfvViewerWindowClass *klass)
 static void
 dfv_viewer_window_init (DfvViewerWindow *self)
 {
+  g_autoptr (EmptyStringRendererData) empty_string_data = NULL;
+
   gtk_widget_init_template (GTK_WIDGET (self));
 
-  /* Set the initial stack page. */
+  /* Set up the header bar and stack switcher. */
+  self->header_bar = GTK_HEADER_BAR (gtk_header_bar_new ());
+  gtk_header_bar_set_show_close_button (self->header_bar, TRUE);
+  gtk_window_set_titlebar (GTK_WINDOW (self), GTK_WIDGET (self->header_bar));
+  gtk_widget_show (GTK_WIDGET (self->header_bar));
+
+  self->file_stack_switcher = GTK_STACK_SWITCHER (gtk_stack_switcher_new ());
+  gtk_stack_switcher_set_stack (self->file_stack_switcher, self->file_stack);
+
+  gtk_header_bar_pack_start (self->header_bar,
+                             GTK_WIDGET (self->file_stack_switcher));
+
+  gtk_widget_hide (GTK_WIDGET (self->file_stack_switcher));
+
+  gtk_window_set_title (GTK_WINDOW (self), _("Dunfell Viewer"));
+  gtk_header_bar_set_title (self->header_bar,
+                            gtk_window_get_title (GTK_WINDOW (self)));
+
+  /* Set the initial stack pages. */
   gtk_stack_set_visible_child_name (self->main_stack, "intro");
+  gtk_stack_set_visible_child_name (self->file_stack, "timeline");
+
+  gtk_header_bar_set_title (self->header_bar,
+                            gtk_window_get_title (GTK_WINDOW (self)));
+
+  /* Set up the sources tree view. */
+  empty_string_data = g_new0 (EmptyStringRendererData, 1);
+  empty_string_data->text = _("Unset");
+  empty_string_data->column = 4;
+
+  gtk_tree_view_column_set_cell_data_func (self->sources_name_column,
+                                           self->sources_name_renderer,
+                                           empty_string_renderer_cb,
+                                           g_steal_pointer (&empty_string_data),
+                                           g_free);
+  gtk_tree_view_column_set_cell_data_func (self->sources_address_column,
+                                           self->sources_address_renderer,
+                                           hex_renderer_cb,
+                                           GINT_TO_POINTER (0)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->sources_max_priority_column,
+                                           self->sources_max_priority_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (11)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->sources_n_dispatches_column,
+                                           self->sources_n_dispatches_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (12)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->sources_min_dispatch_duration_column,
+                                           self->sources_min_dispatch_duration_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (13)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->sources_median_dispatch_duration_column,
+                                           self->sources_median_dispatch_duration_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (14)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->sources_max_dispatch_duration_column,
+                                           self->sources_max_dispatch_duration_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (15)  /* column index */,
+                                           NULL);
+
+  /* Set up the tasks tree view. */
+  gtk_tree_view_column_set_cell_data_func (self->tasks_address_column,
+                                           self->tasks_address_renderer,
+                                           hex_renderer_cb,
+                                           GINT_TO_POINTER (0)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->tasks_run_duration_column,
+                                           self->tasks_run_duration_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (18)  /* column index */,
+                                           NULL);
+  gtk_tree_view_column_set_cell_data_func (self->tasks_thread_run_duration_column,
+                                           self->tasks_thread_run_duration_renderer,
+                                           number_renderer_cb,
+                                           GINT_TO_POINTER (19),  /* column index */
+                                           NULL);
+
+  empty_string_data = g_new0 (EmptyStringRendererData, 1);
+  empty_string_data->text = _("Task not threaded");
+  empty_string_data->column = 16;
+
+  gtk_tree_view_column_set_cell_data_func (self->tasks_thread_name_column,
+                                           self->tasks_thread_name_renderer,
+                                           empty_string_renderer_cb,
+                                           g_steal_pointer (&empty_string_data),
+                                           g_free);
 }
 
 static void
@@ -176,6 +382,105 @@ dfv_viewer_window_dispose (GObject *object)
   g_assert (self->file == NULL);
 
   G_OBJECT_CLASS (dfv_viewer_window_parent_class)->dispose (object);
+}
+
+static void
+hex_renderer_cb (GtkTreeViewColumn *tree_column,
+                 GtkCellRenderer   *cell,
+                 GtkTreeModel      *tree_model,
+                 GtkTreeIter       *iter,
+                 gpointer           user_data)
+{
+  g_auto (GValue) value = G_VALUE_INIT, uint64_value = G_VALUE_INIT;
+  gint column_index;
+  guint64 uint64;
+  g_autofree gchar *hex_string = NULL;
+
+  g_assert (GTK_IS_CELL_RENDERER_TEXT (cell));
+
+  column_index = GPOINTER_TO_INT (user_data);
+
+  /* Grab the original numeric value and render it as a hex string. */
+  gtk_tree_model_get_value (tree_model, iter, column_index, &value);
+
+  g_value_init (&uint64_value, G_TYPE_UINT64);
+  g_assert (g_value_transform (&value, &uint64_value));
+  uint64 = g_value_get_uint64 (&uint64_value);
+  hex_string = g_strdup_printf ("0x%llx", (long long unsigned int) uint64);
+
+  g_object_set (G_OBJECT (cell),
+                "text", hex_string,
+                "family", "Monospace",
+                "xalign", 1.0,
+                NULL);
+}
+
+static void
+number_renderer_cb (GtkTreeViewColumn *tree_column,
+                    GtkCellRenderer   *cell,
+                    GtkTreeModel      *tree_model,
+                    GtkTreeIter       *iter,
+                    gpointer           user_data)
+{
+  g_auto (GValue) value = G_VALUE_INIT, int64_value = G_VALUE_INIT;
+  gint column_index;
+  gint64 int64;
+  g_autofree gchar *spaced_string = NULL;
+
+  g_assert (GTK_IS_CELL_RENDERER_TEXT (cell));
+
+  column_index = GPOINTER_TO_INT (user_data);
+
+  /* Grab the original numeric value and render it with grouped digits. */
+  gtk_tree_model_get_value (tree_model, iter, column_index, &value);
+
+  g_value_init (&int64_value, G_TYPE_INT64);
+  g_assert (g_value_transform (&value, &int64_value));
+  int64 = g_value_get_int64 (&int64_value);
+  spaced_string = g_strdup_printf ("%'" G_GINT64_FORMAT, int64);
+
+  g_object_set (G_OBJECT (cell),
+                "text", spaced_string,
+                "xalign", 1.0,
+                NULL);
+}
+
+static void
+empty_string_renderer_cb (GtkTreeViewColumn *tree_column,
+                          GtkCellRenderer   *cell,
+                          GtkTreeModel      *tree_model,
+                          GtkTreeIter       *iter,
+                          gpointer           user_data)
+{
+  g_auto (GValue) value = G_VALUE_INIT;
+  EmptyStringRendererData *data = user_data;
+  const gchar *str, *foreground;
+  PangoStyle style;
+
+  g_assert (GTK_IS_CELL_RENDERER_TEXT (cell));
+
+  /* Grab the original string value. If it is NULL or empty, substitute a
+   * replacement and format it differently. */
+  gtk_tree_model_get_value (tree_model, iter, data->column, &value);
+  str = g_value_get_string (&value);
+
+  if (str == NULL || *str == '\0')
+    {
+      str = data->text;
+      foreground = "gray";
+      style = PANGO_STYLE_ITALIC;
+    }
+  else
+    {
+      foreground = NULL;
+      style = PANGO_STYLE_NORMAL;
+    }
+
+  g_object_set (G_OBJECT (cell),
+                "text", str,
+                "foreground", foreground,
+                "style", style,
+                NULL);
 }
 
 /**
@@ -342,6 +647,21 @@ record_button_clicked (GtkButton *button,
   dfv_viewer_window_record (self);
 }
 
+static void
+main_stack_notify_visible_child_name (GObject    *object,
+                                      GParamSpec *pspec,
+                                      gpointer    user_data)
+{
+  DfvViewerWindow *self = DFV_VIEWER_WINDOW (user_data);
+  gboolean is_file_pane;
+
+  is_file_pane = g_str_equal (gtk_stack_get_visible_child_name (self->main_stack),
+                              "file");
+
+  gtk_widget_set_visible (GTK_WIDGET (self->file_stack_switcher),
+                          is_file_pane);
+}
+
 static void set_file_cb1 (GObject      *source_object,
                           GAsyncResult *result,
                           gpointer      user_data);
@@ -408,6 +728,8 @@ dfv_viewer_window_clear_file (DfvViewerWindow *self,
   g_object_notify (G_OBJECT (self), "file");
 
   gtk_window_set_title (GTK_WINDOW (self), _("Dunfell Viewer"));
+  gtk_header_bar_set_title (self->header_bar,
+                            gtk_window_get_title (GTK_WINDOW (self)));
   gtk_stack_set_visible_child_name (self->main_stack, "intro");
 
   g_clear_pointer (&self->timeline, gtk_widget_destroy);
@@ -485,6 +807,10 @@ set_file_cb2 (GObject      *source_object,
   DflParser *parser;
   DflEventSequence *sequence;
   g_autoptr (DflModel) model = NULL;
+  g_autoptr (DwlSourceModel) source_model = NULL;
+  g_autoptr (DwlTaskModel) task_model = NULL;
+  g_autoptr (GPtrArray) sources = NULL;  /* (element-type DflSource) */
+  g_autoptr (GPtrArray) tasks = NULL;  /* (element-type DflTask) */
   GError *child_error = NULL;
 
   self = DFV_VIEWER_WINDOW (user_data);
@@ -523,7 +849,18 @@ set_file_cb2 (GObject      *source_object,
   gtk_paned_pack2 (self->main_paned, self->statistics_pane, FALSE, FALSE);
   gtk_widget_show (self->statistics_pane);
 
-  gtk_stack_set_visible_child_name (self->main_stack, "timeline");
+  sources = dfl_model_dup_sources (model);
+  source_model = dwl_source_model_new (sources);
+  gtk_tree_view_set_model (self->sources_tree_view,
+                           GTK_TREE_MODEL (source_model));
+
+  tasks = dfl_model_dup_tasks (model);
+  task_model = dwl_task_model_new (tasks);
+  gtk_tree_view_set_model (self->tasks_tree_view,
+                           GTK_TREE_MODEL (task_model));
+
+  gtk_stack_set_visible_child_name (self->file_stack, "timeline");
+  gtk_stack_set_visible_child_name (self->main_stack, "file");
   gtk_widget_grab_focus (self->timeline);
 }
 
@@ -559,7 +896,10 @@ set_file_cb_name (GObject      *source_object,
    * might have been loaded. */
   if (self->file == file)
     {
-      gtk_window_set_title (GTK_WINDOW (self),
-                            g_file_info_get_display_name (file_info));
+      const gchar *filename;
+
+      filename = g_file_info_get_display_name (file_info);
+      gtk_window_set_title (GTK_WINDOW (self), filename);
+      gtk_header_bar_set_title (self->header_bar, filename);
     }
 }
