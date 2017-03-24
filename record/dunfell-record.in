@@ -38,13 +38,13 @@ done
 
 shift $(( $OPTIND - 1 ))
 
-if [ "$#" == 0 ]; then
+if [ "$#" = 0 ]; then
 	echo "$0: Must provide a command to record." >&2
 	exec man dunfell-record
 fi
 
 # Log to a temporary file if none is specified.
-if [ "$log_file" == "" ]; then
+if [ "$log_file" = "" ]; then
 	log_file=$(mktemp "dunfell-$(basename $1)-XXXXXX.log")
 fi
 
