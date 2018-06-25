@@ -84,8 +84,8 @@ static gboolean dwl_timeline_move_selected (DwlTimeline              *timeline,
 static void add_default_css (GtkStyleContext *context);
 static void update_cache    (DwlTimeline     *self);
 
-#define ZOOM_MIN 0.001
-#define ZOOM_MAX 1000.0
+#define ZOOM_MIN 0.001f
+#define ZOOM_MAX 1000.0f
 
 typedef enum
 {
@@ -696,7 +696,7 @@ draw_source_dispatch_line (DwlTimeline           *self,
 
   /* Label the dispatch with the relevant callback function, but only if the
    * zoom level is high enough to accommodate it.. */
-  if (self->zoom > 0.3 &&
+  if (self->zoom > 0.3f &&
       (dispatch->dispatch_name != NULL || dispatch->callback_name != NULL))
     {
       PangoLayout *layout = NULL;
@@ -1138,7 +1138,7 @@ dwl_timeline_draw (GtkWidget *widget,
    * markers if there’s enough space to render them. */
   for (t = min_timestamp + ((min_visible_timestamp - min_timestamp) / 1000000) * 1000000;
        t <= max_visible_timestamp;
-       t += (self->zoom <= 0.0011) ? 100000 : ((self->zoom <= 0.01) ? 10000 : 1000))
+       t += (self->zoom <= 0.0011f) ? 100000 : ((self->zoom <= 0.01f) ? 10000 : 1000))
     {
       const gchar *line_class_name, *label_class_name;
       gdouble marker_y;
@@ -1649,7 +1649,7 @@ dwl_timeline_scroll_event (GtkWidget      *widget,
       old_zoom = dwl_timeline_get_zoom (self);
 
       /* Set the updated zoom and schedule a redraw. */
-      dwl_timeline_set_zoom (self, old_zoom * factor);
+      dwl_timeline_set_zoom (self, old_zoom * (gfloat) factor);
 
       /* Adjust the scroll position so the cursor continues to be focused on the
        * same point. They use the same units, modulo the zoom level.
@@ -2178,7 +2178,7 @@ dwl_timeline_set_zoom (DwlTimeline *self,
   if (new_zoom == self->zoom)
     return FALSE;
 
-  g_debug ("%s: Setting zoom to %f", G_STRFUNC, new_zoom);
+  g_debug ("%s: Setting zoom to %f", G_STRFUNC, (gdouble) new_zoom);
 
   self->zoom = new_zoom;
   g_object_notify (G_OBJECT (self), "zoom");

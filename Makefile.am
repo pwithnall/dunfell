@@ -185,14 +185,14 @@ dwl_enum_source_file = libdunfell-ui/enums.c
 dwl_enum_prerequisites = $(dwl_public_headers)
 
 $(dwl_enum_header_file): $(dwl_enum_header_file:%=%.template) $(dwl_enum_prerequisites)
-	$(AM_V_GEN)$(GLIB_MKENUMS) --template $< \
+	$(GLIB_MKENUMS) --template $< \
 		$(patsubst %,$(srcdir)/%,$(dwl_enum_prerequisites)) \
-		> $@.tmp && mv $@.tmp $@
+		--output $@
 
 $(dwl_enum_source_file): $(dwl_enum_source_file:%=%.template) $(dwl_enum_prerequisites)
-	$(AM_V_GEN)$(GLIB_MKENUMS) --template $< \
+	$(GLIB_MKENUMS) --template $< \
 		$(patsubst %,$(srcdir)/%,$(dwl_enum_prerequisites)) \
-		> $@.tmp && mv $@.tmp $@
+		--output $@
 
 EXTRA_DIST += \
 	$(dwl_enum_header_file:%=%.template) \
