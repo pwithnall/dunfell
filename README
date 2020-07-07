@@ -1,6 +1,13 @@
 Dunfell
 =======
 
+DEPRECATED: Dunfell is deprecated in favour of using sysprof with the sysprof
+marks which ship with GLib 2.65.1 and later versions.
+
+See https://gitlab.gnome.org/GNOME/sysprof
+
+---
+
 Dunfell provides a library for extracting events from GLib main contexts and
 visualising them for the purposes of debugging and optimisation. It provides
 graphical utilities for this purpose.
